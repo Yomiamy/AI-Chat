@@ -1,4 +1,4 @@
-package com.ai_chat.ai_chat
+package com.flutter.ai_chat
 
 import io.flutter.embedding.android.FlutterActivity
 
