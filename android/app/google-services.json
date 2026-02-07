@@ -1,0 +1,86 @@
+{
+  "project_info": {
+    "project_number": "719921143375",
+    "project_id": "flutterpractice-32f76",
+    "storage_bucket": "flutterpractice-32f76.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:719921143375:android:07728412a965603df0543a",
+        "android_client_info": {
+          "package_name": "com.flutter.ai_chat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDevNkT4n3DA0B1rjkZ4cFnxTeXyBhzAx8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:719921143375:android:052a8772b298ad73f0543a",
+        "android_client_info": {
+          "package_name": "com.flutter.test.flutter_practice"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDevNkT4n3DA0B1rjkZ4cFnxTeXyBhzAx8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:719921143375:android:983365e9a54c0d3af0543a",
+        "android_client_info": {
+          "package_name": "com.flutter.test.flutter_practice.beta"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDevNkT4n3DA0B1rjkZ4cFnxTeXyBhzAx8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:719921143375:android:a7b338b868f7df4af0543a",
+        "android_client_info": {
+          "package_name": "com.flutter.test.flutter_practice.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDevNkT4n3DA0B1rjkZ4cFnxTeXyBhzAx8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
