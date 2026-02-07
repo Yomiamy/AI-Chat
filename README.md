@@ -2,6 +2,12 @@
 
 A modern AI chat application built with Flutter and Firebase AI (Gemini). This project demonstrates how to integrate Google's state-of-the-art Gemini models into a mobile application, providing a fluid, responsive, and "Good Taste" user experience.
 
+## 📸 Screenshots
+
+| Empty State | Chat Interface |
+| :---: | :---: |
+| ![Empty State](assets/screenshots/empty_state.png) | ![Chat Interface](assets/screenshots/chat_interface.png) |
+
 ## ✨ Features
 
 -   **Gemini 2.5 Flash Integration**: Leverages the latest Gemini models for high-speed, accurate AI interactions.
