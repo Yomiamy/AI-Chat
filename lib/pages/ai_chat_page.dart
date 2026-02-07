@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -194,15 +195,28 @@ class _AiChatPageState extends State<AiChatPage> {
                 color: const Color(0xFFF0F2F6),
                 borderRadius: BorderRadius.circular(24),
               ),
-              child: TextField(
-                controller: _textEditingController,
-                decoration: const InputDecoration(
-                  hintText: 'Type a message...',
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(color: Colors.black38),
+              child: Focus(
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent &&
+                      (event.logicalKey == LogicalKeyboardKey.enter ||
+                          event.logicalKey == LogicalKeyboardKey.numpadEnter) &&
+                      !HardwareKeyboard.instance.isShiftPressed) {
+                    _sendMessage(context);
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: TextField(
+                  controller: _textEditingController,
+                  textInputAction: TextInputAction.send,
+                  decoration: const InputDecoration(
+                    hintText: 'Type a message...',
+                    border: InputBorder.none,
+                    hintStyle: TextStyle(color: Colors.black38),
+                  ),
+                  maxLines: null,
+                  onSubmitted: (value) => _sendMessage(context),
                 ),
-                maxLines: null,
-                onSubmitted: (value) => _sendMessage(context),
               ),
             ),
           ),
