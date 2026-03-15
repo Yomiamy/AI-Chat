@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../utils/permission_manager.dart';
 
 import '../bloc/gemini_api_bloc.dart';
 import '../bloc/gemini_api_state.dart';
@@ -19,6 +23,9 @@ class AiChatPage extends StatefulWidget {
 class _AiChatPageState extends State<AiChatPage> {
   late final TextEditingController _textEditingController;
   final ScrollController _scrollController = ScrollController();
+
+  Uint8List? _selectedImageBytes;
+  String? _selectedMimeType;
 
   @override
   void initState() {
@@ -42,6 +49,31 @@ class _AiChatPageState extends State<AiChatPage> {
           curve: Curves.easeOut,
         );
       }
+    });
+  }
+  Future<void> _pickImage() async {
+    final file = await PermissionManager.pickImageWithPermission(context);
+
+    if (file == null) return;
+
+    final bytes = await file.readAsBytes();
+    final ext = file.name.split('.').last.toLowerCase();
+    final mime = switch (ext) {
+      'jpg' || 'jpeg' => 'image/jpeg',
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      _ => 'image/jpeg',
+    };
+
+    setState(() {
+      _selectedImageBytes = bytes;
+      _selectedMimeType = mime;
+    });
+  }
+  void _clearSelectedImage() {
+    setState(() {
+      _selectedImageBytes = null;
+      _selectedMimeType = null;
     });
   }
 
@@ -138,24 +170,21 @@ class _AiChatPageState extends State<AiChatPage> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.deepPurple.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
+          CircleAvatar(
+            radius: 44,
+            backgroundColor: Color(0x1A7C3AED),
+            child: Icon(
               Icons.chat_bubble_outline,
-              size: 64,
+              size: 44,
               color: Colors.deepPurple,
             ),
           ),
-          const SizedBox(height: 24),
-          const Text(
+          SizedBox(height: 24),
+          Text(
             'How can I help you today?',
             style: TextStyle(
               fontSize: 20,
@@ -163,9 +192,9 @@ class _AiChatPageState extends State<AiChatPage> {
               color: Colors.black87,
             ),
           ),
-          const SizedBox(height: 12),
-          const Text(
-            'Start a conversation with Gemini AI',
+          SizedBox(height: 12),
+          Text(
+            'Type a message or attach an image',
             style: TextStyle(fontSize: 16, color: Colors.black54),
           ),
         ],
@@ -186,55 +215,93 @@ class _AiChatPageState extends State<AiChatPage> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0F2F6),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Focus(
-                onKeyEvent: (node, event) {
-                  if (event is KeyDownEvent &&
-                      (event.logicalKey == LogicalKeyboardKey.enter ||
-                          event.logicalKey == LogicalKeyboardKey.numpadEnter) &&
-                      !HardwareKeyboard.instance.isShiftPressed) {
-                    _sendMessage(context);
-                    return KeyEventResult.handled;
-                  }
-                  return KeyEventResult.ignored;
-                },
-                child: TextField(
-                  controller: _textEditingController,
-                  textInputAction: TextInputAction.send,
-                  decoration: const InputDecoration(
-                    hintText: 'Type a message...',
-                    border: InputBorder.none,
-                    hintStyle: TextStyle(color: Colors.black38),
-                  ),
-                  maxLines: null,
-                  onSubmitted: (value) => _sendMessage(context),
-                ),
-              ),
+          // 圖片預覽區（有選圖時才顯示）
+          if (_selectedImageBytes != null) ...[
+            _ImagePreview(
+              imageBytes: _selectedImageBytes!,
+              onRemove: _clearSelectedImage,
             ),
-          ),
-          const SizedBox(width: 12),
-          Builder(
-            builder: (context) {
-              return GestureDetector(
-                onTap: () => _sendMessage(context),
+            const SizedBox(height: 8),
+          ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // 選圖按鈕
+              GestureDetector(
+                onTap: _pickImage,
                 child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(
-                    color: Colors.deepPurple,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.send, color: Colors.white, size: 24),
+                  child: const Icon(
+                    Icons.image_outlined,
+                    color: Colors.deepPurple,
+                    size: 22,
+                  ),
                 ),
-              );
-            },
+              ),
+              const SizedBox(width: 10),
+              // 文字輸入框
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  constraints: const BoxConstraints(maxHeight: 120),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0F2F6),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Focus(
+                    onKeyEvent: (node, event) {
+                      if (event is KeyDownEvent &&
+                          (event.logicalKey == LogicalKeyboardKey.enter ||
+                              event.logicalKey ==
+                                  LogicalKeyboardKey.numpadEnter) &&
+                          !HardwareKeyboard.instance.isShiftPressed) {
+                        _sendMessage(context);
+                        return KeyEventResult.handled;
+                      }
+                      return KeyEventResult.ignored;
+                    },
+                    child: TextField(
+                      controller: _textEditingController,
+                      textInputAction: TextInputAction.send,
+                      decoration: const InputDecoration(
+                        hintText: 'Type a message...',
+                        border: InputBorder.none,
+                        hintStyle: TextStyle(color: Colors.black38),
+                      ),
+                      maxLines: null,
+                      onSubmitted: (value) => _sendMessage(context),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // 送出按鈕
+              Builder(
+                builder: (ctx) => GestureDetector(
+                  onTap: () => _sendMessage(ctx),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                      color: Colors.deepPurple,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.send,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -243,13 +310,67 @@ class _AiChatPageState extends State<AiChatPage> {
 
   void _sendMessage(BuildContext context) {
     final query = _textEditingController.text.trim();
-    if (query.isNotEmpty) {
-      _textEditingController.clear();
-      context.read<GeminiApiBloc>().add(QueryEvent(query: query));
-    }
+    // 至少要有文字或圖片之一才送出
+    if (query.isEmpty && _selectedImageBytes == null) return;
+
+    final bytes = _selectedImageBytes;
+    final mime = _selectedMimeType;
+
+    _textEditingController.clear();
+    setState(() {
+      _selectedImageBytes = null;
+      _selectedMimeType = null;
+    });
+
+    context.read<GeminiApiBloc>().add(
+      QueryEvent(query: query, imageBytes: bytes, mimeType: mime),
+    );
   }
 }
 
+// ────────────────────────────────────────────
+// 選圖後的縮圖預覽元件
+// ────────────────────────────────────────────
+class _ImagePreview extends StatelessWidget {
+  final Uint8List imageBytes;
+  final VoidCallback onRemove;
+
+  const _ImagePreview({required this.imageBytes, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.topRight,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.memory(
+            imageBytes,
+            height: 100,
+            width: 100,
+            fit: BoxFit.cover,
+          ),
+        ),
+        GestureDetector(
+          onTap: onRemove,
+          child: Container(
+            margin: const EdgeInsets.all(4),
+            padding: const EdgeInsets.all(3),
+            decoration: const BoxDecoration(
+              color: Colors.black54,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.close, color: Colors.white, size: 14),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ────────────────────────────────────────────
+// 訊息氣泡元件
+// ────────────────────────────────────────────
 class _MessageBubble extends StatelessWidget {
   final String message;
 
@@ -307,6 +428,24 @@ class _MessageBubble extends StatelessWidget {
             MarkdownBody(
               data: content,
               selectable: true,
+              imageBuilder: (uri, title, alt) {
+                // 支援 data URI 格式的圖片（使用者端嵌入的 base64 圖片）
+                final uriStr = uri.toString();
+                if (uriStr.startsWith('data:')) {
+                  final commaIndex = uriStr.indexOf(',');
+                  if (commaIndex != -1) {
+                    final base64Str = uriStr.substring(commaIndex + 1);
+                    try {
+                      final bytes = base64Decode(base64Str);
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.memory(bytes, fit: BoxFit.contain),
+                      );
+                    } catch (_) {}
+                  }
+                }
+                return const SizedBox.shrink();
+              },
               styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context))
                   .copyWith(
                     p: TextStyle(
