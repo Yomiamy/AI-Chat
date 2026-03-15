@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:bloc/bloc.dart';
 import 'package:firebase_ai/firebase_ai.dart';
@@ -28,63 +29,42 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
 
   FutureOr<void> _query(QueryEvent event, Emitter<GeminiApiState> emit) async {
     final prompt = event.query;
+    final imageBytes = event.imageBytes;
+    final mimeType = event.mimeType;
 
-    _chatList.insert(0, "Prompt: $prompt");
+    // 組裝使用者訊息（可能包含圖片的 base64 markdown）
+    final userMessage = _buildUserMessage(prompt, imageBytes, mimeType);
+    _chatList.insert(0, 'Prompt: $userMessage');
     emit(state.copyWith(status: Status.newPrompt, chatList: _chatList));
-
     emit(state.copyWith(status: Status.queryLoading));
 
     try {
-      final response = _aiModel.generateContentStream([
-        Content.text("""
-        $prompt 
-        請用以下格式要求回答:
-        - 繁體中文回答 
-        - 以markdown格式輸出
-        - 依照內容調整縮排
-        """),
-      ]);
+      final content = _buildContent(prompt, imageBytes, mimeType);
+      final response = _aiModel.generateContentStream([content]);
 
       await for (final chunk in response) {
         final parts = chunk.candidates.firstOrNull?.content.parts ?? [];
         if (parts.isNotEmpty) {
-          StringBuffer markdownBuffer = StringBuffer();
+          final markdownBuffer = StringBuffer();
 
           for (final part in parts) {
             if (part is TextPart) {
               markdownBuffer.writeln(part.text);
-              continue;
-            }
-
-            if (part is ExecutableCodePart) {
+            } else if (part is ExecutableCodePart) {
               markdownBuffer.writeln(part.code);
-              continue;
-            }
-
-            if (part is CodeExecutionResultPart) {
+            } else if (part is CodeExecutionResultPart) {
               markdownBuffer.writeln(part.output);
-              continue;
-            }
-
-            if (part is InlineDataPart) {
-              final mimeType = part.mimeType;
-              final isImage = RegExp(
-                r'image/(jpeg|png|webp)',
-              ).hasMatch(mimeType);
-
-              if (isImage) {
-                final imageBytesBase64 = base64Encode(part.bytes);
-                markdownBuffer.writeln(
-                  '![image](data:$mimeType;base64,$imageBytesBase64)',
-                );
-                continue;
+            } else if (part is InlineDataPart) {
+              final mime = part.mimeType;
+              if (RegExp(r'image/(jpeg|png|webp)').hasMatch(mime)) {
+                final b64 = base64Encode(part.bytes);
+                markdownBuffer.writeln('![image](data:$mime;base64,$b64)');
               }
             }
           }
 
           if (markdownBuffer.isNotEmpty) {
             final aiReply = StringBuffer();
-
             if (_chatList.firstOrNull?.startsWith('AI reply: ') ?? false) {
               aiReply
                 ..write(_chatList.removeAt(0))
@@ -94,6 +74,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
             }
             _chatList.insert(0, aiReply.toString());
           }
+
           emit(
             state.copyWith(status: Status.querySuccess, chatList: _chatList),
           );
@@ -101,18 +82,55 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
       }
     } catch (e) {
       emit(state.copyWith(status: Status.queryFailure));
-      _chatList.insert(0, "Error: $e"); // Optional: Show error in chat
+      _chatList.insert(0, 'Error: $e');
     }
   }
 
+  /// 組裝使用者在氣泡中顯示的訊息字串（圖片以 base64 markdown 嵌入）
+  String _buildUserMessage(
+    String prompt,
+    Uint8List? imageBytes,
+    String? mimeType,
+  ) {
+    if (imageBytes == null || mimeType == null) return prompt;
+    final b64 = base64Encode(imageBytes);
+    return '![img](data:$mimeType;base64,$b64)\n\n$prompt';
+  }
+
+  /// 組裝送給 Gemini 的 Content（有圖片用 multi，無圖片用 text）
+  Content _buildContent(
+    String prompt,
+    Uint8List? imageBytes,
+    String? mimeType,
+  ) {
+    if (imageBytes == null || mimeType == null) {
+      return Content.text('''
+$prompt 
+請用以下格式要求回答:
+- 繁體中文回答 
+- 以markdown格式輸出
+- 依照內容調整縮排
+''');
+    }
+
+    return Content.multi([
+      InlineDataPart(mimeType, imageBytes),
+      TextPart('''
+$prompt 
+請用以下格式要求回答:
+- 繁體中文回答 
+- 以markdown格式輸出
+- 依照內容調整縮排
+'''),
+    ]);
+  }
+
   Future<void> _initFirebaseAiLogic() async {
-    // Current valid model
     _aiModel = FirebaseAI.googleAI().generativeModel(
       model: 'gemini-2.5-flash',
       generationConfig: GenerationConfig(
         responseModalities: [ResponseModalities.text],
       ),
-      // tools: [Tool.googleSearch(), Tool.codeExecution()], // Remove tools to simplify dependencies if not needed, but code execution was used
     );
   }
 }

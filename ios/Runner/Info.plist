@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>需要存取您的相片庫，以便選擇圖片傳送給 AI 進行分析。</string>
 </dict>
 </plist>
