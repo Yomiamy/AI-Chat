@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -63,6 +64,37 @@ class _AiChatPageState extends State<AiChatPage> {
       'png' => 'image/png',
       'webp' => 'image/webp',
       _ => 'image/jpeg',
+    };
+
+    setState(() {
+      _selectedImageBytes = bytes;
+      _selectedMimeType = mime;
+    });
+  }
+
+  Future<void> _pickGeneralFile() async {
+    final result = await PermissionManager.pickFile();
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.first;
+    Uint8List? bytes = file.bytes;
+
+    if (bytes == null && file.path != null) {
+      bytes = await File(file.path!).readAsBytes();
+    }
+    
+    if (bytes == null) return;
+
+    final ext = file.extension?.toLowerCase() ?? '';
+    final mime = switch (ext) {
+      'pdf' => 'application/pdf',
+      'txt' => 'text/plain',
+      'csv' => 'text/csv',
+      'doc' || 'docx' => 'application/msword',
+      'jpg' || 'jpeg' => 'image/jpeg',
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      _ => 'application/octet-stream',
     };
 
     setState(() {
@@ -219,10 +251,11 @@ class _AiChatPageState extends State<AiChatPage> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 圖片預覽區（有選圖時才顯示）
+          // 檔案/圖片預覽區
           if (_selectedImageBytes != null) ...[
-            _ImagePreview(
-              imageBytes: _selectedImageBytes!,
+            _FilePreview(
+              fileBytes: _selectedImageBytes!,
+              mimeType: _selectedMimeType ?? 'application/octet-stream',
               onRemove: _clearSelectedImage,
             ),
             const SizedBox(height: 8),
@@ -246,7 +279,24 @@ class _AiChatPageState extends State<AiChatPage> {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
+              // 一般檔案按鈕
+              GestureDetector(
+                onTap: _pickGeneralFile,
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.attach_file,
+                    color: Colors.deepPurple,
+                    size: 22,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               // 文字輸入框
               Expanded(
                 child: Container(
@@ -329,27 +379,59 @@ class _AiChatPageState extends State<AiChatPage> {
 }
 
 // ────────────────────────────────────────────
-// 選圖後的縮圖預覽元件
+// 選圖/選檔後的預覽元件
 // ────────────────────────────────────────────
-class _ImagePreview extends StatelessWidget {
-  final Uint8List imageBytes;
+class _FilePreview extends StatelessWidget {
+  final Uint8List fileBytes;
+  final String mimeType;
   final VoidCallback onRemove;
 
-  const _ImagePreview({required this.imageBytes, required this.onRemove});
+  const _FilePreview({
+    required this.fileBytes,
+    required this.mimeType,
+    required this.onRemove,
+  });
 
   @override
   Widget build(BuildContext context) {
+    Widget content;
+    final isImage = mimeType.startsWith('image/');
+    
+    if (isImage) {
+      content = Image.memory(
+        fileBytes,
+        height: 100,
+        width: 100,
+        fit: BoxFit.cover,
+      );
+    } else {
+      final mbSize = (fileBytes.lengthInBytes / (1024 * 1024)).toStringAsFixed(2);
+      content = Container(
+        height: 100,
+        width: 100,
+        color: Colors.deepPurple.withValues(alpha: 0.1),
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.insert_drive_file, color: Colors.deepPurple, size: 32),
+            const SizedBox(height: 4),
+            Text(
+              '$mbSize MB',
+              style: const TextStyle(fontSize: 12, color: Colors.deepPurple, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
     return Stack(
       alignment: Alignment.topRight,
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: Image.memory(
-            imageBytes,
-            height: 100,
-            width: 100,
-            fit: BoxFit.cover,
-          ),
+          child: content,
         ),
         GestureDetector(
           onTap: onRemove,
