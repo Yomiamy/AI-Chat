@@ -32,7 +32,15 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     final imageBytes = event.imageBytes;
     final mimeType = event.mimeType;
 
-    // 組裝使用者訊息（可能包含圖片的 base64 markdown）
+    // 檢查檔案大小是否超過 5MB (5 * 1024 * 1024 bytes)
+    if (imageBytes != null && imageBytes.lengthInBytes > 5 * 1024 * 1024) {
+      _chatList.insert(0, 'Prompt: $prompt\n\n[附件被拒絕：檔案大小超過 5MB 限制]');
+      _chatList.insert(0, 'Error: 上傳檔案大小不得超過 5MB');
+      emit(state.copyWith(status: Status.queryFailure, chatList: _chatList));
+      return;
+    }
+
+    // 組裝使用者訊息（可能包含檔案資訊或圖片的 base64 markdown）
     final userMessage = _buildUserMessage(prompt, imageBytes, mimeType);
     _chatList.insert(0, 'Prompt: $userMessage');
     emit(state.copyWith(status: Status.newPrompt, chatList: _chatList));
@@ -86,15 +94,21 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     }
   }
 
-  /// 組裝使用者在氣泡中顯示的訊息字串（圖片以 base64 markdown 嵌入）
+  /// 組裝使用者在氣泡中顯示的訊息字串（圖片以 base64 markdown 嵌入，其他檔案顯示檔名或類型與大小）
   String _buildUserMessage(
     String prompt,
     Uint8List? imageBytes,
     String? mimeType,
   ) {
     if (imageBytes == null || mimeType == null) return prompt;
-    final b64 = base64Encode(imageBytes);
-    return '![img](data:$mimeType;base64,$b64)\n\n$prompt';
+    
+    if (mimeType.startsWith('image/')) {
+      final b64 = base64Encode(imageBytes);
+      return '![img](data:$mimeType;base64,$b64)\n\n$prompt';
+    } else {
+      final mbSize = (imageBytes.lengthInBytes / (1024 * 1024)).toStringAsFixed(2);
+      return '[附件: $mimeType, 大小: $mbSize MB]\n\n$prompt';
+    }
   }
 
   /// 組裝送給 Gemini 的 Content（有圖片用 multi，無圖片用 text）
