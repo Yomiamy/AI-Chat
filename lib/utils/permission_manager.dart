@@ -57,19 +57,19 @@ class PermissionManager {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(S.of(context).permissionPhotoTitle),
-        content: Text(S.of(context).permissionPhotoDesc),
+        title: Text(S.current.permissionPhotoTitle),
+        content: Text(S.current.permissionPhotoDesc),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(S.of(context).cancel),
+            child: Text(S.current.cancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
               openAppSettings();
             },
-            child: Text(S.of(context).goToSettings),
+            child: Text(S.current.goToSettings),
           ),
         ],
       ),

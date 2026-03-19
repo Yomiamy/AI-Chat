@@ -127,7 +127,7 @@ class _AiChatPageState extends State<AiChatPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  S.of(context).aiAssistantTitle,
+                  S.current.aiAssistantTitle,
                   style: const TextStyle(
                     color: Colors.black87,
                     fontSize: 16,
@@ -135,7 +135,7 @@ class _AiChatPageState extends State<AiChatPage> {
                   ),
                 ),
                 Text(
-                  S.of(context).onlineStatus,
+                  S.current.onlineStatus,
                   style: const TextStyle(
                     color: Colors.green,
                     fontSize: 12,
@@ -217,7 +217,7 @@ class _AiChatPageState extends State<AiChatPage> {
           ),
           SizedBox(height: 24),
           Text(
-            S.of(context).howCanIHelp,
+            S.current.howCanIHelp,
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -226,7 +226,7 @@ class _AiChatPageState extends State<AiChatPage> {
           ),
           const SizedBox(height: 12),
           Text(
-            S.of(context).typeMessageOrAttach,
+            S.current.typeMessageOrAttach,
             style: const TextStyle(fontSize: 16, color: Colors.black54),
           ),
         ],
@@ -322,7 +322,7 @@ class _AiChatPageState extends State<AiChatPage> {
                       controller: _textEditingController,
                       textInputAction: TextInputAction.send,
                       decoration: InputDecoration(
-                        hintText: S.of(context).typeMessageHint,
+                        hintText: S.current.typeMessageHint,
                         border: InputBorder.none,
                         hintStyle: const TextStyle(color: Colors.black38),
                       ),
@@ -499,7 +499,7 @@ class _MessageBubble extends StatelessWidget {
                   const Icon(Icons.error_outline, color: Colors.red, size: 16),
                   const SizedBox(width: 8),
                   Text(
-                    S.of(context).errorLabel,
+                    S.current.errorLabel,
                     style: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.bold,
