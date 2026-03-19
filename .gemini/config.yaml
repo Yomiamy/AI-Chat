@@ -1,0 +1,10 @@
+# Gemini Code Assist Configuration
+# https://cloud.google.com/gemini/docs/codeassist/configure-gemini-code-assist
+
+code_review:
+  # 自動 review 每個 PR
+  enabled: true
+  # 回應語言
+  comment_language: "zh-TW"
+
+styleguide: styleguide.md
