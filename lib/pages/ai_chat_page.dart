@@ -6,8 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../utils/permission_manager.dart';
+import '../generated/l10n.dart';
 
 import '../bloc/gemini_api_bloc.dart';
 import '../bloc/gemini_api_state.dart';
@@ -116,27 +116,27 @@ class _AiChatPageState extends State<AiChatPage> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
-        title: const Row(
+        title: Row(
           children: [
-            CircleAvatar(
+            const CircleAvatar(
               backgroundColor: Colors.deepPurple,
               child: Icon(Icons.auto_awesome, color: Colors.white, size: 20),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Gemini AI Assistant',
-                  style: TextStyle(
+                  S.of(context).aiAssistantTitle,
+                  style: const TextStyle(
                     color: Colors.black87,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  'Online',
-                  style: TextStyle(
+                  S.of(context).onlineStatus,
+                  style: const TextStyle(
                     color: Colors.green,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -202,11 +202,11 @@ class _AiChatPageState extends State<AiChatPage> {
   }
 
   Widget _buildEmptyState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircleAvatar(
+          const CircleAvatar(
             radius: 44,
             backgroundColor: Color(0x1A7C3AED),
             child: Icon(
@@ -217,17 +217,17 @@ class _AiChatPageState extends State<AiChatPage> {
           ),
           SizedBox(height: 24),
           Text(
-            'How can I help you today?',
-            style: TextStyle(
+            S.of(context).howCanIHelp,
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
-            'Type a message or attach an image',
-            style: TextStyle(fontSize: 16, color: Colors.black54),
+            S.of(context).typeMessageOrAttach,
+            style: const TextStyle(fontSize: 16, color: Colors.black54),
           ),
         ],
       ),
@@ -321,10 +321,10 @@ class _AiChatPageState extends State<AiChatPage> {
                     child: TextField(
                       controller: _textEditingController,
                       textInputAction: TextInputAction.send,
-                      decoration: const InputDecoration(
-                        hintText: 'Type a message...',
+                      decoration: InputDecoration(
+                        hintText: S.of(context).typeMessageHint,
                         border: InputBorder.none,
-                        hintStyle: TextStyle(color: Colors.black38),
+                        hintStyle: const TextStyle(color: Colors.black38),
                       ),
                       maxLines: null,
                       onSubmitted: (value) => _sendMessage(context),
@@ -494,13 +494,13 @@ class _MessageBubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (isError)
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.error_outline, color: Colors.red, size: 16),
-                  SizedBox(width: 8),
+                  const Icon(Icons.error_outline, color: Colors.red, size: 16),
+                  const SizedBox(width: 8),
                   Text(
-                    'Error',
-                    style: TextStyle(
+                    S.of(context).errorLabel,
+                    style: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.bold,
                     ),

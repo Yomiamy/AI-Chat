@@ -22,6 +22,18 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
-    "appTitle": MessageLookupByLibrary.simpleMessage("AI Chat"),
+    "aiAssistantTitle": MessageLookupByLibrary.simpleMessage("Gemini AI 助理"),
+    "appTitle": MessageLookupByLibrary.simpleMessage("AI 聊天"),
+    "cancel": MessageLookupByLibrary.simpleMessage("取消"),
+    "errorLabel": MessageLookupByLibrary.simpleMessage("錯誤"),
+    "goToSettings": MessageLookupByLibrary.simpleMessage("前往設定"),
+    "howCanIHelp": MessageLookupByLibrary.simpleMessage("今天能怎麼幫助你？"),
+    "onlineStatus": MessageLookupByLibrary.simpleMessage("上線中"),
+    "permissionPhotoDesc": MessageLookupByLibrary.simpleMessage(
+      "請前往系統設定，允許此 App 存取相片庫，才能選取圖片傳送給 AI。",
+    ),
+    "permissionPhotoTitle": MessageLookupByLibrary.simpleMessage("需要相片存取權限"),
+    "typeMessageHint": MessageLookupByLibrary.simpleMessage("輸入訊息..."),
+    "typeMessageOrAttach": MessageLookupByLibrary.simpleMessage("輸入訊息或附上圖片"),
   };
 }

@@ -22,6 +22,28 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+    "aiAssistantTitle": MessageLookupByLibrary.simpleMessage(
+      "Gemini AI Assistant",
+    ),
     "appTitle": MessageLookupByLibrary.simpleMessage("AI Chat"),
+    "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
+    "errorLabel": MessageLookupByLibrary.simpleMessage("Error"),
+    "goToSettings": MessageLookupByLibrary.simpleMessage("Go to Settings"),
+    "howCanIHelp": MessageLookupByLibrary.simpleMessage(
+      "How can I help you today?",
+    ),
+    "onlineStatus": MessageLookupByLibrary.simpleMessage("Online"),
+    "permissionPhotoDesc": MessageLookupByLibrary.simpleMessage(
+      "Please go to system settings and allow this app to access your photo library so you can select images to send to the AI.",
+    ),
+    "permissionPhotoTitle": MessageLookupByLibrary.simpleMessage(
+      "Photo Access Required",
+    ),
+    "typeMessageHint": MessageLookupByLibrary.simpleMessage(
+      "Type a message...",
+    ),
+    "typeMessageOrAttach": MessageLookupByLibrary.simpleMessage(
+      "Type a message or attach an image",
+    ),
   };
 }

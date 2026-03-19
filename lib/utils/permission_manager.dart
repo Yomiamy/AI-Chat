@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../generated/l10n.dart';
 
 class PermissionManager {
   static final ImagePicker _imagePicker = ImagePicker();
@@ -56,19 +57,19 @@ class PermissionManager {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('需要相片存取權限'),
-        content: const Text('請前往系統設定，允許此 App 存取相片庫，才能選取圖片傳送給 AI。'),
+        title: Text(S.of(context).permissionPhotoTitle),
+        content: Text(S.of(context).permissionPhotoDesc),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('取消'),
+            child: Text(S.of(context).cancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
               openAppSettings();
             },
-            child: const Text('前往設定'),
+            child: Text(S.of(context).goToSettings),
           ),
         ],
       ),

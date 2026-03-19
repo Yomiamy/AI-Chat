@@ -58,6 +58,91 @@ class S {
   String get appTitle {
     return Intl.message('AI Chat', name: 'appTitle', desc: '', args: []);
   }
+
+  /// `Gemini AI Assistant`
+  String get aiAssistantTitle {
+    return Intl.message(
+      'Gemini AI Assistant',
+      name: 'aiAssistantTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Online`
+  String get onlineStatus {
+    return Intl.message('Online', name: 'onlineStatus', desc: '', args: []);
+  }
+
+  /// `How can I help you today?`
+  String get howCanIHelp {
+    return Intl.message(
+      'How can I help you today?',
+      name: 'howCanIHelp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Type a message or attach an image`
+  String get typeMessageOrAttach {
+    return Intl.message(
+      'Type a message or attach an image',
+      name: 'typeMessageOrAttach',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Type a message...`
+  String get typeMessageHint {
+    return Intl.message(
+      'Type a message...',
+      name: 'typeMessageHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Error`
+  String get errorLabel {
+    return Intl.message('Error', name: 'errorLabel', desc: '', args: []);
+  }
+
+  /// `Photo Access Required`
+  String get permissionPhotoTitle {
+    return Intl.message(
+      'Photo Access Required',
+      name: 'permissionPhotoTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please go to system settings and allow this app to access your photo library so you can select images to send to the AI.`
+  String get permissionPhotoDesc {
+    return Intl.message(
+      'Please go to system settings and allow this app to access your photo library so you can select images to send to the AI.',
+      name: 'permissionPhotoDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Cancel`
+  String get cancel {
+    return Intl.message('Cancel', name: 'cancel', desc: '', args: []);
+  }
+
+  /// `Go to Settings`
+  String get goToSettings {
+    return Intl.message(
+      'Go to Settings',
+      name: 'goToSettings',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {
