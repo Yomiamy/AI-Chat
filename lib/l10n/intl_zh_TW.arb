@@ -1,0 +1,14 @@
+{
+  "@@locale": "zh_TW",
+  "appTitle": "AI 聊天",
+  "aiAssistantTitle": "Gemini AI 助理",
+  "onlineStatus": "上線中",
+  "howCanIHelp": "今天能怎麼幫助你？",
+  "typeMessageOrAttach": "輸入訊息或附上圖片",
+  "typeMessageHint": "輸入訊息...",
+  "errorLabel": "錯誤",
+  "permissionPhotoTitle": "需要相片存取權限",
+  "permissionPhotoDesc": "請前往系統設定，允許此 App 存取相片庫，才能選取圖片傳送給 AI。",
+  "cancel": "取消",
+  "goToSettings": "前往設定"
+}
