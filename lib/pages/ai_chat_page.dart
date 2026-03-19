@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:ai_chat/gen/assets.gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -52,6 +53,7 @@ class _AiChatPageState extends State<AiChatPage> {
       }
     });
   }
+
   Future<void> _pickImage() async {
     final file = await PermissionManager.pickImageWithPermission(context);
 
@@ -82,7 +84,7 @@ class _AiChatPageState extends State<AiChatPage> {
     if (bytes == null && file.path != null) {
       bytes = await File(file.path!).readAsBytes();
     }
-    
+
     if (bytes == null) return;
 
     final ext = file.extension?.toLowerCase() ?? '';
@@ -102,6 +104,7 @@ class _AiChatPageState extends State<AiChatPage> {
       _selectedMimeType = mime;
     });
   }
+
   void _clearSelectedImage() {
     setState(() {
       _selectedImageBytes = null;
@@ -396,7 +399,7 @@ class _FilePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget content;
     final isImage = mimeType.startsWith('image/');
-    
+
     if (isImage) {
       content = Image.memory(
         fileBytes,
@@ -405,7 +408,9 @@ class _FilePreview extends StatelessWidget {
         fit: BoxFit.cover,
       );
     } else {
-      final mbSize = (fileBytes.lengthInBytes / (1024 * 1024)).toStringAsFixed(2);
+      final mbSize = (fileBytes.lengthInBytes / (1024 * 1024)).toStringAsFixed(
+        2,
+      );
       content = Container(
         height: 100,
         width: 100,
@@ -414,11 +419,19 @@ class _FilePreview extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.insert_drive_file, color: Colors.deepPurple, size: 32),
+            const Icon(
+              Icons.insert_drive_file,
+              color: Colors.deepPurple,
+              size: 32,
+            ),
             const SizedBox(height: 4),
             Text(
               '$mbSize MB',
-              style: const TextStyle(fontSize: 12, color: Colors.deepPurple, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.deepPurple,
+                fontWeight: FontWeight.bold,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -429,10 +442,7 @@ class _FilePreview extends StatelessWidget {
     return Stack(
       alignment: Alignment.topRight,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: content,
-        ),
+        ClipRRect(borderRadius: BorderRadius.circular(12), child: content),
         GestureDetector(
           onTap: onRemove,
           child: Container(
