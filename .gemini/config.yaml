@@ -1,10 +1,14 @@
 # Gemini Code Assist Configuration
 # https://cloud.google.com/gemini/docs/codeassist/configure-gemini-code-assist
 
+have_fun: true
 code_review:
-  # 自動 review 每個 PR
-  enabled: true
-  # 回應語言
-  comment_language: "zh-TW"
+  disable: false
+  comment_severity_threshold: MEDIUM
+  max_review_comments: -1
+  pull_request_opened:
+    help: false
+    summary: true
+    code_review: true
 
 styleguide: styleguide.md
