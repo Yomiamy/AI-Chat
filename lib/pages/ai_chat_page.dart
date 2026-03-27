@@ -14,6 +14,7 @@ import '../bloc/gemini_api_state.dart';
 import '../bloc/gemini_api_event.dart';
 import '../bloc/status.dart';
 import '../features/foundation/style/sizes.dart';
+import '../gen/colors.gen.dart';
 
 class AiChatPage extends StatefulWidget {
   const AiChatPage({super.key});
@@ -115,15 +116,15 @@ class _AiChatPageState extends State<AiChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: ColorName.colorFff5f7fb,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: ColorName.colorFfffffff,
         title: Row(
           children: [
             const CircleAvatar(
-              backgroundColor: Colors.deepPurple,
-              child: Icon(Icons.auto_awesome, color: Colors.white, size: Sizes.chatHeaderIconSize),
+              backgroundColor: ColorName.colorFf673ab7,
+              child: Icon(Icons.auto_awesome, color: ColorName.colorFfffffff, size: Sizes.chatHeaderIconSize),
             ),
             const SizedBox(width: Sizes.paddingM),
             Column(
@@ -132,7 +133,7 @@ class _AiChatPageState extends State<AiChatPage> {
                 Text(
                   S.current.aiAssistantTitle,
                   style: const TextStyle(
-                    color: Colors.black87,
+                    color: ColorName.colorDd000000,
                     fontSize: Sizes.paddingL,
                     fontWeight: FontWeight.bold,
                   ),
@@ -140,7 +141,7 @@ class _AiChatPageState extends State<AiChatPage> {
                 Text(
                   S.current.onlineStatus,
                   style: const TextStyle(
-                    color: Colors.green,
+                    color: ColorName.colorFf4caf50,
                     fontSize: Sizes.paddingM,
                     fontWeight: FontWeight.w500,
                   ),
@@ -151,7 +152,7 @@ class _AiChatPageState extends State<AiChatPage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black54),
+            icon: const Icon(Icons.more_vert, color: ColorName.color8a000000),
             onPressed: () {},
           ),
         ],
@@ -189,9 +190,9 @@ class _AiChatPageState extends State<AiChatPage> {
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: Sizes.paddingS),
                     child: LinearProgressIndicator(
-                      backgroundColor: Colors.transparent,
+                      backgroundColor: ColorName.color00000000,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.deepPurple,
+                        ColorName.colorFf673ab7,
                       ),
                     ),
                   ),
@@ -211,11 +212,11 @@ class _AiChatPageState extends State<AiChatPage> {
         children: [
           const CircleAvatar(
             radius: Sizes.avatarRadius,
-            backgroundColor: Color(0x1A7C3AED),
+            backgroundColor: ColorName.color1a7c3aed,
             child: Icon(
               Icons.chat_bubble_outline,
               size: Sizes.avatarRadius,
-              color: Colors.deepPurple,
+              color: ColorName.colorFf673ab7,
             ),
           ),
           SizedBox(height: Sizes.paddingXL),
@@ -224,13 +225,13 @@ class _AiChatPageState extends State<AiChatPage> {
             style: const TextStyle(
               fontSize: Sizes.chatBubbleRadius,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: ColorName.colorDd000000,
             ),
           ),
           const SizedBox(height: Sizes.paddingM),
           Text(
             S.current.typeMessageOrAttach,
-            style: const TextStyle(fontSize: Sizes.paddingL, color: Colors.black54),
+            style: const TextStyle(fontSize: Sizes.paddingL, color: ColorName.color8a000000),
           ),
         ],
       ),
@@ -246,10 +247,10 @@ class _AiChatPageState extends State<AiChatPage> {
         Sizes.paddingXXL,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: ColorName.colorFfffffff,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: ColorName.color0d000000,
             blurRadius: Sizes.dividerS,
             offset: const Offset(0, -Sizes.paddingXS),
           ),
@@ -276,13 +277,13 @@ class _AiChatPageState extends State<AiChatPage> {
                 onTap: _pickImage,
                 child: Container(
                   padding: const EdgeInsets.all(Sizes.dividerS),
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurple.withValues(alpha: 0.1),
+                  decoration: const BoxDecoration(
+                    color: ColorName.color1a673ab7,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.image_outlined,
-                    color: Colors.deepPurple,
+                    color: ColorName.colorFf673ab7,
                     size: Sizes.chatActionIconSize,
                   ),
                 ),
@@ -293,13 +294,13 @@ class _AiChatPageState extends State<AiChatPage> {
                 onTap: _pickGeneralFile,
                 child: Container(
                   padding: const EdgeInsets.all(Sizes.dividerS),
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurple.withValues(alpha: 0.1),
+                  decoration: const BoxDecoration(
+                    color: ColorName.color1a673ab7,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.attach_file,
-                    color: Colors.deepPurple,
+                    color: ColorName.colorFf673ab7,
                     size: Sizes.chatActionIconSize,
                   ),
                 ),
@@ -311,7 +312,7 @@ class _AiChatPageState extends State<AiChatPage> {
                   padding: const EdgeInsets.symmetric(horizontal: Sizes.paddingL),
                   constraints: const BoxConstraints(maxHeight: 120),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF0F2F6),
+                    color: ColorName.colorFff0f2f6,
                     borderRadius: BorderRadius.circular(Sizes.paddingXL),
                   ),
                   child: Focus(
@@ -332,7 +333,7 @@ class _AiChatPageState extends State<AiChatPage> {
                       decoration: InputDecoration(
                         hintText: S.current.typeMessageHint,
                         border: InputBorder.none,
-                        hintStyle: const TextStyle(color: Colors.black38),
+                        hintStyle: const TextStyle(color: ColorName.color61000000),
                       ),
                       maxLines: null,
                       onSubmitted: (value) => _sendMessage(context),
@@ -348,12 +349,12 @@ class _AiChatPageState extends State<AiChatPage> {
                   child: Container(
                     padding: const EdgeInsets.all(Sizes.paddingM),
                     decoration: const BoxDecoration(
-                      color: Colors.deepPurple,
+                      color: ColorName.colorFf673ab7,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.send,
-                      color: Colors.white,
+                      color: ColorName.colorFfffffff,
                       size: Sizes.chatActionIconSize,
                     ),
                   ),
@@ -419,14 +420,14 @@ class _FilePreview extends StatelessWidget {
       content = Container(
         height: Sizes.imagePreviewSize,
         width: Sizes.imagePreviewSize,
-        color: Colors.deepPurple.withValues(alpha: 0.1),
+        color: ColorName.color1a673ab7,
         padding: const EdgeInsets.all(Sizes.paddingS),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
               Icons.insert_drive_file,
-              color: Colors.deepPurple,
+              color: ColorName.colorFf673ab7,
               size: Sizes.paddingXXL,
             ),
             const SizedBox(height: Sizes.paddingXS),
@@ -434,7 +435,7 @@ class _FilePreview extends StatelessWidget {
               '$mbSize MB',
               style: const TextStyle(
                 fontSize: 12,
-                color: Colors.deepPurple,
+                color: ColorName.colorFf673ab7,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
@@ -454,10 +455,10 @@ class _FilePreview extends StatelessWidget {
             margin: const EdgeInsets.all(Sizes.paddingXS),
             padding: const EdgeInsets.all(3),
             decoration: const BoxDecoration(
-              color: Colors.black54,
+              color: ColorName.color8a000000,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.close, color: Colors.white, size: 14),
+            child: const Icon(Icons.close, color: ColorName.colorFfffffff, size: 14),
           ),
         ),
       ],
@@ -490,7 +491,7 @@ class _MessageBubble extends StatelessWidget {
         ),
         padding: const EdgeInsets.all(Sizes.paddingL),
         decoration: BoxDecoration(
-          color: isAi ? Colors.white : Colors.deepPurple,
+          color: isAi ? ColorName.colorFfffffff : ColorName.colorFf673ab7,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(Sizes.chatBubbleRadius),
             topRight: const Radius.circular(Sizes.chatBubbleRadius),
@@ -499,7 +500,7 @@ class _MessageBubble extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: ColorName.color0d000000,
               blurRadius: 5,
               offset: const Offset(0, 2),
             ),
@@ -511,12 +512,12 @@ class _MessageBubble extends StatelessWidget {
             if (isError)
               Row(
                 children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: Sizes.iconS),
+                  const Icon(Icons.error_outline, color: ColorName.colorFff44336, size: Sizes.iconS),
                   const SizedBox(width: Sizes.paddingS),
                   Text(
                     S.current.errorLabel,
                     style: const TextStyle(
-                      color: Colors.red,
+                      color: ColorName.colorFff44336,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -546,15 +547,15 @@ class _MessageBubble extends StatelessWidget {
               styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context))
                   .copyWith(
                     p: TextStyle(
-                      color: isAi ? Colors.black87 : Colors.white,
+                      color: isAi ? ColorName.colorDd000000 : ColorName.colorFfffffff,
                       fontSize: 15,
                       height: 1.5,
                     ),
                     code: TextStyle(
                       backgroundColor: isAi
-                          ? Colors.grey[200]
-                          : Colors.deepPurple[700],
-                      color: isAi ? Colors.black87 : Colors.white,
+                          ? ColorName.colorFfeeeeee
+                          : ColorName.colorFf512da8,
+                      color: isAi ? ColorName.colorDd000000 : ColorName.colorFfffffff,
                     ),
                   ),
               onTapLink: (text, href, title) {
