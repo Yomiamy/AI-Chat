@@ -40,9 +40,6 @@ flutter:
 
   assets:
     - assets/
-    - assets/images/
-    - assets/animations/
-
 
 flutter_gen:
   output: lib/gen/
