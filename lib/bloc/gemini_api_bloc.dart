@@ -140,9 +140,9 @@ $prompt
 '''),
     ]);
   }
-  
+
   Future<void> _initFirebaseAiLogic() async {
-    // final thinkingConfig = ThinkingConfig.withThinkingBudget(2000); 設定思考模型的預算（例如 2000 tokens）
+    // final thinkingConfig = ThinkingConfig.withThinkingBudget(2000, includeThoughts: true,); //設定思考模型的預算（例如 2000 tokens）及 思考總結
     _aiModel = FirebaseAI.googleAI().generativeModel(
       model: 'gemini-2.5-flash',
       generationConfig: GenerationConfig(
@@ -154,7 +154,6 @@ $prompt
           // ResponseModalities.audio,
         ],
       ),
-    
     );
   }
 }
