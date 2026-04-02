@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/permission_manager.dart';
+import '../utils/widget_preview.dart';
 import '../generated/l10n.dart';
 
 import '../bloc/gemini_api_bloc.dart';
@@ -124,7 +125,11 @@ class _AiChatPageState extends State<AiChatPage> {
           children: [
             const CircleAvatar(
               backgroundColor: ColorName.colorFf673ab7,
-              child: Icon(Icons.auto_awesome, color: ColorName.colorFfffffff, size: Sizes.chatHeaderIconSize),
+              child: Icon(
+                Icons.auto_awesome,
+                color: ColorName.colorFfffffff,
+                size: Sizes.chatHeaderIconSize,
+              ),
             ),
             const SizedBox(width: Sizes.paddingM),
             Column(
@@ -231,7 +236,10 @@ class _AiChatPageState extends State<AiChatPage> {
           const SizedBox(height: Sizes.paddingM),
           Text(
             S.current.typeMessageOrAttach,
-            style: const TextStyle(fontSize: Sizes.textL, color: ColorName.color8a000000),
+            style: const TextStyle(
+              fontSize: Sizes.textL,
+              color: ColorName.color8a000000,
+            ),
           ),
         ],
       ),
@@ -309,7 +317,9 @@ class _AiChatPageState extends State<AiChatPage> {
               // 文字輸入框
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: Sizes.paddingL),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Sizes.paddingL,
+                  ),
                   constraints: const BoxConstraints(maxHeight: 120),
                   decoration: BoxDecoration(
                     color: ColorName.colorFff0f2f6,
@@ -333,7 +343,9 @@ class _AiChatPageState extends State<AiChatPage> {
                       decoration: InputDecoration(
                         hintText: S.current.typeMessageHint,
                         border: InputBorder.none,
-                        hintStyle: const TextStyle(color: ColorName.color61000000),
+                        hintStyle: const TextStyle(
+                          color: ColorName.color61000000,
+                        ),
                       ),
                       maxLines: null,
                       onSubmitted: (value) => _sendMessage(context),
@@ -448,7 +460,10 @@ class _FilePreview extends StatelessWidget {
     return Stack(
       alignment: Alignment.topRight,
       children: [
-        ClipRRect(borderRadius: BorderRadius.circular(Sizes.paddingM), child: content),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(Sizes.paddingM),
+          child: content,
+        ),
         GestureDetector(
           onTap: onRemove,
           child: Container(
@@ -458,7 +473,11 @@ class _FilePreview extends StatelessWidget {
               color: ColorName.color8a000000,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.close, color: ColorName.colorFfffffff, size: 14),
+            child: const Icon(
+              Icons.close,
+              color: ColorName.colorFfffffff,
+              size: 14,
+            ),
           ),
         ),
       ],
@@ -487,7 +506,8 @@ class _MessageBubble extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: Sizes.paddingL),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * Sizes.messageMaxWidthFactor,
+          maxWidth:
+              MediaQuery.of(context).size.width * Sizes.messageMaxWidthFactor,
         ),
         padding: const EdgeInsets.all(Sizes.paddingL),
         decoration: BoxDecoration(
@@ -512,7 +532,11 @@ class _MessageBubble extends StatelessWidget {
             if (isError)
               Row(
                 children: [
-                  const Icon(Icons.error_outline, color: ColorName.colorFff44336, size: Sizes.iconS),
+                  const Icon(
+                    Icons.error_outline,
+                    color: ColorName.colorFff44336,
+                    size: Sizes.iconS,
+                  ),
                   const SizedBox(width: Sizes.paddingS),
                   Text(
                     S.current.errorLabel,
@@ -547,7 +571,9 @@ class _MessageBubble extends StatelessWidget {
               styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context))
                   .copyWith(
                     p: TextStyle(
-                      color: isAi ? ColorName.colorDd000000 : ColorName.colorFfffffff,
+                      color: isAi
+                          ? ColorName.colorDd000000
+                          : ColorName.colorFfffffff,
                       fontSize: Sizes.textBody,
                       height: 1.5,
                     ),
@@ -555,7 +581,9 @@ class _MessageBubble extends StatelessWidget {
                       backgroundColor: isAi
                           ? ColorName.colorFfeeeeee
                           : ColorName.colorFf512da8,
-                      color: isAi ? ColorName.colorDd000000 : ColorName.colorFfffffff,
+                      color: isAi
+                          ? ColorName.colorDd000000
+                          : ColorName.colorFfffffff,
                     ),
                   ),
               onTapLink: (text, href, title) {
@@ -570,3 +598,6 @@ class _MessageBubble extends StatelessWidget {
     );
   }
 }
+
+@DevicePreviewAll()
+Widget previewPage() => const AiChatPage();
