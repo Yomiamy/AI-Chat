@@ -40,11 +40,13 @@ flutter:
 
   assets:
     - assets/
-    - assets/colors.xml
+    - assets/images/
 
 flutter_gen:
   output: lib/gen/
   line_length: 80
+  assets:
+    enabled: true
   colors:
     inputs:
       - assets/colors.xml
