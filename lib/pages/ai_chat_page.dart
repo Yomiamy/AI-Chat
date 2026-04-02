@@ -134,7 +134,7 @@ class _AiChatPageState extends State<AiChatPage> {
                   S.current.aiAssistantTitle,
                   style: const TextStyle(
                     color: ColorName.colorDd000000,
-                    fontSize: Sizes.paddingL,
+                    fontSize: Sizes.textL,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -142,7 +142,7 @@ class _AiChatPageState extends State<AiChatPage> {
                   S.current.onlineStatus,
                   style: const TextStyle(
                     color: ColorName.colorFf4caf50,
-                    fontSize: Sizes.paddingM,
+                    fontSize: Sizes.textS,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -177,7 +177,7 @@ class _AiChatPageState extends State<AiChatPage> {
                           controller: _scrollController,
                           padding: const EdgeInsets.symmetric(
                             horizontal: Sizes.paddingL,
-                            vertical: Sizes.chatBubbleRadius,
+                            vertical: Sizes.listPaddingV,
                           ),
                           reverse: true,
                           itemCount: chatList.length,
@@ -223,7 +223,7 @@ class _AiChatPageState extends State<AiChatPage> {
           Text(
             S.current.howCanIHelp,
             style: const TextStyle(
-              fontSize: Sizes.chatBubbleRadius,
+              fontSize: Sizes.textXXL,
               fontWeight: FontWeight.bold,
               color: ColorName.colorDd000000,
             ),
@@ -231,7 +231,7 @@ class _AiChatPageState extends State<AiChatPage> {
           const SizedBox(height: Sizes.paddingM),
           Text(
             S.current.typeMessageOrAttach,
-            style: const TextStyle(fontSize: Sizes.paddingL, color: ColorName.color8a000000),
+            style: const TextStyle(fontSize: Sizes.textL, color: ColorName.color8a000000),
           ),
         ],
       ),
@@ -251,7 +251,7 @@ class _AiChatPageState extends State<AiChatPage> {
         boxShadow: [
           BoxShadow(
             color: ColorName.color0d000000,
-            blurRadius: Sizes.dividerS,
+            blurRadius: Sizes.shadowBlurM,
             offset: const Offset(0, -Sizes.paddingXS),
           ),
         ],
@@ -434,7 +434,7 @@ class _FilePreview extends StatelessWidget {
             Text(
               '$mbSize MB',
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: Sizes.textS,
                 color: ColorName.colorFf673ab7,
                 fontWeight: FontWeight.bold,
               ),
@@ -501,7 +501,7 @@ class _MessageBubble extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: ColorName.color0d000000,
-              blurRadius: 5,
+              blurRadius: Sizes.shadowBlurS,
               offset: const Offset(0, 2),
             ),
           ],
@@ -548,7 +548,7 @@ class _MessageBubble extends StatelessWidget {
                   .copyWith(
                     p: TextStyle(
                       color: isAi ? ColorName.colorDd000000 : ColorName.colorFfffffff,
-                      fontSize: 15,
+                      fontSize: Sizes.textBody,
                       height: 1.5,
                     ),
                     code: TextStyle(

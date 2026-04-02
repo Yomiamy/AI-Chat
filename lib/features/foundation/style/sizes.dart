@@ -55,6 +55,24 @@ class Sizes {
   static const paddingXXXXXL = 90.0;
 
   // ────────────────────────────────────────────
+  // 字體大小 (Typography)
+  // ────────────────────────────────────────────
+  static const textXS  = 10.0;
+  static const textS   = 12.0;
+  static const textM   = 14.0;
+  static const textL   = 16.0;
+  static const textXL  = 18.0;
+  static const textXXL = 20.0;
+  static const textBody = 15.0;
+
+  // ────────────────────────────────────────────
+  // 陰影模糊 (Shadow Blur)
+  // ────────────────────────────────────────────
+  static const shadowBlurS = 4.0;
+  static const shadowBlurM = 10.0;
+  static const shadowBlurL = 20.0;
+
+  // ────────────────────────────────────────────
   // 陰影與海拔 (Elevation)
   // ────────────────────────────────────────────
   static const elevationXS = 1.0;
@@ -80,6 +98,7 @@ class Sizes {
   static const chatHeaderIconSize = 20.0;
   static const imagePreviewSize = 100.0;
   static const messageMaxWidthFactor = 0.8;
+  static const listPaddingV = 20.0;
 
   // ────────────────────────────────────────────
   // 輔助方法
