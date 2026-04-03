@@ -1,9 +1,9 @@
 enum Status {
   initial,
   newPrompt,
-  queryLoading,
-  querySuccess,
-  queryFailure,
+  loading,
+  success,
+  failure,
   empty,
   noInternetConnection,
   unauthorized,

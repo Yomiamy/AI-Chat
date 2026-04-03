@@ -37,7 +37,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     if (imageBytes != null && imageBytes.lengthInBytes > 5 * 1024 * 1024) {
       _chatList.insert(0, 'Prompt: $prompt\n\n[附件被拒絕：檔案大小超過 5MB 限制]');
       _chatList.insert(0, 'Error: 上傳檔案大小不得超過 5MB');
-      emit(state.copyWith(status: Status.queryFailure, chatList: _chatList));
+      emit(state.copyWith(status: Status.failure, chatList: _chatList));
       return;
     }
 
@@ -45,7 +45,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     final userMessage = _buildUserMessage(prompt, imageBytes, mimeType);
     _chatList.insert(0, 'Prompt: $userMessage');
     emit(state.copyWith(status: Status.newPrompt, chatList: _chatList));
-    emit(state.copyWith(status: Status.queryLoading));
+    emit(state.copyWith(status: Status.loading));
 
     try {
       final content = _buildContent(prompt, imageBytes, mimeType);
@@ -85,12 +85,12 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
           }
 
           emit(
-            state.copyWith(status: Status.querySuccess, chatList: _chatList),
+            state.copyWith(status: Status.success, chatList: _chatList),
           );
         }
       }
     } catch (e) {
-      emit(state.copyWith(status: Status.queryFailure));
+      emit(state.copyWith(status: Status.failure));
       _chatList.insert(0, 'Error: $e');
     }
   }

@@ -34,15 +34,15 @@ void main() {
 
     test('copyWith status updates status and keeps chatList', () {
       const state = GeminiApiState();
-      final updated = state.copyWith(status: Status.queryLoading);
-      expect(updated.status, Status.queryLoading);
+      final updated = state.copyWith(status: Status.loading);
+      expect(updated.status, Status.loading);
       expect(updated.chatList, isNull);
     });
 
     test('copyWith chatList updates chatList and keeps status', () {
       const state = GeminiApiState();
       final withChats = state.copyWith(
-        status: Status.querySuccess,
+        status: Status.success,
         chatList: ['AI reply: hello'],
       );
       expect(withChats.chatList, hasLength(1));

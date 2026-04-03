@@ -47,7 +47,7 @@ class _AiChatViewState extends State<AiChatView> {
     return BlocListener<GeminiApiBloc, GeminiApiState>(
       listener: (context, state) {
         if (state.status == Status.newPrompt ||
-            state.status == Status.querySuccess) {
+            state.status == Status.success) {
           _scrollToBottom();
         }
       },
@@ -118,7 +118,7 @@ class _AiChatViewState extends State<AiChatView> {
                           },
                         ),
                 ),
-                if (state.status == Status.queryLoading)
+                if (state.status == Status.loading)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: Sizes.paddingS),
                     child: LinearProgressIndicator(
