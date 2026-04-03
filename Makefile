@@ -1,4 +1,4 @@
-.PHONY: get gen clean assets help
+.PHONY: get gen watch assets intl clean help
 
 help:
 	@echo "Usage: make [target]"
@@ -7,7 +7,8 @@ help:
 	@echo "  get          Get dependencies"
 	@echo "  gen          Run build_runner build"
 	@echo "  watch        Run build_runner watch"
-	@echo "  assets       Generate assets and intl"
+	@echo "  assets       Generate typed asset references (flutter_gen)"
+	@echo "  intl         Generate l10n strings (intl_utils)"
 	@echo "  clean        Clean build artifacts"
 
 get:
@@ -21,6 +22,8 @@ watch:
 
 assets:
 	flutter pub run flutter_gen
+
+intl:
 	flutter pub run intl_utils:generate
 
 clean:
