@@ -1,11 +1,11 @@
 import 'dart:io';
 
+import 'package:ai_chat/bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../bloc/gemini_api/gemini_api_bloc.dart';
-import '../../bloc/gemini_api/gemini_api_event.dart';
+
 import '../../../features/foundation/style/sizes.dart';
 import '../../../gen/colors.gen.dart';
 import '../../../generated/l10n.dart';
@@ -107,7 +107,7 @@ class _InputAreaWidgetState extends State<InputAreaWidget> {
     });
 
     context.read<GeminiApiBloc>().add(
-      QueryEvent(query: query, imageBytes: bytes, mimeType: mime),
+      GeminiApiQueryEvent(query: query, imageBytes: bytes, mimeType: mime),
     );
   }
 

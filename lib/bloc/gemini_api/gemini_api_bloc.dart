@@ -15,20 +15,20 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
   late List<String> _chatList;
 
   GeminiApiBloc() : super(const GeminiApiState()) {
-    on<InitEvent>(_init);
-    on<QueryEvent>(_query);
+    on<GeminiApiInitEvent>(_init);
+    on<GeminiApiQueryEvent>(_query);
 
-    add(InitEvent());
+    add(GeminiApiInitEvent());
   }
 
-  void _init(InitEvent event, Emitter<GeminiApiState> emit) async {
+  void _init(GeminiApiInitEvent event, Emitter<GeminiApiState> emit) async {
     _chatList = [];
     await _initFirebaseAiLogic();
 
     emit(const GeminiApiState());
   }
 
-  FutureOr<void> _query(QueryEvent event, Emitter<GeminiApiState> emit) async {
+  FutureOr<void> _query(GeminiApiQueryEvent event, Emitter<GeminiApiState> emit) async {
     final prompt = event.query;
     final imageBytes = event.imageBytes;
     final mimeType = event.mimeType;
