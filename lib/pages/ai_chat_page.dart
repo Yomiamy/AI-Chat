@@ -440,7 +440,7 @@ class _FilePreview extends StatelessWidget {
             const Icon(
               Icons.insert_drive_file,
               color: ColorName.colorFf673ab7,
-              size: Sizes.paddingXXL,
+              size: Sizes.iconL,
             ),
             const SizedBox(height: Sizes.paddingXS),
             Text(
@@ -476,7 +476,7 @@ class _FilePreview extends StatelessWidget {
             child: const Icon(
               Icons.close,
               color: ColorName.colorFfffffff,
-              size: 14,
+              size: Sizes.iconSM,
             ),
           ),
         ),

@@ -29,6 +29,7 @@ class Sizes {
   // ────────────────────────────────────────────
   static const iconXXS = 8.0;
   static const iconXS = 12.0;
+  static const iconSM = 14.0;
   static const iconS = 16.0;
   static const iconM = 24.0;
   static const iconXM = 28.0;
