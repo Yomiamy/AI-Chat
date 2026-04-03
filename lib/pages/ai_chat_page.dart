@@ -7,7 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/permission_manager.dart';
-import '../utils/widget_preview.dart';
 import '../generated/l10n.dart';
 
 import '../bloc/gemini_api_bloc.dart';
@@ -16,6 +15,7 @@ import '../bloc/gemini_api_event.dart';
 import '../bloc/status.dart';
 import '../features/foundation/style/sizes.dart';
 import '../gen/colors.gen.dart';
+import '../utils/widget_preview.dart';
 
 class AiChatPage extends StatefulWidget {
   const AiChatPage({super.key});
@@ -224,7 +224,7 @@ class _AiChatPageState extends State<AiChatPage> {
               color: ColorName.colorFf673ab7,
             ),
           ),
-          SizedBox(height: Sizes.paddingXL),
+          const SizedBox(height: Sizes.paddingXL),
           Text(
             S.current.howCanIHelp,
             style: const TextStyle(
@@ -284,7 +284,7 @@ class _AiChatPageState extends State<AiChatPage> {
               GestureDetector(
                 onTap: _pickImage,
                 child: Container(
-                  padding: const EdgeInsets.all(Sizes.dividerS),
+                  padding: const EdgeInsets.all(Sizes.paddingSM),
                   decoration: const BoxDecoration(
                     color: ColorName.color1a673ab7,
                     shape: BoxShape.circle,
@@ -301,7 +301,7 @@ class _AiChatPageState extends State<AiChatPage> {
               GestureDetector(
                 onTap: _pickGeneralFile,
                 child: Container(
-                  padding: const EdgeInsets.all(Sizes.dividerS),
+                  padding: const EdgeInsets.all(Sizes.paddingSM),
                   decoration: const BoxDecoration(
                     color: ColorName.color1a673ab7,
                     shape: BoxShape.circle,
@@ -353,7 +353,7 @@ class _AiChatPageState extends State<AiChatPage> {
                   ),
                 ),
               ),
-              const SizedBox(width: Sizes.dividerS),
+              const SizedBox(width: Sizes.paddingSM),
               // 送出按鈕
               Builder(
                 builder: (ctx) => GestureDetector(
@@ -550,6 +550,7 @@ class _MessageBubble extends StatelessWidget {
             MarkdownBody(
               data: content,
               selectable: true,
+              // ignore: deprecated_member_use
               imageBuilder: (uri, title, alt) {
                 // 支援 data URI 格式的圖片（使用者端嵌入的 base64 圖片）
                 final uriStr = uri.toString();
