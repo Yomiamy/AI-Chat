@@ -4,7 +4,7 @@ class FilePickState {
   final Status? status;
   final LinkedHashMap<String, Uint8List>? selectedFileBtypesMap;
 
-  FilePickState({
+  const FilePickState({
     this.status = Status.initial,
     this.selectedFileBtypesMap,
   });
