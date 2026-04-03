@@ -4,7 +4,7 @@ import 'dart:typed_data';
 
 import 'package:bloc/bloc.dart';
 import 'package:firebase_ai/firebase_ai.dart';
-import 'status.dart';
+import '../status.dart';
 
 import 'gemini_api_event.dart';
 import 'gemini_api_state.dart';

@@ -1,4 +1,4 @@
-import 'status.dart';
+import '../status.dart';
 
 class GeminiApiState {
   final Status? status;

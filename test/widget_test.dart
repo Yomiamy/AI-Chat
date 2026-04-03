@@ -17,7 +17,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ai_chat/bloc/gemini_api_state.dart';
+import 'package:ai_chat/bloc/gemini_api/gemini_api_state.dart';
 import 'package:ai_chat/bloc/status.dart';
 
 // ---------------------------------------------------------------------------

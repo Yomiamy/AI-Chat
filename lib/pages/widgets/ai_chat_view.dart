@@ -5,9 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../bloc/gemini_api_bloc.dart';
-import '../../bloc/gemini_api_state.dart';
-import '../../bloc/status.dart';
+import '../../bloc/bloc.dart';
 import '../../features/foundation/style/sizes.dart';
 import '../../gen/colors.gen.dart';
 import '../../generated/l10n.dart';
