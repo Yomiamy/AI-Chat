@@ -1,13 +1,11 @@
-import 'dart:typed_data';
+part of 'gemini_api_bloc.dart';
 
-import 'package:equatable/equatable.dart';
-
-abstract class GeminiApiEvent extends Equatable {}
-
-class InitEvent extends GeminiApiEvent {
+abstract class GeminiApiEvent extends Equatable {
   @override
   List<Object?> get props => [];
 }
+
+class InitEvent extends GeminiApiEvent {}
 
 class QueryEvent extends GeminiApiEvent {
   final String query;

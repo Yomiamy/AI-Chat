@@ -1,4 +1,4 @@
-import '../status.dart';
+part of 'gemini_api_bloc.dart';
 
 class GeminiApiState {
   final Status? status;

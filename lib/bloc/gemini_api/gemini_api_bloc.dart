@@ -3,11 +3,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 import 'package:firebase_ai/firebase_ai.dart';
 import '../status.dart';
 
-import 'gemini_api_event.dart';
-import 'gemini_api_state.dart';
+part 'gemini_api_event.dart';
+part 'gemini_api_state.dart';
 
 class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
   late GenerativeModel _aiModel;
