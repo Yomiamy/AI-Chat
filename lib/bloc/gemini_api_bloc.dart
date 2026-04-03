@@ -101,12 +101,14 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     String? mimeType,
   ) {
     if (imageBytes == null || mimeType == null) return prompt;
-    
+
     if (mimeType.startsWith('image/')) {
       final b64 = base64Encode(imageBytes);
       return '![img](data:$mimeType;base64,$b64)\n\n$prompt';
     } else {
-      final mbSize = (imageBytes.lengthInBytes / (1024 * 1024)).toStringAsFixed(2);
+      final mbSize = (imageBytes.lengthInBytes / (1024 * 1024)).toStringAsFixed(
+        2,
+      );
       return '[附件: $mimeType, 大小: $mbSize MB]\n\n$prompt';
     }
   }
@@ -140,10 +142,17 @@ $prompt
   }
 
   Future<void> _initFirebaseAiLogic() async {
+    // final thinkingConfig = ThinkingConfig.withThinkingBudget(2000, includeThoughts: true,); //設定思考模型的預算（例如 2000 tokens）及 思考總結
     _aiModel = FirebaseAI.googleAI().generativeModel(
       model: 'gemini-2.5-flash',
       generationConfig: GenerationConfig(
-        responseModalities: [ResponseModalities.text],
+        // thinkingConfig: thinkingConfig, 啟用思考功能配置
+        responseModalities: [
+          ResponseModalities.text,
+          // 支援多模態輸出（圖片、音訊），目前為註解狀態
+          // ResponseModalities.image,
+          // ResponseModalities.audio,
+        ],
       ),
     );
   }

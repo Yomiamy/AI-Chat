@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Background & Scaffolding -->
+    <color name="color_fff5f7fb">#FFF5F7FB</color>
+    <color name="color_ffffffff">#FFFFFFFF</color>
+    <color name="color_fff0f2f6">#FFF0F2F6</color>
+    <color name="color_00000000">#00000000</color>
+
+    <!-- Brand & Accent -->
+    <color name="color_ff673ab7">#FF673AB7</color>
+    <color name="color_ff512da8">#FF512DA8</color>
+    <color name="color_1a7c3aed">#1A7C3AED</color>
+    <color name="color_1a673ab7">#1A673AB7</color>
+
+    <!-- Text & Greys -->
+    <color name="color_dd000000">#DD000000</color>
+    <color name="color_8a000000">#8A000000</color>
+    <color name="color_61000000">#61000000</color>
+    <color name="color_ffeeeeee">#FFEEEEEE</color>
+    <color name="color_0d000000">#0D000000</color>
+
+    <!-- Semantic -->
+    <color name="color_ff4caf50">#FF4CAF50</color>
+    <color name="color_fff44336">#FFF44336</color>
+</resources>
