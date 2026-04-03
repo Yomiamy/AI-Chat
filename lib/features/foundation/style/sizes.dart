@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 /// 集中管理應用程式中使用的尺寸、間距、圓角等常量。
 /// 參照 Eslite-v3 的設置方式，消除 UI 代碼中的硬編碼數字。
 class Sizes {
+  const Sizes._();
   // ────────────────────────────────────────────
   // 基礎尺寸 (General)
   // ────────────────────────────────────────────
@@ -11,7 +12,7 @@ class Sizes {
   static const dividerXXXS = 0.5;
   static const dividerXXS = 1.0;
   static const dividerXS = 2.0;
-  static const dividerS = 10.0;
+  static const dividerS = 10.0; // divider/border 語義；若用於 padding 請改用 paddingSM
 
   // ────────────────────────────────────────────
   // 圓角 (Radius)
@@ -45,6 +46,7 @@ class Sizes {
   static const paddingXXS = 2.0;
   static const paddingXS = 4.0;
   static const paddingS = 8.0;
+  static const paddingSM = 10.0;
   static const paddingM = 12.0;
   static const paddingL = 16.0;
   static const paddingNegL = -1 * paddingL;
