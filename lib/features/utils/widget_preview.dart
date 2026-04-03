@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import '../generated/l10n.dart';
+import '../../generated/l10n.dart';
 
 /// Preview 語系設定：繁體中文 + 所有必要的 delegate。
 ///

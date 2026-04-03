@@ -9,7 +9,7 @@ import '../../../bloc/gemini_api_event.dart';
 import '../../../features/foundation/style/sizes.dart';
 import '../../../gen/colors.gen.dart';
 import '../../../generated/l10n.dart';
-import '../../../utils/permission_manager.dart';
+import '../../features/utils/permission_manager.dart';
 
 class InputAreaWidget extends StatefulWidget {
   const InputAreaWidget({super.key});
