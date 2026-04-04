@@ -97,9 +97,10 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
 
           // 清除選取好的檔案，因為已經開始送出了
           _removeFile(GeminiApiRemoveFileEvent(), emit);
-          emit(state.copyWith(status: Status.success, chatList: _chatList));
+          emit(state.copyWith(status: Status.loading, chatList: _chatList));
         }
       }
+      emit(state.copyWith(status: Status.success, chatList: _chatList));
     } catch (e) {
       emit(state.copyWith(status: Status.failure));
       _chatList.insert(0, 'Error: $e');
