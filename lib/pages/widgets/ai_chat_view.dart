@@ -79,7 +79,7 @@ class _AiChatViewState extends State<AiChatView> {
             previous != cur &&
             (cur.status == Status.newPrompt || cur.status == Status.success),
         listener: (_, _) => _scrollToBottom(),
-        buildWhen: (previous, current) => previous.status != current.status,
+        buildWhen: (prev, cur) => prev != cur,
         builder: (_, state) {
           final chatList = state.chatList ?? [];
           return Column(

@@ -1,6 +1,6 @@
 part of 'gemini_api_bloc.dart';
 
-class GeminiApiState {
+class GeminiApiState extends Equatable {
   final Status? status;
   final List<String>? chatList;
   final Uint8List? selectedFileBytes;
@@ -26,4 +26,12 @@ class GeminiApiState {
       selectedMimeType: selectedMimeType,
     );
   }
+  
+  @override
+  List<Object?> get props => [
+    status,
+    chatList,
+    selectedFileBytes,
+    selectedMimeType,
+  ];
 }
