@@ -1,6 +1,5 @@
 enum Status {
   initial,
-  newPrompt,
   loading,
   success,
   failure,
