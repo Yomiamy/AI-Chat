@@ -4,6 +4,7 @@ enum Status {
   success,
   failure,
   empty,
+  newPrompt,
   noInternetConnection,
   unauthorized,
   forbidden,

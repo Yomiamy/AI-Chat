@@ -38,8 +38,6 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     GeminiApiQueryEvent event,
     Emitter<GeminiApiState> emit,
   ) async {
-    emit(state.copyWith(status: Status.loading));
-
     final prompt = event.query;
     final fileBytes = state.selectedFileBytes;
     final mimeType = state.selectedMimeType;
@@ -55,9 +53,12 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     // 組裝使用者訊息（可能包含檔案資訊或圖片的 base64 markdown）
     final userMessage = _buildUserMessage(prompt, fileBytes, mimeType);
     _chatList.insert(0, 'Prompt: $userMessage');
+    emit(state.copyWith(status: Status.newPrompt, chatList: _chatList));
 
+    // 組裝AI回覆訊息
     try {
-      // 組裝AI回覆訊息
+      emit(state.copyWith(status: Status.loading));
+
       final content = _buildContent(prompt, fileBytes, mimeType);
       final response = _aiModel.generateContentStream([content]);
 
@@ -105,7 +106,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     }
   }
 
-    FutureOr<void> _pickFile(
+  FutureOr<void> _pickFile(
     GeminiApiPickFileEvent event,
     Emitter<GeminiApiState> emit,
   ) async {
@@ -148,7 +149,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     emit(state.copyWith(selectedFileBytes: null, selectedMimeType: null));
   }
 
-    Future<void> _initFirebaseAiLogic() async {
+  Future<void> _initFirebaseAiLogic() async {
     // final thinkingConfig = ThinkingConfig.withThinkingBudget(2000, includeThoughts: true,); //設定思考模型的預算（例如 2000 tokens）及 思考總結
     _aiModel = FirebaseAI.googleAI().generativeModel(
       model: 'gemini-2.5-flash',
