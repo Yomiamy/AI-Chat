@@ -18,12 +18,13 @@ class GeminiApiState extends Equatable {
     List<String>? chatList,
     Uint8List? selectedFileBytes,
     String? selectedMimeType,
+    bool clearFile = false,
   }) {
     return GeminiApiState(
       status: status ?? this.status,
       chatList: chatList ?? this.chatList,
-      selectedFileBytes: selectedFileBytes,
-      selectedMimeType: selectedMimeType,
+      selectedFileBytes: clearFile ? null : (selectedFileBytes ?? this.selectedFileBytes),
+      selectedMimeType: clearFile ? null : (selectedMimeType ?? this.selectedMimeType),
     );
   }
   

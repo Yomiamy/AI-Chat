@@ -8,6 +8,7 @@ import 'package:ai_chat/features/features.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_ai/firebase_ai.dart';
+import 'package:flutter/material.dart';
 import '../status.dart';
 
 part 'gemini_api_event.dart';
@@ -111,9 +112,12 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     GeminiApiPickFileEvent event,
     Emitter<GeminiApiState> emit,
   ) async {
-    final result = await PermissionManager.pickFile();
+    final result = await FilePickManager.pickFile();
 
-    if (result == null || result.files.isEmpty) return;
+    if (result == null || result.files.isEmpty) {
+      emit(state.copyWith(status: Status.failure, clearFile: true));
+      return;
+    }
 
     final file = result.files.first;
     // 有緩存就先用緩存
@@ -133,9 +137,14 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     GeminiApiPickImageEvent event,
     Emitter<GeminiApiState> emit,
   ) async {
-    final file = await PermissionManager.pickImageWithPermission(event.context);
+    final file = await FilePickManager.pickImageWithPermission(
+      onPermissionDenied: event.onPermissionDenied,
+    );
 
-    if (file == null) return;
+    if (file == null) {
+      emit(state.copyWith(status: Status.failure, clearFile: true));
+      return;
+    }
 
     final bytes = await file.readAsBytes();
     emit(
@@ -147,7 +156,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     GeminiApiRemoveFileEvent event,
     Emitter<GeminiApiState> emit,
   ) {
-    emit(state.copyWith(selectedFileBytes: null, selectedMimeType: null));
+    emit(state.copyWith(clearFile: true));
   }
 
   Future<void> _initFirebaseAiLogic() async {

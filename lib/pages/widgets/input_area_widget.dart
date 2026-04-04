@@ -2,6 +2,7 @@ import 'package:ai_chat/bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../../features/foundation/style/sizes.dart';
 import '../../../gen/colors.gen.dart';
@@ -72,7 +73,9 @@ class _InputAreaWidgetState extends State<InputAreaWidget> {
                 children: [
                   GestureDetector(
                     onTap: () => context.read<GeminiApiBloc>().add(
-                      GeminiApiPickImageEvent(context: context),
+                      GeminiApiPickImageEvent(
+                        onPermissionDenied: () => _showPermissionDialog(context),
+                      ),
                     ),
                     child: Container(
                       padding: const EdgeInsets.all(Sizes.paddingSM),
@@ -166,6 +169,30 @@ class _InputAreaWidgetState extends State<InputAreaWidget> {
           ),
         );
       },
+    );
+  }
+
+  void _showPermissionDialog(BuildContext context) {
+    if (!context.mounted) return;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(S.current.permissionPhotoTitle),
+        content: Text(S.current.permissionPhotoDesc),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(S.current.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              openAppSettings();
+            },
+            child: Text(S.current.goToSettings),
+          ),
+        ],
+      ),
     );
   }
 

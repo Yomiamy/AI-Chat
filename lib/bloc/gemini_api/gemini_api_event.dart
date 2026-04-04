@@ -19,9 +19,14 @@ class GeminiApiQueryEvent extends GeminiApiEvent {
 class GeminiApiPickFileEvent extends GeminiApiEvent {}
 
 class GeminiApiPickImageEvent extends GeminiApiEvent {
-  final dynamic context; // for context in PermissionManager
-  
-  GeminiApiPickImageEvent({this.context});
+  /// Called when photo permission is permanently denied,
+  /// so the widget layer can show the appropriate dialog.
+  final VoidCallback? onPermissionDenied;
+
+  GeminiApiPickImageEvent({this.onPermissionDenied});
+
+  @override
+  List<Object?> get props => [];
 }
 
 class GeminiApiRemoveFileEvent extends GeminiApiEvent {}
