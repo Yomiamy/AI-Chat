@@ -1,15 +1,11 @@
-import 'dart:io';
-
 import 'package:ai_chat/bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-
 import '../../../features/foundation/style/sizes.dart';
 import '../../../gen/colors.gen.dart';
 import '../../../generated/l10n.dart';
-import '../../features/utils/permission_manager.dart';
 
 class InputAreaWidget extends StatefulWidget {
   const InputAreaWidget({super.key});
@@ -20,8 +16,6 @@ class InputAreaWidget extends StatefulWidget {
 
 class _InputAreaWidgetState extends State<InputAreaWidget> {
   late final TextEditingController _textEditingController;
-  Uint8List? _selectedImageBytes;
-  String? _selectedMimeType;
 
   @override
   void initState() {
@@ -35,209 +29,155 @@ class _InputAreaWidgetState extends State<InputAreaWidget> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    final file = await PermissionManager.pickImageWithPermission(context);
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<GeminiApiBloc, GeminiApiState>(
+      builder: (context, state) {
+        final selectedImageBytes = state.selectedFileBytes;
+        final selectedMimeType = state.selectedMimeType;
 
-    if (file == null) return;
-
-    final bytes = await file.readAsBytes();
-    final ext = file.name.split('.').last.toLowerCase();
-    final mime = switch (ext) {
-      'jpg' || 'jpeg' => 'image/jpeg',
-      'png' => 'image/png',
-      'webp' => 'image/webp',
-      _ => 'image/jpeg',
-    };
-
-    setState(() {
-      _selectedImageBytes = bytes;
-      _selectedMimeType = mime;
-    });
-  }
-
-  Future<void> _pickGeneralFile() async {
-    final result = await PermissionManager.pickFile();
-    if (result == null || result.files.isEmpty) return;
-
-    final file = result.files.first;
-    Uint8List? bytes = file.bytes;
-
-    if (bytes == null && file.path != null) {
-      bytes = await File(file.path!).readAsBytes();
-    }
-
-    if (bytes == null) return;
-
-    final ext = file.extension?.toLowerCase() ?? '';
-    final mime = switch (ext) {
-      'pdf' => 'application/pdf',
-      'txt' => 'text/plain',
-      'csv' => 'text/csv',
-      'doc' || 'docx' => 'application/msword',
-      'jpg' || 'jpeg' => 'image/jpeg',
-      'png' => 'image/png',
-      'webp' => 'image/webp',
-      _ => 'application/octet-stream',
-    };
-
-    setState(() {
-      _selectedImageBytes = bytes;
-      _selectedMimeType = mime;
-    });
-  }
-
-  void _clearSelectedImage() {
-    setState(() {
-      _selectedImageBytes = null;
-      _selectedMimeType = null;
-    });
+        return Container(
+          padding: const EdgeInsets.fromLTRB(
+            Sizes.paddingL,
+            Sizes.paddingS,
+            Sizes.paddingL,
+            Sizes.paddingXXL,
+          ),
+          decoration: BoxDecoration(
+            color: ColorName.colorFfffffff,
+            boxShadow: [
+              BoxShadow(
+                color: ColorName.color0d000000,
+                blurRadius: Sizes.shadowBlurM,
+                offset: const Offset(0, -Sizes.paddingXS),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (selectedImageBytes != null) ...[
+                _FilePreview(
+                  fileBytes: selectedImageBytes,
+                  mimeType: selectedMimeType ?? 'application/octet-stream',
+                  onRemove: () => context.read<GeminiApiBloc>().add(
+                    GeminiApiRemoveFileEvent(),
+                  ),
+                ),
+                const SizedBox(height: Sizes.paddingS),
+              ],
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  GestureDetector(
+                    onTap: () => context.read<GeminiApiBloc>().add(
+                      GeminiApiPickImageEvent(context: context),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(Sizes.paddingSM),
+                      decoration: const BoxDecoration(
+                        color: ColorName.color1a673ab7,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.image_outlined,
+                        color: ColorName.colorFf673ab7,
+                        size: Sizes.chatActionIconSize,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: Sizes.paddingS),
+                  GestureDetector(
+                    onTap: () => context.read<GeminiApiBloc>().add(GeminiApiPickFileEvent()),
+                    child: Container(
+                      padding: const EdgeInsets.all(Sizes.paddingSM),
+                      decoration: const BoxDecoration(
+                        color: ColorName.color1a673ab7,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.attach_file,
+                        color: ColorName.colorFf673ab7,
+                        size: Sizes.chatActionIconSize,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: Sizes.paddingS),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Sizes.paddingL,
+                      ),
+                      constraints: const BoxConstraints(maxHeight: 120),
+                      decoration: BoxDecoration(
+                        color: ColorName.colorFff0f2f6,
+                        borderRadius: BorderRadius.circular(Sizes.paddingXL),
+                      ),
+                      child: Focus(
+                        onKeyEvent: (node, event) {
+                          if (event is KeyDownEvent &&
+                              (event.logicalKey == LogicalKeyboardKey.enter ||
+                                  event.logicalKey ==
+                                      LogicalKeyboardKey.numpadEnter) &&
+                              !HardwareKeyboard.instance.isShiftPressed) {
+                            _sendMessage(context);
+                            return KeyEventResult.handled;
+                          }
+                          return KeyEventResult.ignored;
+                        },
+                        child: TextField(
+                          controller: _textEditingController,
+                          textInputAction: TextInputAction.send,
+                          decoration: InputDecoration(
+                            hintText: S.current.typeMessageHint,
+                            border: InputBorder.none,
+                            hintStyle: const TextStyle(
+                              color: ColorName.color61000000,
+                            ),
+                          ),
+                          maxLines: null,
+                          onSubmitted: (value) => _sendMessage(context),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: Sizes.paddingSM),
+                  Builder(
+                    builder: (ctx) => GestureDetector(
+                      onTap: () => _sendMessage(ctx),
+                      child: Container(
+                        padding: const EdgeInsets.all(Sizes.paddingM),
+                        decoration: const BoxDecoration(
+                          color: ColorName.colorFf673ab7,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.send,
+                          color: ColorName.colorFfffffff,
+                          size: Sizes.chatActionIconSize,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _sendMessage(BuildContext context) {
     final query = _textEditingController.text.trim();
-    if (query.isEmpty && _selectedImageBytes == null) return;
+    final state = context.read<GeminiApiBloc>().state;
 
-    final bytes = _selectedImageBytes;
-    final mime = _selectedMimeType;
+    if (query.isEmpty && state.selectedFileBytes == null) return;
 
     _textEditingController.clear();
-    setState(() {
-      _selectedImageBytes = null;
-      _selectedMimeType = null;
-    });
 
-    context.read<GeminiApiBloc>().add(
-      GeminiApiQueryEvent(query: query, imageBytes: bytes, mimeType: mime),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        Sizes.paddingL,
-        Sizes.paddingS,
-        Sizes.paddingL,
-        Sizes.paddingXXL,
-      ),
-      decoration: BoxDecoration(
-        color: ColorName.colorFfffffff,
-        boxShadow: [
-          BoxShadow(
-            color: ColorName.color0d000000,
-            blurRadius: Sizes.shadowBlurM,
-            offset: const Offset(0, -Sizes.paddingXS),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (_selectedImageBytes != null) ...[
-            _FilePreview(
-              fileBytes: _selectedImageBytes!,
-              mimeType: _selectedMimeType ?? 'application/octet-stream',
-              onRemove: _clearSelectedImage,
-            ),
-            const SizedBox(height: Sizes.paddingS),
-          ],
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  padding: const EdgeInsets.all(Sizes.paddingSM),
-                  decoration: const BoxDecoration(
-                    color: ColorName.color1a673ab7,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.image_outlined,
-                    color: ColorName.colorFf673ab7,
-                    size: Sizes.chatActionIconSize,
-                  ),
-                ),
-              ),
-              const SizedBox(width: Sizes.paddingS),
-              GestureDetector(
-                onTap: _pickGeneralFile,
-                child: Container(
-                  padding: const EdgeInsets.all(Sizes.paddingSM),
-                  decoration: const BoxDecoration(
-                    color: ColorName.color1a673ab7,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.attach_file,
-                    color: ColorName.colorFf673ab7,
-                    size: Sizes.chatActionIconSize,
-                  ),
-                ),
-              ),
-              const SizedBox(width: Sizes.paddingS),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Sizes.paddingL,
-                  ),
-                  constraints: const BoxConstraints(maxHeight: 120),
-                  decoration: BoxDecoration(
-                    color: ColorName.colorFff0f2f6,
-                    borderRadius: BorderRadius.circular(Sizes.paddingXL),
-                  ),
-                  child: Focus(
-                    onKeyEvent: (node, event) {
-                      if (event is KeyDownEvent &&
-                          (event.logicalKey == LogicalKeyboardKey.enter ||
-                              event.logicalKey ==
-                                  LogicalKeyboardKey.numpadEnter) &&
-                          !HardwareKeyboard.instance.isShiftPressed) {
-                        _sendMessage(context);
-                        return KeyEventResult.handled;
-                      }
-                      return KeyEventResult.ignored;
-                    },
-                    child: TextField(
-                      controller: _textEditingController,
-                      textInputAction: TextInputAction.send,
-                      decoration: InputDecoration(
-                        hintText: S.current.typeMessageHint,
-                        border: InputBorder.none,
-                        hintStyle: const TextStyle(
-                          color: ColorName.color61000000,
-                        ),
-                      ),
-                      maxLines: null,
-                      onSubmitted: (value) => _sendMessage(context),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: Sizes.paddingSM),
-              Builder(
-                builder: (ctx) => GestureDetector(
-                  onTap: () => _sendMessage(ctx),
-                  child: Container(
-                    padding: const EdgeInsets.all(Sizes.paddingM),
-                    decoration: const BoxDecoration(
-                      color: ColorName.colorFf673ab7,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.send,
-                      color: ColorName.colorFfffffff,
-                      size: Sizes.chatActionIconSize,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+    context.read<GeminiApiBloc>().add(GeminiApiQueryEvent(query: query));
   }
 }
 
@@ -265,8 +205,9 @@ class _FilePreview extends StatelessWidget {
         fit: BoxFit.cover,
       );
     } else {
-      final mbSize =
-          (fileBytes.lengthInBytes / (1024 * 1024)).toStringAsFixed(2);
+      final mbSize = (fileBytes.lengthInBytes / (1024 * 1024)).toStringAsFixed(
+        2,
+      );
       content = Container(
         height: Sizes.imagePreviewSize,
         width: Sizes.imagePreviewSize,

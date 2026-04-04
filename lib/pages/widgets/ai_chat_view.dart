@@ -28,26 +28,11 @@ class _AiChatViewState extends State<AiChatView> {
     super.dispose();
   }
 
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          0.0,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-
-
-
   @override
   Widget build(BuildContext context) {
     return BlocListener<GeminiApiBloc, GeminiApiState>(
       listener: (context, state) {
-        if (state.status == Status.newPrompt ||
-            state.status == Status.success) {
+        if (state.status == Status.loading || state.status == Status.success) {
           _scrollToBottom();
         }
       },
@@ -135,6 +120,18 @@ class _AiChatViewState extends State<AiChatView> {
         ),
       ),
     );
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0.0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 }
 
