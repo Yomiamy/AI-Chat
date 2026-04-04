@@ -9,11 +9,19 @@ class GeminiApiInitEvent extends GeminiApiEvent {}
 
 class GeminiApiQueryEvent extends GeminiApiEvent {
   final String query;
-  final Uint8List? imageBytes;
-  final String? mimeType;
 
-  GeminiApiQueryEvent({required this.query, this.imageBytes, this.mimeType});
+  GeminiApiQueryEvent({required this.query});
 
   @override
-  List<Object?> get props => [query, imageBytes, mimeType];
+  List<Object?> get props => [query];
 }
+
+class GeminiApiPickFileEvent extends GeminiApiEvent {}
+
+class GeminiApiPickImageEvent extends GeminiApiEvent {
+  final dynamic context; // for context in PermissionManager
+  
+  GeminiApiPickImageEvent({this.context});
+}
+
+class GeminiApiRemoveFileEvent extends GeminiApiEvent {}
