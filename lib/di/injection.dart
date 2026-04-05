@@ -5,6 +5,6 @@ import '../data/data.dart';
 final getIt = GetIt.instance;
 
 Future<void> configureDependencies() async {
-  final repo = await ChatRepository.create();
+  final repo = await ChatRepo.create();
   getIt.registerSingleton<ChatRepository>(repo);
 }

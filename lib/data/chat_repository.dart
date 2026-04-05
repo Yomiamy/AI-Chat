@@ -1,23 +1,31 @@
 import '../generated/objectbox/objectbox.g.dart';
 import 'chat_message.dart';
 
-class ChatRepository {
+abstract interface class ChatRepository {
+  List<ChatMessage> loadMessages();
+  void saveMessage({required String role, required String content});
+  void dispose();
+}
+
+class ChatRepo implements ChatRepository {
   late final Store _store;
   late final Box<ChatMessage> _box;
 
-  ChatRepository._();
+  ChatRepo._();
 
   static Future<ChatRepository> create() async {
-    final repo = ChatRepository._();
+    final repo = ChatRepo._();
     repo._store = await openStore();
     repo._box = repo._store.box<ChatMessage>();
 
     return repo;
   }
 
+  @override
   void dispose() => _store.close();
 
   /// Returns up to 100 messages ordered newest-first (descending timestamp).
+  @override
   List<ChatMessage> loadMessages() {
     final query =
         _box
@@ -32,6 +40,7 @@ class ChatRepository {
     }
   }
 
+  @override
   void saveMessage({required String role, required String content}) {
     _box.put(
       ChatMessage(

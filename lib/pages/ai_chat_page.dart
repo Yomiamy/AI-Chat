@@ -13,7 +13,7 @@ class AiChatPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => GeminiApiBloc(GetIt.instance<ChatRepository>()),
+      create: (_) => GeminiApiBloc(GetIt.I<ChatRepository>()),
       child: const AiChatView(),
     );
   }

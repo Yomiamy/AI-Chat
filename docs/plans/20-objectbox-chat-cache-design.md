@@ -104,20 +104,17 @@ final store = Store(
 - **`Store`**：ObjectBox package 內建 class（非自定義），資料庫連線核心，整個 app 生命週期只應存在一個
 - 需要 `await` 因為取路徑涉及 async IO（`path_provider`）
 
-`Store` 不對外暴露到 GetIt，只在 `injection.dart` 內作為 local variable 傳給 `ChatRepository`。
-`ChatRepository` 持有 `Store` reference 並提供 `dispose()` 供關閉時呼叫。
+`Store` 完全封裝在 `ChatRepo` 內部，不對外暴露。`injection.dart` 透過 `ChatRepo.create()` factory 取得實例並以 `ChatRepository` 介面型別註冊到 GetIt。
 
 ```dart
 import 'package:get_it/get_it.dart';
-import '../data/chat_repository.dart';
-import '../generated/objectbox/objectbox.g.dart';
+import '../data/data.dart';
 
 final getIt = GetIt.instance;
 
 Future<void> configureDependencies() async {
-  final store = await openStore();   // 取 app Documents 路徑並開啟/建立資料庫
-  // Store 不註冊到 GetIt，只傳給 Repository 封裝
-  getIt.registerSingleton<ChatRepository>(ChatRepository(store));
+  final repo = await ChatRepo.create();   // openStore() 封裝在 create() 內
+  getIt.registerSingleton<ChatRepository>(repo);
 }
 ```
 
@@ -159,44 +156,60 @@ class MyApp extends StatelessWidget {
 
 ```dart
 import 'package:get_it/get_it.dart';
-import '../data/chat_repository.dart';
+import '../data/data.dart';
 
 BlocProvider(
-  create: (_) => GeminiApiBloc(GetIt.instance<ChatRepository>()),
+  create: (_) => GeminiApiBloc(GetIt.I<ChatRepository>()),
   child: const AiChatView(),
 )
 ```
 
 ### 3. ChatRepository（`lib/data/chat_repository.dart`）
 
+`ChatRepository` 為 `abstract interface`，`ChatRepo` 為 ObjectBox 實作。
+
 ```dart
-import 'package:objectbox/objectbox.dart';
 import '../generated/objectbox/objectbox.g.dart';
 import 'chat_message.dart';
 
-class ChatRepository {
-  final Store _store;   // 持有 Store 以便 dispose 時關閉
-  final Box<ChatMessage> _box;
+abstract interface class ChatRepository {
+  List<ChatMessage> loadMessages();
+  void saveMessage({required String role, required String content});
+  void dispose();
+}
 
-  ChatRepository(Store store)
-      : _store = store,
-        _box = store.box<ChatMessage>();
+class ChatRepo implements ChatRepository {
+  late final Store _store;
+  late final Box<ChatMessage> _box;
 
-  /// 釋放 ObjectBox Store（關閉資料庫檔案鎖）
+  ChatRepo._();
+
+  static Future<ChatRepository> create() async {
+    final repo = ChatRepo._();
+    repo._store = await openStore();
+    repo._box = repo._store.box<ChatMessage>();
+    return repo;
+  }
+
+  @override
   void dispose() => _store.close();
 
-  /// 讀取最新 100 筆，依 timestamp 降序（對應 _chatList.insert(0,...) 的倒序排列）
+  /// Returns up to 100 messages ordered newest-first (descending timestamp).
+  @override
   List<ChatMessage> loadMessages() {
-    return _box
+    final query = _box
         .query()
         .order(ChatMessage_.timestamp, flags: Order.descending)
         .build()
-        .find()
-        .take(100)
-        .toList();
+      ..limit = 100;
+    try {
+      return query.find();
+    } finally {
+      query.close();
+    }
   }
 
-  /// 寫入一筆並裁切至 100 筆上限
+  @override
   void saveMessage({required String role, required String content}) {
     _box.put(ChatMessage(
       content: content,
@@ -206,17 +219,18 @@ class ChatRepository {
     _trimToLimit();
   }
 
-  /// 超過 100 筆時刪除最舊的 1 筆
   void _trimToLimit() {
     const limit = 100;
     final count = _box.count();
     if (count > limit) {
-      final oldest = _box
-          .query()
-          .order(ChatMessage_.timestamp)   // 升序，最舊在前
-          .build()
-          .findFirst();
-      if (oldest != null) _box.remove(oldest.id);
+      final query = _box.query().order(ChatMessage_.timestamp).build()
+        ..limit = 1;
+      try {
+        final oldest = query.findFirst();
+        if (oldest != null) _box.remove(oldest.id);
+      } finally {
+        query.close();
+      }
     }
   }
 }
