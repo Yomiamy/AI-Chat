@@ -83,6 +83,25 @@ lib/
 
 ### 1. DI 初始化（`lib/di/injection.dart`）
 
+#### `openStore()` 說明
+
+`openStore()` 是 build_runner 在 `objectbox.g.dart` 自動產生的便利函式，等同於：
+
+```dart
+final dir = await getApplicationDocumentsDirectory();
+final store = Store(
+  getObjectBoxModel(),
+  directory: '${dir.path}/objectbox',
+);
+```
+
+- **`getObjectBoxModel()`**：由 codegen 產生，描述所有 `@Entity` 的 schema
+- **`directory`**：資料庫實際落地路徑，位於 app sandbox 內（`Documents/objectbox/`）
+- **`Store`**：ObjectBox 的資料庫連線實例，整個 app 生命週期只應存在一個
+- 需要 `await` 因為取路徑涉及 async IO（`path_provider`）
+
+`Store` 必須在 app 關閉時呼叫 `store.close()` 釋放資源。透過 GetIt 管理 singleton 後，在 `WidgetsBindingObserver` 或 `runApp` 後的 dispose 時機處理。
+
 ```dart
 import 'package:get_it/get_it.dart';
 import '../data/chat_repository.dart';
@@ -91,9 +110,14 @@ import '../generated/objectbox/objectbox.g.dart';
 final getIt = GetIt.instance;
 
 Future<void> configureDependencies() async {
-  final store = await openStore();   // ObjectBox Store，async
+  final store = await openStore();   // 取 app Documents 路徑並開啟/建立資料庫
   getIt.registerSingleton<Store>(store);
   getIt.registerSingleton<ChatRepository>(ChatRepository(store));
+}
+
+/// app 終止時呼叫，釋放 Store 持有的檔案鎖
+void disposeDependencies() {
+  getIt<Store>().close();
 }
 ```
 
@@ -113,6 +137,38 @@ Future<void> main() async {
 ```
 
 `MyApp` 恢復為無參數的 `const` widget，不需傳入任何依賴。
+
+`Store` 的關閉在 `MyApp` 透過 `WidgetsBindingObserver` 處理：
+
+```dart
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    disposeDependencies();   // store.close()
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      // ... 其餘不變
+      home: const AiChatPage(),
+    );
+  }
+}
 
 ### 2. AiChatPage（`lib/pages/ai_chat_page.dart`）
 
