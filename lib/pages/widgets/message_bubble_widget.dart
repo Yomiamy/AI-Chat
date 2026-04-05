@@ -15,11 +15,10 @@ class MessageBubbleWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isAi = ChatEntryPrefix.aiReply.matches(message);
-    final bool isError = ChatEntryPrefix.error.matches(message);
-    final String content = isAi
-        ? ChatEntryPrefix.aiReply.strip(message)
-        : ChatEntryPrefix.prompt.strip(message);
+    final prefix = ChatEntryPrefix.of(message);
+    final bool isAi = prefix == ChatEntryPrefix.aiReply;
+    final bool isError = prefix == ChatEntryPrefix.error;
+    final String content = prefix?.strip(message) ?? message;
 
     return Align(
       alignment: isAi ? Alignment.centerLeft : Alignment.centerRight,

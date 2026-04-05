@@ -17,6 +17,10 @@ part 'gemini_api_event.dart';
 part 'gemini_api_state.dart';
 
 class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
+  static final _base64ImagePattern = RegExp(
+    r'!\[.*?\]\(data:(image/[^;]+);base64,([A-Za-z0-9+/=]+)\)',
+  );
+
   late GenerativeModel _aiModel;
   late List<String> _chatList;
   final ChatRepository _repo;
@@ -232,10 +236,6 @@ $prompt
 '''),
     ]);
   }
-
-  static final _base64ImagePattern = RegExp(
-    r'!\[.*?\]\(data:(image/[^;]+);base64,([A-Za-z0-9+/=]+)\)',
-  );
 
   String _stripBase64(String text) {
     return text.replaceAllMapped(_base64ImagePattern, (m) {

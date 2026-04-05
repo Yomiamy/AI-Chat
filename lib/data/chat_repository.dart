@@ -8,6 +8,8 @@ abstract interface class ChatRepository {
 }
 
 class ChatRepo implements ChatRepository {
+  static const int _maxMessages = 100;
+
   late final Store _store;
   late final Box<ChatMessage> _box;
 
@@ -24,7 +26,7 @@ class ChatRepo implements ChatRepository {
   @override
   void dispose() => _store.close();
 
-  /// Returns up to 100 messages ordered newest-first (descending timestamp).
+  /// Returns up to [_maxMessages] messages ordered newest-first (descending timestamp).
   @override
   List<ChatMessage> loadMessages() {
     final query =
@@ -32,7 +34,7 @@ class ChatRepo implements ChatRepository {
             .query()
             .order(ChatMessage_.timestamp, flags: Order.descending)
             .build()
-          ..limit = 100;
+          ..limit = _maxMessages;
     try {
       return query.find();
     } finally {
@@ -53,17 +55,15 @@ class ChatRepo implements ChatRepository {
   }
 
   void _trimToLimit() {
-    const limit = 100;
     final count = _box.count();
-    if (count > limit) {
-      final query = _box.query().order(ChatMessage_.timestamp).build()
-        ..limit = 1;
-      try {
-        final oldest = query.findFirst();
-        if (oldest != null) _box.remove(oldest.id);
-      } finally {
-        query.close();
-      }
+    final excess = count - _maxMessages;
+    if (excess <= 0) return;
+    final query = _box.query().order(ChatMessage_.timestamp).build()
+      ..limit = excess;
+    try {
+      _box.removeMany(query.findIds());
+    } finally {
+      query.close();
     }
   }
 }
