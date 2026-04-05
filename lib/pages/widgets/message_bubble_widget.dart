@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../bloc/bloc.dart';
 import '../../features/foundation/style/sizes.dart';
 import '../../generated/l10n.dart';
 
@@ -14,11 +15,11 @@ class MessageBubbleWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isAi = message.startsWith('AI reply: ');
+    final bool isAi = ChatEntryPrefix.aiReply.matches(message);
+    final bool isError = ChatEntryPrefix.error.matches(message);
     final String content = isAi
-        ? message.replaceFirst('AI reply: ', '')
-        : message.replaceFirst('Prompt: ', '');
-    final bool isError = message.startsWith('Error: ');
+        ? ChatEntryPrefix.aiReply.strip(message)
+        : ChatEntryPrefix.prompt.strip(message);
 
     return Align(
       alignment: isAi ? Alignment.centerLeft : Alignment.centerRight,

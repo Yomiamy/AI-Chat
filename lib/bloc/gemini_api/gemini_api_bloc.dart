@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'dart:io';
 
 import 'package:ai_chat/data/data.dart';
+import 'models/models.dart';
 import 'package:ai_chat/features/features.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -33,9 +34,9 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
   void _init(GeminiApiInitEvent event, Emitter<GeminiApiState> emit) async {
     _chatList = _repo.loadMessages().map((m) {
       return switch (m.roleEnum) {
-        ChatMessageRoleEnum.prompt  => 'Prompt: ${m.content}',
-        ChatMessageRoleEnum.aiReply => 'AI reply: ${m.content}',
-        _                           => 'Error: ${m.content}',
+        ChatMessageRoleEnum.prompt  => ChatEntryPrefix.prompt.wrap(m.content),
+        ChatMessageRoleEnum.aiReply => ChatEntryPrefix.aiReply.wrap(m.content),
+        _                           => ChatEntryPrefix.error.wrap(m.content),
       };
     }).toList();
 
@@ -53,15 +54,15 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
 
     // 檢查檔案大小是否超過 5MB
     if (fileBytes != null && fileBytes.lengthInBytes > 5 * 1024 * 1024) {
-      _chatList.insert(0, 'Prompt: $prompt\n\n[附件被拒絕：檔案大小超過 5MB 限制]');
-      _chatList.insert(0, 'Error: 上傳檔案大小不得超過 5MB');
+      _chatList.insert(0, ChatEntryPrefix.prompt.wrap('$prompt\n\n[附件被拒絕：檔案大小超過 5MB 限制]'));
+      _chatList.insert(0, ChatEntryPrefix.error.wrap('上傳檔案大小不得超過 5MB'));
       _repo.saveMessage(role: ChatMessageRoleEnum.error, content: '上傳檔案大小不得超過 5MB');
       emit(state.copyWith(status: Status.failure, chatList: _chatList));
       return;
     }
 
     final userMessage = _buildUserMessage(prompt, fileBytes, mimeType);
-    _chatList.insert(0, 'Prompt: $userMessage');
+    _chatList.insert(0, ChatEntryPrefix.prompt.wrap(userMessage));
 
     // ① 使用者送出後寫入快取（base64 圖片替換為佔位符）
     _repo.saveMessage(role: ChatMessageRoleEnum.prompt, content: _stripBase64(userMessage));
@@ -97,12 +98,12 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
 
           if (markdownBuffer.isNotEmpty) {
             final aiReply = StringBuffer();
-            if (_chatList.firstOrNull?.startsWith('AI reply: ') ?? false) {
+            if (ChatEntryPrefix.aiReply.matches(_chatList.firstOrNull ?? '')) {
               aiReply
                 ..write(_chatList.removeAt(0))
                 ..write(' ${markdownBuffer.toString()}');
             } else {
-              aiReply.write('AI reply: ${markdownBuffer.toString()}');
+              aiReply.write(ChatEntryPrefix.aiReply.wrap(markdownBuffer.toString()));
             }
             _chatList.insert(0, aiReply.toString());
           }
@@ -113,7 +114,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
       }
 
       // ② stream 全數完成後寫入 AI 回覆（Gemini 空回覆時略過）
-      if (_chatList.isNotEmpty && _chatList.first.startsWith('AI reply: ')) {
+      if (_chatList.isNotEmpty && ChatEntryPrefix.aiReply.matches(_chatList.first)) {
         _repo.saveMessage(
           role: ChatMessageRoleEnum.aiReply,
           content: _stripContent(_chatList.first),
@@ -124,7 +125,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
       // ③ 錯誤時寫入快取
       _repo.saveMessage(role: ChatMessageRoleEnum.error, content: e.toString());
       emit(state.copyWith(status: Status.failure));
-      _chatList.insert(0, 'Error: $e');
+      _chatList.insert(0, ChatEntryPrefix.error.wrap('$e'));
     }
   }
 
@@ -249,9 +250,6 @@ $prompt
     return text.replaceAll(_base64ImagePattern, '[圖片回覆]');
   }
 
-  String _stripContent(String item) {
-    const prefix = 'AI reply: ';
-    final content = item.startsWith(prefix) ? item.substring(prefix.length) : item;
-    return _stripAiBase64(content);
-  }
+  String _stripContent(String item) =>
+      _stripAiBase64(ChatEntryPrefix.aiReply.strip(item));
 }
