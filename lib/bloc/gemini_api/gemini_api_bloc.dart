@@ -115,11 +115,13 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
         }
       }
 
-      // ② stream 全數完成後寫入 AI 回覆
-      _repo.saveMessage(
-        role: 'ai_reply',
-        content: _stripContent(_chatList.first),
-      );
+      // ② stream 全數完成後寫入 AI 回覆（Gemini 空回覆時略過）
+      if (_chatList.isNotEmpty && _chatList.first.startsWith('AI reply: ')) {
+        _repo.saveMessage(
+          role: 'ai_reply',
+          content: _stripContent(_chatList.first),
+        );
+      }
       emit(state.copyWith(status: Status.success, chatList: _chatList));
     } catch (e) {
       // ③ 錯誤時寫入快取
@@ -251,7 +253,8 @@ $prompt
   }
 
   String _stripContent(String item) {
-    final content = item.contains(': ') ? item.substring(item.indexOf(': ') + 2) : item;
+    const prefix = 'AI reply: ';
+    final content = item.startsWith(prefix) ? item.substring(prefix.length) : item;
     return _stripAiBase64(content);
   }
 }
