@@ -115,11 +115,6 @@ Future<void> configureDependencies() async {
   // Store 不註冊到 GetIt，只傳給 Repository 封裝
   getIt.registerSingleton<ChatRepository>(ChatRepository(store));
 }
-
-/// app 終止時呼叫，由 ChatRepository 負責關閉 Store
-void disposeDependencies() {
-  getIt<ChatRepository>().dispose();
-}
 ```
 
 ### 2. `main.dart` 呼叫 DI 初始化

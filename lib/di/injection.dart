@@ -9,7 +9,3 @@ Future<void> configureDependencies() async {
   final store = await openStore();
   getIt.registerSingleton<ChatRepository>(ChatRepository(store));
 }
-
-void disposeDependencies() {
-  getIt<ChatRepository>().dispose();
-}
