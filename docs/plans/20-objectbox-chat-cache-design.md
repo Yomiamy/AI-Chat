@@ -97,10 +97,11 @@ final store = Store(
 
 - **`getObjectBoxModel()`**：由 codegen 產生，描述所有 `@Entity` 的 schema
 - **`directory`**：資料庫實際落地路徑，位於 app sandbox 內（`Documents/objectbox/`）
-- **`Store`**：ObjectBox 的資料庫連線實例，整個 app 生命週期只應存在一個
+- **`Store`**：ObjectBox package 內建 class（非自定義），資料庫連線核心，整個 app 生命週期只應存在一個
 - 需要 `await` 因為取路徑涉及 async IO（`path_provider`）
 
-`Store` 必須在 app 關閉時呼叫 `store.close()` 釋放資源。透過 GetIt 管理 singleton 後，在 `WidgetsBindingObserver` 或 `runApp` 後的 dispose 時機處理。
+`Store` 不對外暴露到 GetIt，只在 `injection.dart` 內作為 local variable 傳給 `ChatRepository`。
+`ChatRepository` 持有 `Store` reference 並提供 `dispose()` 供關閉時呼叫。
 
 ```dart
 import 'package:get_it/get_it.dart';
@@ -111,13 +112,13 @@ final getIt = GetIt.instance;
 
 Future<void> configureDependencies() async {
   final store = await openStore();   // 取 app Documents 路徑並開啟/建立資料庫
-  getIt.registerSingleton<Store>(store);
+  // Store 不註冊到 GetIt，只傳給 Repository 封裝
   getIt.registerSingleton<ChatRepository>(ChatRepository(store));
 }
 
-/// app 終止時呼叫，釋放 Store 持有的檔案鎖
+/// app 終止時呼叫，由 ChatRepository 負責關閉 Store
 void disposeDependencies() {
-  getIt<Store>().close();
+  getIt<ChatRepository>().dispose();
 }
 ```
 
@@ -156,7 +157,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    disposeDependencies();   // store.close()
+    disposeDependencies();   // ChatRepository.dispose() → store.close()
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -190,9 +191,15 @@ import '../generated/objectbox/objectbox.g.dart';
 import 'chat_message.dart';
 
 class ChatRepository {
+  final Store _store;   // 持有 Store 以便 dispose 時關閉
   final Box<ChatMessage> _box;
 
-  ChatRepository(Store store) : _box = store.box<ChatMessage>();
+  ChatRepository(Store store)
+      : _store = store,
+        _box = store.box<ChatMessage>();
+
+  /// 釋放 ObjectBox Store（關閉資料庫檔案鎖）
+  void dispose() => _store.close();
 
   /// 讀取最新 100 筆，依 timestamp 降序（對應 _chatList.insert(0,...) 的倒序排列）
   List<ChatMessage> loadMessages() {
