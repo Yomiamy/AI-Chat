@@ -11,14 +11,18 @@ class ChatRepository {
 
   void dispose() => _store.close();
 
+  /// Returns up to 100 messages ordered newest-first (descending timestamp).
   List<ChatMessage> loadMessages() {
-    return _box
+    final query = _box
         .query()
         .order(ChatMessage_.timestamp, flags: Order.descending)
         .build()
-        .find()
-        .take(100)
-        .toList();
+      ..limit = 100;
+    try {
+      return query.find();
+    } finally {
+      query.close();
+    }
   }
 
   void saveMessage({required String role, required String content}) {
@@ -34,12 +38,17 @@ class ChatRepository {
     const limit = 100;
     final count = _box.count();
     if (count > limit) {
-      final oldest = _box
+      final query = _box
           .query()
           .order(ChatMessage_.timestamp)
           .build()
-          .findFirst();
-      if (oldest != null) _box.remove(oldest.id);
+        ..limit = 1;
+      try {
+        final oldest = query.findFirst();
+        if (oldest != null) _box.remove(oldest.id);
+      } finally {
+        query.close();
+      }
     }
   }
 }
