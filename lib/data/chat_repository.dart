@@ -2,22 +2,29 @@ import '../generated/objectbox/objectbox.g.dart';
 import 'chat_message.dart';
 
 class ChatRepository {
-  final Store _store;
-  final Box<ChatMessage> _box;
+  late final Store _store;
+  late final Box<ChatMessage> _box;
 
-  ChatRepository(Store store)
-      : _store = store,
-        _box = store.box<ChatMessage>();
+  ChatRepository._();
+
+  static Future<ChatRepository> create() async {
+    final repo = ChatRepository._();
+    repo._store = await openStore();
+    repo._box = repo._store.box<ChatMessage>();
+
+    return repo;
+  }
 
   void dispose() => _store.close();
 
   /// Returns up to 100 messages ordered newest-first (descending timestamp).
   List<ChatMessage> loadMessages() {
-    final query = _box
-        .query()
-        .order(ChatMessage_.timestamp, flags: Order.descending)
-        .build()
-      ..limit = 100;
+    final query =
+        _box
+            .query()
+            .order(ChatMessage_.timestamp, flags: Order.descending)
+            .build()
+          ..limit = 100;
     try {
       return query.find();
     } finally {
@@ -26,11 +33,13 @@ class ChatRepository {
   }
 
   void saveMessage({required String role, required String content}) {
-    _box.put(ChatMessage(
-      content: content,
-      timestamp: DateTime.now().millisecondsSinceEpoch,
-      role: role,
-    ));
+    _box.put(
+      ChatMessage(
+        content: content,
+        timestamp: DateTime.now().millisecondsSinceEpoch,
+        role: role,
+      ),
+    );
     _trimToLimit();
   }
 
@@ -38,10 +47,7 @@ class ChatRepository {
     const limit = 100;
     final count = _box.count();
     if (count > limit) {
-      final query = _box
-          .query()
-          .order(ChatMessage_.timestamp)
-          .build()
+      final query = _box.query().order(ChatMessage_.timestamp).build()
         ..limit = 1;
       try {
         final oldest = query.findFirst();
