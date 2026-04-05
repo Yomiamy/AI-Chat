@@ -54,13 +54,15 @@ lib/generated/objectbox/          ← objectbox.output_dir（已設定於 pubspe
 
 ```
 main.dart
-  └─ openStore() → ChatRepository → GetIt.instance.registerSingleton
-       └─ BlocProvider<GeminiApiBloc>(
-            create: (_) => GeminiApiBloc(GetIt.instance<ChatRepository>())
-          )
+  └─ configureDependencies()
+       └─ ChatRepository.create()   ← openStore() 封裝在內
+            └─ GetIt.registerSingleton<ChatRepository>
+                 └─ BlocProvider<GeminiApiBloc>(
+                      create: (_) => GeminiApiBloc(GetIt.instance<ChatRepository>())
+                    )
 ```
 
-`GetIt` 作為 service locator，`Store` 與 `ChatRepository` 在 `main()` 中註冊為 singleton，BLoC 直接從 `GetIt` 取用，不依賴 widget tree 傳遞。
+`GetIt` 作為 service locator，`ChatRepository` 在 `configureDependencies()` 中透過 `create()` factory 初始化並註冊為 singleton；`Store` 封裝在 repository 內部，不對外暴露。BLoC 直接從 `GetIt` 取用，不依賴 widget tree 傳遞。
 
 **檔案結構（新增）：**
 
@@ -68,9 +70,11 @@ main.dart
 lib/
   data/
     chat_message.dart          ← @Entity 定義
-    chat_repository.dart       ← 封裝 Box<ChatMessage> 操作
+    chat_repository.dart       ← 封裝 Box<ChatMessage> 操作，含 create() factory
+    data.dart                  ← barrel export
   di/
     injection.dart             ← GetIt 初始化與所有 singleton 註冊
+    di.dart                    ← barrel export
   generated/
     objectbox/                 ← build_runner 產生，勿手動編輯
       objectbox.g.dart
