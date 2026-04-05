@@ -32,14 +32,11 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
 
   void _init(GeminiApiInitEvent event, Emitter<GeminiApiState> emit) async {
     _chatList = _repo.loadMessages().map((m) {
-      switch (m.role) {
-        case 'prompt':
-          return 'Prompt: ${m.content}';
-        case 'ai_reply':
-          return 'AI reply: ${m.content}';
-        default:
-          return 'Error: ${m.content}';
-      }
+      return switch (m.roleEnum) {
+        ChatMessageRoleEnum.prompt  => 'Prompt: ${m.content}',
+        ChatMessageRoleEnum.aiReply => 'AI reply: ${m.content}',
+        _                           => 'Error: ${m.content}',
+      };
     }).toList();
 
     await _initFirebaseAiLogic();
@@ -58,7 +55,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     if (fileBytes != null && fileBytes.lengthInBytes > 5 * 1024 * 1024) {
       _chatList.insert(0, 'Prompt: $prompt\n\n[附件被拒絕：檔案大小超過 5MB 限制]');
       _chatList.insert(0, 'Error: 上傳檔案大小不得超過 5MB');
-      _repo.saveMessage(role: 'error', content: '上傳檔案大小不得超過 5MB');
+      _repo.saveMessage(role: ChatMessageRoleEnum.error, content: '上傳檔案大小不得超過 5MB');
       emit(state.copyWith(status: Status.failure, chatList: _chatList));
       return;
     }
@@ -67,7 +64,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     _chatList.insert(0, 'Prompt: $userMessage');
 
     // ① 使用者送出後寫入快取（base64 圖片替換為佔位符）
-    _repo.saveMessage(role: 'prompt', content: _stripBase64(userMessage));
+    _repo.saveMessage(role: ChatMessageRoleEnum.prompt, content: _stripBase64(userMessage));
 
     emit(state.copyWith(status: Status.newPrompt, chatList: _chatList));
 
@@ -118,14 +115,14 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
       // ② stream 全數完成後寫入 AI 回覆（Gemini 空回覆時略過）
       if (_chatList.isNotEmpty && _chatList.first.startsWith('AI reply: ')) {
         _repo.saveMessage(
-          role: 'ai_reply',
+          role: ChatMessageRoleEnum.aiReply,
           content: _stripContent(_chatList.first),
         );
       }
       emit(state.copyWith(status: Status.success, chatList: _chatList));
     } catch (e) {
       // ③ 錯誤時寫入快取
-      _repo.saveMessage(role: 'error', content: e.toString());
+      _repo.saveMessage(role: ChatMessageRoleEnum.error, content: e.toString());
       emit(state.copyWith(status: Status.failure));
       _chatList.insert(0, 'Error: $e');
     }

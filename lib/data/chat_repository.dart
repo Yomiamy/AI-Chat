@@ -3,7 +3,7 @@ import 'chat_message.dart';
 
 abstract interface class ChatRepository {
   List<ChatMessage> loadMessages();
-  void saveMessage({required String role, required String content});
+  void saveMessage({required ChatMessageRoleEnum role, required String content});
   void dispose();
 }
 
@@ -41,12 +41,12 @@ class ChatRepo implements ChatRepository {
   }
 
   @override
-  void saveMessage({required String role, required String content}) {
+  void saveMessage({required ChatMessageRoleEnum role, required String content}) {
     _box.put(
       ChatMessage(
         content: content,
         timestamp: DateTime.now().millisecondsSinceEpoch,
-        role: role,
+        role: role.value,
       ),
     );
     _trimToLimit();

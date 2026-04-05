@@ -34,11 +34,13 @@ class ChatMessage {
 
 ### Role 對應表
 
-| role | 原 `_chatList` 前綴 | 寫入時機 |
-|------|------------------|---------|
-| `prompt` | `Prompt: ...` | `_query` 開頭，使用者送出後 |
-| `ai_reply` | `AI reply: ...` | `Status.success` emit 前，stream 全數收完後 |
-| `error` | `Error: ...` | catch 區塊 |
+`ChatMessage.role` 欄位以字串落地，透過 `ChatMessageRoleEnum` 做 type-safe 存取（`@Transient() get roleEnum`）。
+
+| `ChatMessageRoleEnum` | stored value | 原 `_chatList` 前綴 | 寫入時機 |
+|---|---|---|---|
+| `.prompt` | `"prompt"` | `Prompt: ...` | `_query` 開頭，使用者送出後 |
+| `.aiReply` | `"ai_reply"` | `AI reply: ...` | stream 全數收完後 |
+| `.error` | `"error"` | `Error: ...` | catch 區塊 |
 
 ### ObjectBox 產生檔案位置
 
@@ -174,7 +176,7 @@ import 'chat_message.dart';
 
 abstract interface class ChatRepository {
   List<ChatMessage> loadMessages();
-  void saveMessage({required String role, required String content});
+  void saveMessage({required ChatMessageRoleEnum role, required String content});
   void dispose();
 }
 
@@ -273,13 +275,13 @@ void _init(GeminiApiInitEvent event, Emitter<GeminiApiState> emit) async {
 
 ```dart
 // ① 使用者送出後（成功進入 try 前）
-_repo.saveMessage(role: 'prompt', content: _stripBase64(userMessage));
+_repo.saveMessage(role: ChatMessageRoleEnum.prompt, content: _stripBase64(userMessage));
 
 // ② stream 全數完成後（Status.success emit 前）
-_repo.saveMessage(role: 'ai_reply', content: _stripContent(_chatList.first));
+_repo.saveMessage(role: ChatMessageRoleEnum.aiReply, content: _stripContent(_chatList.first));
 
 // ③ catch 區塊
-_repo.saveMessage(role: 'error', content: e.toString());
+_repo.saveMessage(role: ChatMessageRoleEnum.error, content: e.toString());
 ```
 
 ### 5. Base64 過濾（私有 helper，置於 bloc 檔內）
