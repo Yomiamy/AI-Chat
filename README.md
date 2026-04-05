@@ -18,7 +18,10 @@ A modern AI chat application built with Flutter and Firebase AI (Gemini). This p
     -   Automatic bottom-scrolling with smooth animations.
     -   Responsive input area with physical keyboard support (Enter to send, Shift+Enter for newline).
 -   **Robust Architecture**: Utilizes the BLoC (Business Logic Component) pattern for clean, predictable state management.
--   **Cross-Platform Support**: Optimized for both Android and iOS.
+-   **Dependency Injection**: Structured DI container for repository and bloc instance management.
+-   **Localization (i18n)**: Multi-language support (English and Traditional Chinese) using `.arb` files.
+-   **Strongly Typed Assets**: Utilizes `flutter_gen` for type-safe static assets and colors management.
+-   **Modular UI Components**: Fully decoupled and reusable widget architecture.
 
 ## 🛠 Tech Stack
 
@@ -30,6 +33,7 @@ A modern AI chat application built with Flutter and Firebase AI (Gemini). This p
     -   `flutter_markdown`: For rendering AI-generated Markdown content.
     -   `url_launcher`: Handling link interactions within the chat.
     -   `equatable`: Simplified value equality in BLoC states.
+    -   `flutter_gen`: For strongly-typed assets.
 
 ## 🏗 Project Structure
 
@@ -38,12 +42,15 @@ The project follows a Feature-First, clean architecture approach:
 ```text
 lib/
 ├── bloc/               # Core Business Logic (BLoC)
-│   ├── gemini_api_bloc.dart    # Gemini API communication & stream handling
-│   ├── gemini_api_event.dart   # UI Event definitions
-│   ├── gemini_api_state.dart   # UI State definitions
-│   └── status.dart             # Chat state enumerations (loading, success, etc.)
+│   └── gemini_api/     # Gemini API communication, state, events & models
+├── data/               # Data Layer & Repositories (Chat Repository)
+├── di/                 # Dependency Injection setup
+├── features/           # Reusable utils and foundation
+├── generated/          # Auto-generated code (e.g., flutter_gen assets)
+├── l10n/               # Localization files (.arb)
 ├── pages/              # UI Components & Pages
-│   └── ai_chat_page.dart       # Primary Chat Interface
+│   ├── ai_chat_page.dart # Primary Chat Interface Entry
+│   └── widgets/        # Modular UI components (InputArea, MessageBubble, etc.)
 └── main.dart           # Entry point & Firebase Initialization
 ```
 
