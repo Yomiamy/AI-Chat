@@ -23,26 +23,7 @@ Future _initLocale() async {
   await S.load(systemLocale);
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void dispose() {
-    disposeDependencies();
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
+class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {

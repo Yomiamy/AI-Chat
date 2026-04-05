@@ -137,30 +137,15 @@ Future<void> main() async {
 }
 ```
 
-`MyApp` 恢復為無參數的 `const` widget，不需傳入任何依賴。
+`MyApp` 為無參數的 `const StatelessWidget`，不需傳入任何依賴，也不需要 `WidgetsBindingObserver`。
 
-`Store` 的關閉在 `MyApp` 透過 `WidgetsBindingObserver` 處理：
+> **為什麼不用 WidgetsBindingObserver？**
+> `StatefulWidget.dispose()` 在 app 被 OS 強制終止時不會被呼叫，無法保證執行 `store.close()`。
+> ObjectBox 對 process 非正常終止是安全的（下次啟動自動回收），因此手動 dispose 沒有實質意義，加上 Observer 反而是過度設計。
 
 ```dart
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void dispose() {
-    disposeDependencies();   // ChatRepository.dispose() → store.close()
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
