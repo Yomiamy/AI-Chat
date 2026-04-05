@@ -1,11 +1,11 @@
 import 'dart:ui' as ui;
 
+import 'package:ai_chat/generated/assets/colors.gen.dart';
 import 'package:ai_chat/pages/ai_chat_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ai_chat/generated/l10n.dart';
-import 'package:ai_chat/gen/colors.gen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

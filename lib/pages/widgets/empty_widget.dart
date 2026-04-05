@@ -1,7 +1,7 @@
+import 'package:ai_chat/generated/assets/colors.gen.dart';
 import 'package:flutter/material.dart';
 
 import '../../../features/foundation/style/sizes.dart';
-import '../../../gen/colors.gen.dart';
 import '../../../generated/l10n.dart';
 
 class EmptyWidget extends StatelessWidget {

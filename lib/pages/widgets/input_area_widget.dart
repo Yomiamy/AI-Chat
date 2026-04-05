@@ -1,11 +1,11 @@
 import 'package:ai_chat/bloc/bloc.dart';
+import 'package:ai_chat/generated/assets/colors.gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../features/foundation/style/sizes.dart';
-import '../../../gen/colors.gen.dart';
 import '../../../generated/l10n.dart';
 
 class InputAreaWidget extends StatefulWidget {

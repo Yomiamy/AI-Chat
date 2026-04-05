@@ -1,10 +1,10 @@
 import 'dart:convert';
+import 'package:ai_chat/generated/assets/colors.gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../features/foundation/style/sizes.dart';
-import '../../gen/colors.gen.dart';
 import '../../generated/l10n.dart';
 
 class MessageBubbleWidget extends StatelessWidget {
