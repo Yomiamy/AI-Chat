@@ -182,6 +182,8 @@ abstract interface class ChatRepository {
 }
 
 class ChatRepo implements ChatRepository {
+  static const int _maxMessages = 100;
+
   late final Store _store;
   late final Box<ChatMessage> _box;
 
@@ -197,14 +199,14 @@ class ChatRepo implements ChatRepository {
   @override
   void dispose() => _store.close();
 
-  /// Returns up to 100 messages ordered newest-first (descending timestamp).
+  /// Returns up to [_maxMessages] messages ordered newest-first (descending timestamp).
   @override
   List<ChatMessage> loadMessages() {
     final query = _box
         .query()
         .order(ChatMessage_.timestamp, flags: Order.descending)
         .build()
-      ..limit = 100;
+      ..limit = _maxMessages;
     try {
       return query.find();
     } finally {
@@ -213,27 +215,25 @@ class ChatRepo implements ChatRepository {
   }
 
   @override
-  void saveMessage({required String role, required String content}) {
+  void saveMessage({required ChatMessageRoleEnum role, required String content}) {
     _box.put(ChatMessage(
       content: content,
       timestamp: DateTime.now().millisecondsSinceEpoch,
-      role: role,
+      role: role.value,
     ));
     _trimToLimit();
   }
 
   void _trimToLimit() {
-    const limit = 100;
     final count = _box.count();
-    if (count > limit) {
-      final query = _box.query().order(ChatMessage_.timestamp).build()
-        ..limit = 1;
-      try {
-        final oldest = query.findFirst();
-        if (oldest != null) _box.remove(oldest.id);
-      } finally {
-        query.close();
-      }
+    final excess = count - _maxMessages;
+    if (excess <= 0) return;
+    final query = _box.query().order(ChatMessage_.timestamp).build()
+      ..limit = excess;
+    try {
+      _box.removeMany(query.findIds());
+    } finally {
+      query.close();
     }
   }
 }
@@ -245,9 +245,13 @@ class ChatRepo implements ChatRepository {
 
 ```dart
 class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
+  static final _base64ImagePattern = RegExp(        // static 欄位置於最前
+    r'!\[.*?\]\(data:(image/[^;]+);base64,([A-Za-z0-9+/=]+)\)',
+  );
+
   late GenerativeModel _aiModel;
   late List<String> _chatList;
-  final ChatRepository _repo;                // 新增
+  final ChatRepository _repo;
 
   GeminiApiBloc(this._repo) : super(const GeminiApiState()) {
     // handlers 不變
@@ -287,11 +291,9 @@ _repo.saveMessage(role: ChatMessageRoleEnum.error, content: e.toString());
 
 ### 5. Base64 過濾（私有 helper，置於 bloc 檔內）
 
-```dart
-static final _base64ImagePattern = RegExp(
-  r'!\[.*?\]\(data:(image/[^;]+);base64,([A-Za-z0-9+/=]+)\)',
-);
+`_base64ImagePattern` 為 `static final`，依 Style Guide 宣告於 class 最頂端（instance 欄位之前）。
 
+```dart
 /// 使用者訊息：base64 圖片替換為帶大小的佔位符
 String _stripBase64(String text) {
   return text.replaceAllMapped(_base64ImagePattern, (m) {
@@ -307,11 +309,9 @@ String _stripAiBase64(String text) {
   return text.replaceAll(_base64ImagePattern, '[圖片回覆]');
 }
 
-/// 去除 _chatList 項目的前綴（"AI reply: " / "Prompt: "）再過濾
-String _stripContent(String item) {
-  final content = item.contains(': ') ? item.substring(item.indexOf(': ') + 2) : item;
-  return _stripAiBase64(content);
-}
+/// 去除 _chatList 項目的 aiReply 前綴再過濾 base64
+String _stripContent(String item) =>
+    _stripAiBase64(ChatEntryPrefix.aiReply.strip(item));
 ```
 
 ---
@@ -345,8 +345,9 @@ _query 觸發
 ## 上限策略
 
 - 每次 `saveMessage` → `_trimToLimit()` 檢查 `box.count()`
-- `count > 100`：刪除 timestamp 最小（最舊）的 1 筆
-- 每次只刪 1 筆（寫入也是 1 筆），保持 count ≤ 100
+- `excess = count - _maxMessages`；`excess ≤ 0` 時直接返回
+- 一次以 `query.findIds()` + `removeMany()` 批次刪除 excess 筆最舊記錄，確保 count ≤ 100
+- 上限常數統一使用 `static const int _maxMessages = 100`，`loadMessages` 與 `_trimToLimit` 共享
 
 ---
 
