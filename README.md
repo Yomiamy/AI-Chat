@@ -6,7 +6,7 @@ A modern AI chat application built with Flutter and Firebase AI (Gemini). This p
 
 | Empty State | Chat Interface |
 | :---: | :---: |
-| ![Empty State](assets/screenshots/empty_state.png) | ![Chat Interface](assets/screenshots/chat_interface.png) |
+| ![Empty State](assets/images/empty_state.png) | ![Chat Interface](assets/images/chat_interface.png) |
 
 ## ✨ Features
 
