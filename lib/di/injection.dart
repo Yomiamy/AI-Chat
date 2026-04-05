@@ -1,6 +1,6 @@
 import 'package:get_it/get_it.dart';
 
-import '../data/chat_repository.dart';
+import '../data/data.dart';
 
 final getIt = GetIt.instance;
 

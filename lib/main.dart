@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ai_chat/generated/l10n.dart';
 
-import 'di/injection.dart';
+import 'di/di.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

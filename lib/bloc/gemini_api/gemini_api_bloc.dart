@@ -4,7 +4,7 @@ import 'dart:typed_data';
 
 import 'dart:io';
 
-import 'package:ai_chat/data/chat_repository.dart';
+import 'package:ai_chat/data/data.dart';
 import 'package:ai_chat/features/features.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
