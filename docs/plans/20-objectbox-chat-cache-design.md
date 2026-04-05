@@ -356,7 +356,16 @@ dependencies:
   get_it: ^8.0.0        # service locator
   objectbox: ^5.2.0
   objectbox_flutter_libs: ^5.2.0
+
+dev_dependencies:
+  objectbox_generator: ^5.2.0
 ```
+
+> **注意：** `pubspec.yaml` 的 `objectbox.output_dir` 不需 `lib/` 前綴，build_runner 已自動加上：
+> ```yaml
+> objectbox:
+>   output_dir: generated/objectbox   # ← 正確；不要寫 lib/generated/objectbox
+> ```
 
 ---
 
