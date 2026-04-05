@@ -54,12 +54,13 @@ lib/generated/objectbox/          ← objectbox.output_dir（已設定於 pubspe
 
 ```
 main.dart
-  └─ Store（ObjectBox，app 生命週期唯一實例）
-       └─ RepositoryProvider<ChatRepository>
-            └─ BlocProvider<GeminiApiBloc>(
-                 create: (ctx) => GeminiApiBloc(ctx.read<ChatRepository>())
-               )
+  └─ openStore() → ChatRepository → GetIt.instance.registerSingleton
+       └─ BlocProvider<GeminiApiBloc>(
+            create: (_) => GeminiApiBloc(GetIt.instance<ChatRepository>())
+          )
 ```
+
+`GetIt` 作為 service locator，`Store` 與 `ChatRepository` 在 `main()` 中註冊為 singleton，BLoC 直接從 `GetIt` 取用，不依賴 widget tree 傳遞。
 
 **檔案結構（新增）：**
 
@@ -68,6 +69,8 @@ lib/
   data/
     chat_message.dart          ← @Entity 定義
     chat_repository.dart       ← 封裝 Box<ChatMessage> 操作
+  di/
+    injection.dart             ← GetIt 初始化與所有 singleton 註冊
   generated/
     objectbox/                 ← build_runner 產生，勿手動編輯
       objectbox.g.dart
@@ -78,52 +81,47 @@ lib/
 
 ## 實作細節
 
-### 1. Store 初始化（`main.dart`）
+### 1. DI 初始化（`lib/di/injection.dart`）
 
 ```dart
-// 新增 import
-import 'package:objectbox/objectbox.dart';
-import 'generated/objectbox/objectbox.g.dart';
-import 'data/chat_repository.dart';
+import 'package:get_it/get_it.dart';
+import '../data/chat_repository.dart';
+import '../generated/objectbox/objectbox.g.dart';
+
+final getIt = GetIt.instance;
+
+Future<void> configureDependencies() async {
+  final store = await openStore();   // ObjectBox Store，async
+  getIt.registerSingleton<Store>(store);
+  getIt.registerSingleton<ChatRepository>(ChatRepository(store));
+}
+```
+
+### 2. `main.dart` 呼叫 DI 初始化
+
+```dart
+import 'di/injection.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await _initLocale();
+  await configureDependencies();     // GetIt 註冊完成後才 runApp
 
-  final store = await openStore();           // ObjectBox Store，async，需 await
-  final repo = ChatRepository(store);
-
-  runApp(MyApp(chatRepository: repo));
+  runApp(const MyApp());
 }
 ```
 
-`MyApp` 改為接收 `chatRepository` 並用 `RepositoryProvider` 包住 widget tree：
+`MyApp` 恢復為無參數的 `const` widget，不需傳入任何依賴。
+
+### 2. AiChatPage（`lib/pages/ai_chat_page.dart`）
 
 ```dart
-class MyApp extends StatelessWidget {
-  final ChatRepository chatRepository;
-  const MyApp({super.key, required this.chatRepository});
+import 'package:get_it/get_it.dart';
+import '../data/chat_repository.dart';
 
-  @override
-  Widget build(BuildContext context) {
-    return RepositoryProvider.value(
-      value: chatRepository,
-      child: MaterialApp(
-        // ... 其餘不變
-        home: const AiChatPage(),
-      ),
-    );
-  }
-}
-```
-
-### 2. AiChatPage 注入 BLoC（`lib/pages/ai_chat_page.dart`）
-
-```dart
-// 改為從 context 取 ChatRepository，傳入 BLoC
 BlocProvider(
-  create: (context) => GeminiApiBloc(context.read<ChatRepository>()),
+  create: (_) => GeminiApiBloc(GetIt.instance<ChatRepository>()),
   child: const AiChatView(),
 )
 ```
@@ -285,6 +283,17 @@ _query 觸發
 - 每次 `saveMessage` → `_trimToLimit()` 檢查 `box.count()`
 - `count > 100`：刪除 timestamp 最小（最舊）的 1 筆
 - 每次只刪 1 筆（寫入也是 1 筆），保持 count ≤ 100
+
+---
+
+## pubspec.yaml 新增依賴
+
+```yaml
+dependencies:
+  get_it: ^8.0.0        # service locator
+  objectbox: ^5.2.0
+  objectbox_flutter_libs: ^5.2.0
+```
 
 ---
 
