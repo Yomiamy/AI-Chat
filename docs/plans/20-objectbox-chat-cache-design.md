@@ -34,13 +34,14 @@ class ChatMessage {
 
 ### Role 對應表
 
-`ChatMessage.role` 欄位以字串落地，透過 `ChatMessageRoleEnum` 做 type-safe 存取（`@Transient() get roleEnum`）。
+`ChatMessage.role` 欄位以字串落地，透過 `ChatMessageRoleEnum` 做 type-safe 存取（`@Transient() get roleEnum`）。  
+`_chatList` 項目的前綴字串由 `ChatEntryPrefix`（`lib/bloc/gemini_api/models/`）統一管理，消除 magic string。
 
-| `ChatMessageRoleEnum` | stored value | 原 `_chatList` 前綴 | 寫入時機 |
-|---|---|---|---|
-| `.prompt` | `"prompt"` | `Prompt: ...` | `_query` 開頭，使用者送出後 |
-| `.aiReply` | `"ai_reply"` | `AI reply: ...` | stream 全數收完後 |
-| `.error` | `"error"` | `Error: ...` | catch 區塊 |
+| `ChatMessageRoleEnum` | stored value | `ChatEntryPrefix` | prefix value | 寫入時機 |
+|---|---|---|---|---|
+| `.prompt` | `"prompt"` | `.prompt` | `"Prompt: "` | `_query` 開頭，使用者送出後 |
+| `.aiReply` | `"ai_reply"` | `.aiReply` | `"AI reply: "` | stream 全數收完後 |
+| `.error` | `"error"` | `.error` | `"Error: "` | catch 區塊 |
 
 ### ObjectBox 產生檔案位置
 
@@ -257,13 +258,13 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
 
 ```dart
 void _init(GeminiApiInitEvent event, Emitter<GeminiApiState> emit) async {
-  // 從 ObjectBox 載入，還原前綴格式
+  // 從 ObjectBox 載入，透過 ChatEntryPrefix 還原前綴格式
   _chatList = _repo.loadMessages().map((m) {
-    switch (m.role) {
-      case 'prompt':   return 'Prompt: ${m.content}';
-      case 'ai_reply': return 'AI reply: ${m.content}';
-      default:         return 'Error: ${m.content}';
-    }
+    return switch (m.roleEnum) {
+      ChatMessageRoleEnum.prompt  => ChatEntryPrefix.prompt.wrap(m.content),
+      ChatMessageRoleEnum.aiReply => ChatEntryPrefix.aiReply.wrap(m.content),
+      _                           => ChatEntryPrefix.error.wrap(m.content),
+    };
   }).toList();
 
   await _initFirebaseAiLogic();
