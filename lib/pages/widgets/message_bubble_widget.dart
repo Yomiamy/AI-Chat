@@ -1,10 +1,11 @@
 import 'dart:convert';
+import 'package:ai_chat/generated/assets/colors.gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../bloc/bloc.dart';
 import '../../features/foundation/style/sizes.dart';
-import '../../gen/colors.gen.dart';
 import '../../generated/l10n.dart';
 
 class MessageBubbleWidget extends StatelessWidget {
@@ -14,11 +15,10 @@ class MessageBubbleWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isAi = message.startsWith('AI reply: ');
-    final String content = isAi
-        ? message.replaceFirst('AI reply: ', '')
-        : message.replaceFirst('Prompt: ', '');
-    final bool isError = message.startsWith('Error: ');
+    final prefix = ChatEntryPrefix.of(message);
+    final bool isAi = prefix == ChatEntryPrefix.aiReply;
+    final bool isError = prefix == ChatEntryPrefix.error;
+    final String content = prefix?.strip(message) ?? message;
 
     return Align(
       alignment: isAi ? Alignment.centerLeft : Alignment.centerRight,

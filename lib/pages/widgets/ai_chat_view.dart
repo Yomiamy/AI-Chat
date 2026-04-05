@@ -1,9 +1,9 @@
+import 'package:ai_chat/generated/assets/colors.gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../bloc/bloc.dart';
 import '../../features/foundation/style/sizes.dart';
-import '../../gen/colors.gen.dart';
 import '../../generated/l10n.dart';
 import 'empty_widget.dart';
 import 'input_area_widget.dart';

@@ -14,10 +14,10 @@
 //      chatList is empty — the same widget tree _buildEmptyState()
 //      produces inside AiChatPage — without constructing GeminiApiBloc.
 
+import 'package:ai_chat/bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ai_chat/bloc/gemini_api/gemini_api_state.dart';
 import 'package:ai_chat/bloc/status.dart';
 
 // ---------------------------------------------------------------------------

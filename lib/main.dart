@@ -1,25 +1,25 @@
 import 'dart:ui' as ui;
 
+import 'package:ai_chat/generated/assets/colors.gen.dart';
 import 'package:ai_chat/pages/ai_chat_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ai_chat/generated/l10n.dart';
-import 'package:ai_chat/gen/colors.gen.dart';
+
+import 'di/di.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  
   await _initLocale();
-  
+  await configureDependencies();
+
   runApp(const MyApp());
 }
 
 Future _initLocale() async {
-// 去底層抓系統目前的預設語言
   final systemLocale = ui.PlatformDispatcher.instance.locale;
-  // 手動逼它先載入
   await S.load(systemLocale);
 }
 
