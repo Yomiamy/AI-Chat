@@ -1,0 +1,12 @@
+# Distribution certificate
+stg-distribution.p12
+
+# Ad-hoc provisioning profile
+stg-profile.mobileprovision
+
+# Firebase service account credentials
+stg-credentials.json
+
+# Fastlane generated artifacts
+report.xml
+README.md
