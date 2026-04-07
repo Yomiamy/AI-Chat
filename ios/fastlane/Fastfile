@@ -1,0 +1,83 @@
+default_platform(:ios)
+
+platform :ios do
+    desc "Build a Local Build"
+    lane :local_build do
+        import_certificate(
+            certificate_path: "fastlane/stg-distribution.p12",
+            certificate_password: ENV["CERTIFICATE_PASSWORD"],
+            keychain_name: ENV["KEYCHAIN_NAME"],
+            keychain_password: ENV["KEYCHAIN_PASSWORD"]
+        )
+        install_provisioning_profile(
+            path: "fastlane/stg-profile.mobileprovision",
+        )
+        update_code_signing_settings(
+            use_automatic_signing: false,
+            path: "Runner.xcodeproj",
+            team_id: ENV["TEAM_ID"],
+            code_sign_identity: "Apple Distribution",
+            profile_name: "(Adhoc)Ai Chat",
+            targets: ["Runner"],
+            build_configurations: ["Profile"],
+        )
+        gym(
+            workspace: "Runner.xcworkspace",
+            scheme: "Runner",
+            export_method: "ad-hoc",
+            configuration: "Profile",
+            output_directory: "../build/ios/profile",
+            output_name: "ai_chat.ipa",
+            clean: true,
+        )
+    end
+
+    desc "Build a new Beta Build"
+    lane :beta_build do
+        import_certificate(
+            certificate_path: "fastlane/stg-distribution.p12",
+            certificate_password: ENV["CERTIFICATE_PASSWORD"],
+            keychain_name: ENV["KEYCHAIN_NAME"],
+            keychain_password: ENV["KEYCHAIN_PASSWORD"]
+        )
+        install_provisioning_profile(
+            path: "fastlane/stg-profile.mobileprovision",
+        )
+        update_code_signing_settings(
+            use_automatic_signing: false,
+            path: "Runner.xcodeproj",
+            team_id: ENV["TEAM_ID"],
+            code_sign_identity: "Apple Distribution",
+            profile_name: "(Adhoc)Ai Chat",
+            targets: ["Runner"],
+            build_configurations: ["Profile"],
+        )
+        gym(
+            workspace: "Runner.xcworkspace",
+            scheme: "Runner",
+            export_method: "ad-hoc",
+            configuration: "Profile",
+            output_directory: "../build/ios/profile",
+            output_name: "ai_chat.ipa",
+            clean: true,
+        )
+    end
+
+    desc "Deploy to Firebase App Distribution"
+    lane :beta_deploy do
+        release_notes = ENV["FIREBASE_RELEASE_NOTES"].to_s.strip
+        firebase_app_distribution(
+            app: ENV["FIREBASE_APP_ID"],
+            service_credentials_file: "fastlane/stg-credentials.json",
+            ipa_path: "../build/ios/profile/ai_chat.ipa",
+            groups: ENV["FIREBASE_GROUPS"] || "qa&rd",
+            release_notes: release_notes.empty? ? "This is a beta build upload by Fastlane" : release_notes
+        )
+    end
+
+    desc "Submit a new Beta Build to Firebase App Distribution"
+    lane :beta do
+        beta_build
+        beta_deploy
+    end
+end
