@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../bloc/bloc.dart';
-import '../../bloc/gemini_api/models/chat_entry_prefix.dart';
 import '../../features/features.dart';
 import '../../generated/l10n.dart';
 import 'empty_widget.dart';
