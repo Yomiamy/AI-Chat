@@ -25,7 +25,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
   static const String _sessionStartKey = 'session_start_ms';
 
   late GenerativeModel _aiModel;
-  late List<String> _chatList;
+  List<String> _chatList = [];
   final ChatRepository _repo;
 
   GeminiApiBloc(this._repo) : super(const GeminiApiState()) {
