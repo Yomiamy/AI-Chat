@@ -40,7 +40,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     add(GeminiApiInitEvent());
   }
 
-  void _init(GeminiApiInitEvent event, Emitter<GeminiApiState> emit) async {
+  Future<void> _init(GeminiApiInitEvent event, Emitter<GeminiApiState> emit) async {
     final prefs = await SharedPreferences.getInstance();
     final sessionStartMs = prefs.getInt(_sessionStartKey);
 
