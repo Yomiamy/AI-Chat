@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:ai_chat/data/data.dart';
 import 'models/models.dart';
 import 'package:ai_chat/features/features.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_ai/firebase_ai.dart';
@@ -21,8 +22,10 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     r'!\[.*?\]\(data:(image/[^;]+);base64,([A-Za-z0-9+/=]+)\)',
   );
 
+  static const String _sessionStartKey = 'session_start_ms';
+
   late GenerativeModel _aiModel;
-  late List<String> _chatList;
+  List<String> _chatList = [];
   final ChatRepository _repo;
 
   GeminiApiBloc(this._repo) : super(const GeminiApiState()) {
@@ -31,12 +34,17 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     on<GeminiApiPickFileEvent>(_pickFile);
     on<GeminiApiPickImageEvent>(_pickImage);
     on<GeminiApiRemoveFileEvent>(_removeFile);
+    on<GeminiApiNewChatEvent>(_newChat);
+    on<GeminiApiClearAllEvent>(_clearAll);
 
     add(GeminiApiInitEvent());
   }
 
-  void _init(GeminiApiInitEvent event, Emitter<GeminiApiState> emit) async {
-    _chatList = _repo.loadMessages().map((m) {
+  Future<void> _init(GeminiApiInitEvent event, Emitter<GeminiApiState> emit) async {
+    final prefs = await SharedPreferences.getInstance();
+    final sessionStartMs = prefs.getInt(_sessionStartKey);
+
+    _chatList = _repo.loadMessages(since: sessionStartMs).map((m) {
       return switch (m.roleEnum) {
         ChatMessageRoleEnum.prompt  => ChatEntryPrefix.prompt.wrap(m.content),
         ChatMessageRoleEnum.aiReply => ChatEntryPrefix.aiReply.wrap(m.content),
@@ -46,6 +54,33 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
 
     await _initFirebaseAiLogic();
     emit(state.copyWith(chatList: _chatList.isEmpty ? null : _chatList));
+  }
+
+  Future<void> _newChat(
+    GeminiApiNewChatEvent event,
+    Emitter<GeminiApiState> emit,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_sessionStartKey, DateTime.now().millisecondsSinceEpoch);
+    _chatList = [];
+    emit(state.copyWith(
+      status: Status.initial,
+      clearChat: true,
+      clearFile: true,
+    ));
+  }
+
+  void _clearAll(
+    GeminiApiClearAllEvent event,
+    Emitter<GeminiApiState> emit,
+  ) {
+    _repo.clearAll();
+    _chatList = [];
+    emit(state.copyWith(
+      status: Status.initial,
+      clearChat: true,
+      clearFile: true,
+    ));
   }
 
   FutureOr<void> _query(

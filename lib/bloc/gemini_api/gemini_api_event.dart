@@ -30,3 +30,8 @@ class GeminiApiPickImageEvent extends GeminiApiEvent {
 }
 
 class GeminiApiRemoveFileEvent extends GeminiApiEvent {}
+
+class GeminiApiNewChatEvent extends GeminiApiEvent {}
+
+class GeminiApiClearAllEvent extends GeminiApiEvent {}
+

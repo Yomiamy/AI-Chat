@@ -10,5 +10,32 @@
   "permissionPhotoTitle": "Photo Access Required",
   "permissionPhotoDesc": "Please go to system settings and allow this app to access your photo library so you can select images to send to the AI.",
   "cancel": "Cancel",
-  "goToSettings": "Go to Settings"
+  "goToSettings": "Go to Settings",
+  "menuNewChat": "New Chat",
+  "menuClearChat": "Clear Chat",
+  "menuCopyAll": "Copy All",
+  "menuAbout": "About",
+  "clearChatTitle": "Clear all messages?",
+  "clearChatContent": "This action cannot be undone. All conversation history will be permanently deleted.",
+  "clearChatConfirm": "Clear",
+  "copiedToClipboard": "Conversation copied",
+  "aboutDialogVersion": "Version {version} (build {build})",
+  "@aboutDialogVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutDialogModel": "AI Model: {model}",
+  "@aboutDialogModel": {
+    "placeholders": {
+      "model": {
+        "type": "String"
+      }
+    }
+  }
 }

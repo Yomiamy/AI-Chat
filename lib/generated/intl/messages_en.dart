@@ -20,18 +20,38 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'en';
 
+  static String m0(model) => "AI Model: ${model}";
+
+  static String m1(version, build) => "Version ${version} (build ${build})";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+    "aboutDialogModel": m0,
+    "aboutDialogVersion": m1,
     "aiAssistantTitle": MessageLookupByLibrary.simpleMessage(
       "Gemini AI Assistant",
     ),
     "appTitle": MessageLookupByLibrary.simpleMessage("AI Chat"),
     "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
+    "clearChatConfirm": MessageLookupByLibrary.simpleMessage("Clear"),
+    "clearChatContent": MessageLookupByLibrary.simpleMessage(
+      "This action cannot be undone. All conversation history will be permanently deleted.",
+    ),
+    "clearChatTitle": MessageLookupByLibrary.simpleMessage(
+      "Clear all messages?",
+    ),
+    "copiedToClipboard": MessageLookupByLibrary.simpleMessage(
+      "Conversation copied",
+    ),
     "errorLabel": MessageLookupByLibrary.simpleMessage("Error"),
     "goToSettings": MessageLookupByLibrary.simpleMessage("Go to Settings"),
     "howCanIHelp": MessageLookupByLibrary.simpleMessage(
       "How can I help you today?",
     ),
+    "menuAbout": MessageLookupByLibrary.simpleMessage("About"),
+    "menuClearChat": MessageLookupByLibrary.simpleMessage("Clear Chat"),
+    "menuCopyAll": MessageLookupByLibrary.simpleMessage("Copy All"),
+    "menuNewChat": MessageLookupByLibrary.simpleMessage("New Chat"),
     "onlineStatus": MessageLookupByLibrary.simpleMessage("Online"),
     "permissionPhotoDesc": MessageLookupByLibrary.simpleMessage(
       "Please go to system settings and allow this app to access your photo library so you can select images to send to the AI.",

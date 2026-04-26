@@ -143,6 +143,86 @@ class S {
       args: [],
     );
   }
+
+  /// `New Chat`
+  String get menuNewChat {
+    return Intl.message('New Chat', name: 'menuNewChat', desc: '', args: []);
+  }
+
+  /// `Clear Chat`
+  String get menuClearChat {
+    return Intl.message(
+      'Clear Chat',
+      name: 'menuClearChat',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy All`
+  String get menuCopyAll {
+    return Intl.message('Copy All', name: 'menuCopyAll', desc: '', args: []);
+  }
+
+  /// `About`
+  String get menuAbout {
+    return Intl.message('About', name: 'menuAbout', desc: '', args: []);
+  }
+
+  /// `Clear all messages?`
+  String get clearChatTitle {
+    return Intl.message(
+      'Clear all messages?',
+      name: 'clearChatTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This action cannot be undone. All conversation history will be permanently deleted.`
+  String get clearChatContent {
+    return Intl.message(
+      'This action cannot be undone. All conversation history will be permanently deleted.',
+      name: 'clearChatContent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear`
+  String get clearChatConfirm {
+    return Intl.message('Clear', name: 'clearChatConfirm', desc: '', args: []);
+  }
+
+  /// `Conversation copied`
+  String get copiedToClipboard {
+    return Intl.message(
+      'Conversation copied',
+      name: 'copiedToClipboard',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Version {version} (build {build})`
+  String aboutDialogVersion(String version, String build) {
+    return Intl.message(
+      'Version $version (build $build)',
+      name: 'aboutDialogVersion',
+      desc: '',
+      args: [version, build],
+    );
+  }
+
+  /// `AI Model: {model}`
+  String aboutDialogModel(String model) {
+    return Intl.message(
+      'AI Model: $model',
+      name: 'aboutDialogModel',
+      desc: '',
+      args: [model],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {
