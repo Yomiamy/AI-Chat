@@ -17,6 +17,8 @@ A modern AI chat application built with Flutter and Firebase AI (Gemini). This p
     -   Full Markdown rendering (including code blocks with syntax highlighting and inline images).
     -   Automatic bottom-scrolling with smooth animations.
     -   Responsive input area with physical keyboard support (Enter to send, Shift+Enter for newline).
+    -   **AppBar Menu**: Convenient actions for clearing chat, copying messages, and viewing application details.
+-   **Session Management**: Implements chat session handling and data persistence across restarts.
 -   **Robust Architecture**: Utilizes the BLoC (Business Logic Component) pattern for clean, predictable state management.
 -   **Dependency Injection**: Structured DI container for repository and bloc instance management.
 -   **Localization (i18n)**: Multi-language support (English and Traditional Chinese) using `.arb` files.
@@ -29,6 +31,7 @@ A modern AI chat application built with Flutter and Firebase AI (Gemini). This p
 -   **Language**: [Dart](https://dart.dev)
 -   **State Management**: [flutter_bloc](https://pub.dev/packages/flutter_bloc) (v9.1.1)
 -   **AI Engine**: [firebase_ai](https://pub.dev/packages/firebase_ai) (v3.7.0)
+-   **Data Persistence**: `shared_preferences` for session state caching.
 -   **UI & Utilities**:
     -   `flutter_markdown`: For rendering AI-generated Markdown content.
     -   `url_launcher`: Handling link interactions within the chat.
