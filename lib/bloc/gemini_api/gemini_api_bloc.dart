@@ -65,7 +65,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     _chatList = [];
     emit(state.copyWith(
       status: Status.initial,
-      chatList: null,
+      clearChat: true,
       clearFile: true,
     ));
   }
@@ -78,7 +78,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     _chatList = [];
     emit(state.copyWith(
       status: Status.initial,
-      chatList: null,
+      clearChat: true,
       clearFile: true,
     ));
   }
