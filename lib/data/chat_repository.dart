@@ -2,8 +2,15 @@ import '../generated/objectbox/objectbox.g.dart';
 import 'chat_message.dart';
 
 abstract interface class ChatRepository {
-  List<ChatMessage> loadMessages();
+  /// Returns up to [_maxMessages] messages ordered newest-first.
+  /// If [since] is provided, only messages with `timestamp > since` are returned.
+  List<ChatMessage> loadMessages({int? since});
+
   void saveMessage({required ChatMessageRoleEnum role, required String content});
+
+  /// Removes ALL messages from the store. Irreversible.
+  void clearAll();
+
   void dispose();
 }
 
@@ -26,13 +33,19 @@ class ChatRepo implements ChatRepository {
   @override
   void dispose() => _store.close();
 
+  @override
+  void clearAll() => _box.removeAll();
+
   /// Returns up to [_maxMessages] messages ordered newest-first (descending timestamp).
   @override
-  List<ChatMessage> loadMessages() {
+  List<ChatMessage> loadMessages({int? since}) {
+    final builder =
+        since != null
+            ? _box.query(ChatMessage_.timestamp.greaterThan(since))
+            : _box.query();
+
     final query =
-        _box
-            .query()
-            .order(ChatMessage_.timestamp, flags: Order.descending)
+        (builder..order(ChatMessage_.timestamp, flags: Order.descending))
             .build()
           ..limit = _maxMessages;
     try {
