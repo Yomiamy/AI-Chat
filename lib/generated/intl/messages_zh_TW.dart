@@ -20,14 +20,30 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'zh_TW';
 
+  static String m0(model) => "AI 模型：${model}";
+
+  static String m1(version, build) => "版本 ${version} (build ${build})";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+    "aboutDialogModel": m0,
+    "aboutDialogVersion": m1,
     "aiAssistantTitle": MessageLookupByLibrary.simpleMessage("Gemini AI 助理"),
     "appTitle": MessageLookupByLibrary.simpleMessage("AI 聊天"),
     "cancel": MessageLookupByLibrary.simpleMessage("取消"),
+    "clearChatConfirm": MessageLookupByLibrary.simpleMessage("清除"),
+    "clearChatContent": MessageLookupByLibrary.simpleMessage(
+      "此操作無法復原，所有對話記錄將被永久刪除。",
+    ),
+    "clearChatTitle": MessageLookupByLibrary.simpleMessage("清除所有對話？"),
+    "copiedToClipboard": MessageLookupByLibrary.simpleMessage("已複製對話記錄"),
     "errorLabel": MessageLookupByLibrary.simpleMessage("錯誤"),
     "goToSettings": MessageLookupByLibrary.simpleMessage("前往設定"),
     "howCanIHelp": MessageLookupByLibrary.simpleMessage("今天能怎麼幫助你？"),
+    "menuAbout": MessageLookupByLibrary.simpleMessage("關於"),
+    "menuClearChat": MessageLookupByLibrary.simpleMessage("清除對話"),
+    "menuCopyAll": MessageLookupByLibrary.simpleMessage("複製對話"),
+    "menuNewChat": MessageLookupByLibrary.simpleMessage("新對話"),
     "onlineStatus": MessageLookupByLibrary.simpleMessage("上線中"),
     "permissionPhotoDesc": MessageLookupByLibrary.simpleMessage(
       "請前往系統設定，允許此 App 存取相片庫，才能選取圖片傳送給 AI。",

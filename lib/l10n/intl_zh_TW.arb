@@ -10,5 +10,32 @@
   "permissionPhotoTitle": "需要相片存取權限",
   "permissionPhotoDesc": "請前往系統設定，允許此 App 存取相片庫，才能選取圖片傳送給 AI。",
   "cancel": "取消",
-  "goToSettings": "前往設定"
+  "goToSettings": "前往設定",
+  "menuNewChat": "新對話",
+  "menuClearChat": "清除對話",
+  "menuCopyAll": "複製對話",
+  "menuAbout": "關於",
+  "clearChatTitle": "清除所有對話？",
+  "clearChatContent": "此操作無法復原，所有對話記錄將被永久刪除。",
+  "clearChatConfirm": "清除",
+  "copiedToClipboard": "已複製對話記錄",
+  "aboutDialogVersion": "版本 {version} (build {build})",
+  "@aboutDialogVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutDialogModel": "AI 模型：{model}",
+  "@aboutDialogModel": {
+    "placeholders": {
+      "model": {
+        "type": "String"
+      }
+    }
+  }
 }

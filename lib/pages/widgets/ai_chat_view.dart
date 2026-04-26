@@ -1,9 +1,11 @@
 import 'package:ai_chat/generated/assets/colors.gen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../bloc/bloc.dart';
-import '../../features/foundation/style/sizes.dart';
+import '../../bloc/gemini_api/models/chat_entry_prefix.dart';
+import '../../features/features.dart';
 import '../../generated/l10n.dart';
 import 'empty_widget.dart';
 import 'input_area_widget.dart';
@@ -16,6 +18,8 @@ class AiChatView extends StatefulWidget {
   @override
   State<AiChatView> createState() => _AiChatViewState();
 }
+
+enum _MenuAction { newChat, clearChat, copyAll, about }
 
 class _AiChatViewState extends State<AiChatView> {
   final ScrollController _scrollController = ScrollController();
@@ -68,9 +72,44 @@ class _AiChatViewState extends State<AiChatView> {
           ],
         ),
         actions: [
-          IconButton(
+          PopupMenuButton<_MenuAction>(
             icon: const Icon(Icons.more_vert, color: ColorName.color8a000000),
-            onPressed: () {},
+            onSelected: (action) => _onMenuSelected(context, action),
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: _MenuAction.newChat,
+                child: Row(children: [
+                  const Icon(Icons.add_comment_outlined),
+                  const SizedBox(width: Sizes.paddingS),
+                  Text(S.current.menuNewChat),
+                ]),
+              ),
+              PopupMenuItem(
+                value: _MenuAction.clearChat,
+                child: Row(children: [
+                  const Icon(Icons.delete_outline),
+                  const SizedBox(width: Sizes.paddingS),
+                  Text(S.current.menuClearChat),
+                ]),
+              ),
+              PopupMenuItem(
+                value: _MenuAction.copyAll,
+                child: Row(children: [
+                  const Icon(Icons.copy_outlined),
+                  const SizedBox(width: Sizes.paddingS),
+                  Text(S.current.menuCopyAll),
+                ]),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem(
+                value: _MenuAction.about,
+                child: Row(children: [
+                  const Icon(Icons.info_outline),
+                  const SizedBox(width: Sizes.paddingS),
+                  Text(S.current.menuAbout),
+                ]),
+              ),
+            ],
           ),
         ],
       ),
@@ -108,6 +147,31 @@ class _AiChatViewState extends State<AiChatView> {
         },
       ),
     );
+  }
+
+  void _onMenuSelected(BuildContext context, _MenuAction action) {
+    switch (action) {
+      case _MenuAction.newChat:
+        context.read<GeminiApiBloc>().add(GeminiApiNewChatEvent());
+      case _MenuAction.clearChat:
+        _confirmClearChat(context);
+      case _MenuAction.copyAll:
+        _copyAllMessages(context);
+      case _MenuAction.about:
+        _showAboutDialog(context);
+    }
+  }
+
+  void _confirmClearChat(BuildContext context) {
+    // Implemented in Task 10
+  }
+
+  void _copyAllMessages(BuildContext context) {
+    // Implemented in Task 11
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    // Implemented in Task 12
   }
 
   void _scrollToBottom() {
