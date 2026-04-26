@@ -163,15 +163,73 @@ class _AiChatViewState extends State<AiChatView> {
   }
 
   void _confirmClearChat(BuildContext context) {
-    // Implemented in Task 10
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(S.current.clearChatTitle),
+        content: Text(S.current.clearChatContent),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(S.current.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<GeminiApiBloc>().add(GeminiApiClearAllEvent());
+              Navigator.of(dialogContext).pop();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text(S.current.clearChatConfirm),
+          ),
+        ],
+      ),
+    );
   }
 
   void _copyAllMessages(BuildContext context) {
-    // Implemented in Task 11
+    final state = context.read<GeminiApiBloc>().state;
+    final chatList = state.chatList ?? const <String>[];
+
+    final buffer = StringBuffer();
+    // chatList 為 newest-first，reversed 才是時間順序
+    for (final entry in chatList.reversed) {
+      final prefix = ChatEntryPrefix.of(entry);
+      final readable = switch (prefix) {
+        ChatEntryPrefix.prompt => '👤 You: ${ChatEntryPrefix.prompt.strip(entry)}',
+        ChatEntryPrefix.aiReply =>
+          '🤖 Gemini: ${ChatEntryPrefix.aiReply.strip(entry)}',
+        ChatEntryPrefix.error => '⚠️ Error: ${ChatEntryPrefix.error.strip(entry)}',
+        _ => entry,
+      };
+      buffer.writeln(readable);
+      buffer.writeln();
+    }
+
+    Clipboard.setData(ClipboardData(text: buffer.toString()));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(S.current.copiedToClipboard)),
+    );
   }
 
   void _showAboutDialog(BuildContext context) {
-    // Implemented in Task 12
+    showAboutDialog(
+      context: context,
+      applicationName: S.current.appTitle,
+      applicationVersion: S.current.aboutDialogVersion(
+        AppConstants.appVersion,
+        AppConstants.buildNumber,
+      ),
+      applicationIcon: const CircleAvatar(
+        backgroundColor: ColorName.colorFf673ab7,
+        child: Icon(Icons.auto_awesome, color: ColorName.colorFfffffff),
+      ),
+      children: [
+        const SizedBox(height: Sizes.paddingM),
+        Text(S.current.aboutDialogModel(AppConstants.aiModel)),
+        const SizedBox(height: Sizes.paddingS),
+        Text(AppConstants.aiProvider),
+      ],
+    );
   }
 
   void _scrollToBottom() {
