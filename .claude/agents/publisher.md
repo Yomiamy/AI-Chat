@@ -21,7 +21,7 @@ tools: [Bash, Read, Write]
 
 ## 使用的 Skills
 - `gen-pr` — 生成草稿 + 可選建立 PR
-- `superpowers:finishing-a-development-branch` — 收尾流程
+- `finishing-a-development-branch` — 收尾流程
 
 ## 完成條件
 PR 已建立（URL 回報給使用者），worktree 已清理。

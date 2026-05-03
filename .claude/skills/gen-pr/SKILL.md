@@ -146,7 +146,7 @@ Only include the ticket line when a matching ticket can be resolved from the bra
 ## 👻 Describe your changes
 
 ### Summary
-[APP-1234](https://eslite.youtrack.cloud/issue/APP-1234) 禮品商品版面異常
+[APP-1234](https://<your-org>.youtrack.cloud/issue/APP-1234) 禮品商品版面異常
 
 **[修正問題]**
 

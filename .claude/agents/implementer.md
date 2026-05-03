@@ -20,7 +20,7 @@ tools: [Read, Write, Edit, Bash, Glob, Grep]
 - 不跳過任何 review 階段
 
 ## 使用的 Skills
-- `superpowers:subagent-driven-development` — 主要執行框架
+- `subagent-driven-development` — 主要執行框架
 - `gen-commit` — 功能單元 commit
 
 ## 完成條件

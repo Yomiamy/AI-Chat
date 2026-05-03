@@ -20,7 +20,7 @@ tools: [Bash, Read, Write, Edit]
 - 修改後重新驗證
 
 ## 使用的 Skills
-- `superpowers:receiving-code-review` — 評估意見、決定接受或 pushback
+- `receiving-code-review` — 評估意見、決定接受或 pushback
 - `gen-pr-reply` — 回覆 GitHub PR inline comments
 
 ## 完成條件

@@ -20,8 +20,8 @@ tools: [Read, Write, Bash, Glob, Grep]
 - 任務夠小：每步驟一個動作，包含完整程式碼與指令
 
 ## 使用的 Skills
-- `superpowers:brainstorming` — 需求探索
-- `superpowers:writing-plans` — 計畫文件
+- `brainstorming` — 需求探索
+- `writing-plans` — 計畫文件
 
 ## 完成條件
 計畫文件已寫入 `docs/plans/YYYY-MM-DD-<feature>.md`，內容包含實作方向的 trade-off 分析，並列出可供選擇的執行方式（subagent-driven / parallel session）。

@@ -21,7 +21,7 @@ tools: [Bash, Read, Glob, Grep]
 
 ## 使用的 Skills
 - `gen-pr-code-review` — 深度 code review
-- `superpowers:verification-before-completion` — 強制驗證紀律
+- `verification-before-completion` — 強制驗證紀律
 
 ## 完成條件
 審查無 Critical/Important 問題，測試全部通過，回報給 publisher subagent。

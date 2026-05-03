@@ -155,12 +155,12 @@ description: |
 
 | 階段 | Subagent | Model | 核心 Skills |
 |------|----------|-------|-------------|
-| 構思規劃 | @planner | Opus | superpowers:brainstorming, superpowers:writing-plans |
+| 構思規劃 | @planner | Opus | brainstorming, writing-plans |
 | 建立分支 | @brancher | Sonnet | gen-issue-from-plan, gen-branch |
-| 實作 | @implementer | Sonnet | superpowers:subagent-driven-development, gen-commit |
-| 審查 | @reviewer | Opus | gen-pr-code-review, superpowers:verification-before-completion |
-| 回覆 Review | @responder | Sonnet | superpowers:receiving-code-review, gen-pr-reply |
-| 發布 | @publisher | Sonnet | gen-pr, superpowers:finishing-a-development-branch |
+| 實作 | @implementer | Sonnet | subagent-driven-development, gen-commit |
+| 審查 | @reviewer | Opus | gen-pr-code-review, verification-before-completion |
+| 回覆 Review | @responder | Sonnet | receiving-code-review, gen-pr-reply |
+| 發布 | @publisher | Sonnet | gen-pr, finishing-a-development-branch |
 
 ---
 
