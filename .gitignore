@@ -1,6 +1,9 @@
 # Git worktrees
 .worktrees/
 
+# Claude Code workflow state (local only, not shared across developers)
+.claude/workflow-state.json
+
 # Miscellaneous
 *.class
 *.lock
