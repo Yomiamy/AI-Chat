@@ -233,14 +233,14 @@ description: |
 
 | Command | Stage | Action |
 |---------|-------|--------|
-| `/dev-workflow` | — | Check workflow state / start new |
-| `/dev-workflow spec <description>` | 0a | Write feature spec |
-| `/dev-workflow plan <spec-path>` | 0b | Write implementation plan |
-| `/dev-workflow branch <issue>` | 1 | Create branch |
-| `/dev-workflow implement <plan-path>` | 2 | Run implementation |
-| `/dev-workflow code-review <branch>` | 3 | Run code review |
-| `/dev-workflow publish <branch>` | 4 | Create PR |
-| `/dev-workflow review #<PR>` | 5 | Handle PR review comments |
+| `/dev-workflow` | — | 查看目前流程狀態 / 開始新流程 |
+| `/dev-workflow spec <description>` | 0a | 撰寫功能規格 |
+| `/dev-workflow plan <spec-path>` | 0b | 產出實作計畫 |
+| `/dev-workflow branch <issue>` | 1 | 建立 Issue + 分支 |
+| `/dev-workflow implement <plan-path>` | 2 | 執行實作 |
+| `/dev-workflow code-review <branch>` | 3 | 執行代碼審查 |
+| `/dev-workflow publish <branch>` | 4 | 建立 PR |
+| `/dev-workflow review #<PR>` | 5 | 處理 PR review 意見 |
 
 ---
 
