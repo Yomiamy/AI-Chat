@@ -73,8 +73,9 @@ void main() {
 
     String stripContent(String item) {
       const prefix = 'AI reply: ';
-      final content =
-          item.startsWith(prefix) ? item.substring(prefix.length) : item;
+      final content = item.startsWith(prefix)
+          ? item.substring(prefix.length)
+          : item;
       return stripAiBase64(content);
     }
 

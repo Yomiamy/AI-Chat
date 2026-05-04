@@ -74,7 +74,8 @@ class _InputAreaWidgetState extends State<InputAreaWidget> {
                   GestureDetector(
                     onTap: () => context.read<GeminiApiBloc>().add(
                       GeminiApiPickImageEvent(
-                        onPermissionDenied: () => _showPermissionDialog(context),
+                        onPermissionDenied: () =>
+                            _showPermissionDialog(context),
                       ),
                     ),
                     child: Container(
@@ -92,7 +93,9 @@ class _InputAreaWidgetState extends State<InputAreaWidget> {
                   ),
                   const SizedBox(width: Sizes.paddingS),
                   GestureDetector(
-                    onTap: () => context.read<GeminiApiBloc>().add(GeminiApiPickFileEvent()),
+                    onTap: () => context.read<GeminiApiBloc>().add(
+                      GeminiApiPickFileEvent(),
+                    ),
                     child: Container(
                       padding: const EdgeInsets.all(Sizes.paddingSM),
                       decoration: const BoxDecoration(

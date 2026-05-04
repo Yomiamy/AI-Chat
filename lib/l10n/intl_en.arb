@@ -19,6 +19,13 @@
   "clearChatContent": "This action cannot be undone. All conversation history will be permanently deleted.",
   "clearChatConfirm": "Clear",
   "copiedToClipboard": "Conversation copied",
+  "searchHint": "Search messages...",
+  "noSearchResults": "No matching messages found",
+  "startSearching": "Search through your history",
+  "menuExport": "Export Chat",
+  "exportTxt": "Plain Text (.txt)",
+  "exportMd": "Markdown (.md)",
+  "exportTitle": "Select Export Format",
   "aboutDialogVersion": "Version {version} (build {build})",
   "@aboutDialogVersion": {
     "placeholders": {
