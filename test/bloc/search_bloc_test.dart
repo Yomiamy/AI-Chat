@@ -34,7 +34,7 @@ void main() {
       build: () {
         when(
           () => mockRepository.searchMessages('flutter'),
-        ).thenReturn(mockResults);
+        ).thenAnswer((_) async => mockResults);
         return searchBloc;
       },
       act: (bloc) => bloc.add(const SearchQueryChanged('flutter')),
@@ -54,7 +54,9 @@ void main() {
     blocTest<SearchBloc, SearchState>(
       'emits [searching, empty] when query has no results',
       build: () {
-        when(() => mockRepository.searchMessages('unknown')).thenReturn([]);
+        when(
+          () => mockRepository.searchMessages('unknown'),
+        ).thenAnswer((_) async => []);
         return searchBloc;
       },
       act: (bloc) => bloc.add(const SearchQueryChanged('unknown')),

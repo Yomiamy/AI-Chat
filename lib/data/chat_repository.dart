@@ -14,7 +14,7 @@ abstract interface class ChatRepository {
   /// Removes ALL messages from the store. Irreversible.
   void clearAll();
 
-  List<ChatMessage> searchMessages(String query);
+  Future<List<ChatMessage>> searchMessages(String query);
 
   void dispose();
 }
@@ -60,14 +60,15 @@ class ChatRepo implements ChatRepository {
   }
 
   @override
-  List<ChatMessage> searchMessages(String query) {
+  Future<List<ChatMessage>> searchMessages(String query) async {
     if (query.isEmpty) return [];
     final q = _box
         .query(ChatMessage_.content.contains(query, caseSensitive: false))
         .order(ChatMessage_.timestamp, flags: Order.descending)
-        .build();
+        .build()
+      ..limit = _maxMessages;
     try {
-      return q.find();
+      return await q.findAsync();
     } finally {
       q.close();
     }

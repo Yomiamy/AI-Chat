@@ -3,12 +3,14 @@ part of 'gemini_api_bloc.dart';
 class GeminiApiState extends Equatable {
   final Status? status;
   final List<String>? chatList;
+  final List<ChatMessage>? messages;
   final Uint8List? selectedFileBytes;
   final String? selectedMimeType;
 
   const GeminiApiState({
     this.status = Status.initial,
     this.chatList,
+    this.messages,
     this.selectedFileBytes,
     this.selectedMimeType,
   });
@@ -16,6 +18,7 @@ class GeminiApiState extends Equatable {
   GeminiApiState copyWith({
     Status? status,
     List<String>? chatList,
+    List<ChatMessage>? messages,
     Uint8List? selectedFileBytes,
     String? selectedMimeType,
     bool clearFile = false,
@@ -24,6 +27,7 @@ class GeminiApiState extends Equatable {
     return GeminiApiState(
       status: status ?? this.status,
       chatList: clearChat ? null : (chatList ?? this.chatList),
+      messages: clearChat ? null : (messages ?? this.messages),
       selectedFileBytes: clearFile
           ? null
           : (selectedFileBytes ?? this.selectedFileBytes),
@@ -37,6 +41,7 @@ class GeminiApiState extends Equatable {
   List<Object?> get props => [
     status,
     chatList,
+    messages,
     selectedFileBytes,
     selectedMimeType,
   ];

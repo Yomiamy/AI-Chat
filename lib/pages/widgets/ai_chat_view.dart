@@ -342,22 +342,7 @@ class _AiChatViewState extends State<AiChatView> {
     if (_isSearching && searchState.results.isNotEmpty) {
       messages = searchState.results;
     } else {
-      final chatList = chatState.chatList ?? [];
-      messages = chatList.map((entry) {
-        final prefix = ChatEntryPrefix.of(entry);
-        final content = prefix?.strip(entry) ?? entry;
-        final role = switch (prefix) {
-          ChatEntryPrefix.prompt => ChatMessageRoleEnum.prompt,
-          ChatEntryPrefix.aiReply => ChatMessageRoleEnum.aiReply,
-          _ => ChatMessageRoleEnum.error,
-        };
-        return ChatMessage(
-          content: content,
-          timestamp: DateTime.now()
-              .millisecondsSinceEpoch, // 這裡僅作為佔位，實務上 loadMessages 才有精確時間
-          role: role.value,
-        );
-      }).toList();
+      messages = chatState.messages ?? [];
     }
 
     if (messages.isEmpty) return;

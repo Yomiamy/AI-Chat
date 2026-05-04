@@ -26,6 +26,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
 
   late GenerativeModel _aiModel;
   List<String> _chatList = [];
+  List<ChatMessage> _messages = [];
   final ChatRepository _repo;
 
   GeminiApiBloc(this._repo) : super(const GeminiApiState()) {
@@ -47,7 +48,8 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     final prefs = await SharedPreferences.getInstance();
     final sessionStartMs = prefs.getInt(_sessionStartKey);
 
-    _chatList = _repo.loadMessages(since: sessionStartMs).map((m) {
+    _messages = _repo.loadMessages(since: sessionStartMs);
+    _chatList = _messages.map((m) {
       return switch (m.roleEnum) {
         ChatMessageRoleEnum.prompt => ChatEntryPrefix.prompt.wrap(m.content),
         ChatMessageRoleEnum.aiReply => ChatEntryPrefix.aiReply.wrap(m.content),
@@ -56,7 +58,10 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     }).toList();
 
     await _initFirebaseAiLogic();
-    emit(state.copyWith(chatList: _chatList.isEmpty ? null : _chatList));
+    emit(state.copyWith(
+      chatList: _chatList.isEmpty ? null : _chatList,
+      messages: _messages.isEmpty ? null : _messages,
+    ));
   }
 
   Future<void> _newChat(
@@ -66,6 +71,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_sessionStartKey, DateTime.now().millisecondsSinceEpoch);
     _chatList = [];
+    _messages = [];
     emit(
       state.copyWith(status: Status.initial, clearChat: true, clearFile: true),
     );
@@ -74,6 +80,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
   void _clearAll(GeminiApiClearAllEvent event, Emitter<GeminiApiState> emit) {
     _repo.clearAll();
     _chatList = [];
+    _messages = [];
     emit(
       state.copyWith(status: Status.initial, clearChat: true, clearFile: true),
     );
@@ -106,12 +113,25 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     _chatList.insert(0, ChatEntryPrefix.prompt.wrap(userMessage));
 
     // ① 使用者送出後寫入快取（base64 圖片替換為佔位符）
-    _repo.saveMessage(
-      role: ChatMessageRoleEnum.prompt,
-      content: _stripBase64(userMessage),
+    final userContent = _stripBase64(userMessage);
+    _repo.saveMessage(role: ChatMessageRoleEnum.prompt, content: userContent);
+
+    _messages.insert(
+      0,
+      ChatMessage(
+        role: ChatMessageRoleEnum.prompt.value,
+        content: userContent,
+        timestamp: DateTime.now().millisecondsSinceEpoch,
+      ),
     );
 
-    emit(state.copyWith(status: Status.newPrompt, chatList: _chatList));
+    emit(
+      state.copyWith(
+        status: Status.newPrompt,
+        chatList: _chatList,
+        messages: _messages,
+      ),
+    );
 
     try {
       emit(state.copyWith(status: Status.loading));
@@ -162,17 +182,47 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
       // ② stream 全數完成後寫入 AI 回覆（Gemini 空回覆時略過）
       if (_chatList.isNotEmpty &&
           ChatEntryPrefix.aiReply.matches(_chatList.first)) {
-        _repo.saveMessage(
-          role: ChatMessageRoleEnum.aiReply,
-          content: _stripContent(_chatList.first),
+        final aiContent = _stripContent(_chatList.first);
+        _repo.saveMessage(role: ChatMessageRoleEnum.aiReply, content: aiContent);
+
+        _messages.insert(
+          0,
+          ChatMessage(
+            role: ChatMessageRoleEnum.aiReply.value,
+            content: aiContent,
+            timestamp: DateTime.now().millisecondsSinceEpoch,
+          ),
         );
       }
-      emit(state.copyWith(status: Status.success, chatList: _chatList));
+      emit(
+        state.copyWith(
+          status: Status.success,
+          chatList: _chatList,
+          messages: _messages,
+        ),
+      );
     } catch (e) {
       // ③ 錯誤時寫入快取
-      _repo.saveMessage(role: ChatMessageRoleEnum.error, content: e.toString());
-      emit(state.copyWith(status: Status.failure));
-      _chatList.insert(0, ChatEntryPrefix.error.wrap('$e'));
+      final errorMsg = e.toString();
+      _repo.saveMessage(role: ChatMessageRoleEnum.error, content: errorMsg);
+
+      _messages.insert(
+        0,
+        ChatMessage(
+          role: ChatMessageRoleEnum.error.value,
+          content: errorMsg,
+          timestamp: DateTime.now().millisecondsSinceEpoch,
+        ),
+      );
+
+      _chatList.insert(0, ChatEntryPrefix.error.wrap(errorMsg));
+      emit(
+        state.copyWith(
+          status: Status.failure,
+          chatList: _chatList,
+          messages: _messages,
+        ),
+      );
     }
   }
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rxdart/rxdart.dart';
 import '../../data/chat_message.dart';
@@ -21,7 +22,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
   }
 
   EventTransformer<T> _debounce<T>(Duration duration) {
-    return (events, mapper) => events.debounceTime(duration).flatMap(mapper);
+    return (events, mapper) => events.debounceTime(duration).switchMap(mapper);
   }
 
   Future<void> _onSearchQueryChanged(
@@ -37,7 +38,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     emit(state.copyWith(query: query, status: SearchStatus.searching));
 
     try {
-      final results = _repository.searchMessages(query);
+      final results = await _repository.searchMessages(query);
       if (results.isEmpty) {
         emit(state.copyWith(results: [], status: SearchStatus.empty));
       } else {

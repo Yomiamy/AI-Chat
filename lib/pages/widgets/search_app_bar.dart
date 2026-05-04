@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class SearchAppBar extends StatelessWidget implements PreferredSizeWidget {
+class SearchAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String query;
   final ValueChanged<String> onQueryChanged;
   final VoidCallback onBack;
@@ -17,35 +17,60 @@ class SearchAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
+  State<SearchAppBar> createState() => _SearchAppBarState();
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
+
+class _SearchAppBarState extends State<SearchAppBar> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.query);
+  }
+
+  @override
+  void didUpdateWidget(SearchAppBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.query != _controller.text) {
+      _controller.text = widget.query;
+      _controller.selection = TextSelection.collapsed(
+        offset: _controller.text.length,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return AppBar(
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
-        onPressed: onBack,
+        onPressed: widget.onBack,
       ),
       title: TextField(
+        controller: _controller,
         autofocus: true,
         decoration: InputDecoration(
-          hintText: hintText,
+          hintText: widget.hintText,
           border: InputBorder.none,
           hintStyle: const TextStyle(color: Colors.grey),
         ),
         style: const TextStyle(fontSize: 18),
-        onChanged: onQueryChanged,
-        controller: TextEditingController.fromValue(
-          TextEditingValue(
-            text: query,
-            selection: TextSelection.collapsed(offset: query.length),
-          ),
-        ),
+        onChanged: widget.onQueryChanged,
       ),
       actions: [
-        if (query.isNotEmpty)
-          IconButton(icon: const Icon(Icons.clear), onPressed: onClear),
+        if (widget.query.isNotEmpty)
+          IconButton(icon: const Icon(Icons.clear), onPressed: widget.onClear),
       ],
     );
   }
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
