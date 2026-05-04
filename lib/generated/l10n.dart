@@ -204,6 +204,66 @@ class S {
     );
   }
 
+  /// `Search messages...`
+  String get searchHint {
+    return Intl.message(
+      'Search messages...',
+      name: 'searchHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No matching messages found`
+  String get noSearchResults {
+    return Intl.message(
+      'No matching messages found',
+      name: 'noSearchResults',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Search through your history`
+  String get startSearching {
+    return Intl.message(
+      'Search through your history',
+      name: 'startSearching',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Export Chat`
+  String get menuExport {
+    return Intl.message('Export Chat', name: 'menuExport', desc: '', args: []);
+  }
+
+  /// `Plain Text (.txt)`
+  String get exportTxt {
+    return Intl.message(
+      'Plain Text (.txt)',
+      name: 'exportTxt',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Markdown (.md)`
+  String get exportMd {
+    return Intl.message('Markdown (.md)', name: 'exportMd', desc: '', args: []);
+  }
+
+  /// `Select Export Format`
+  String get exportTitle {
+    return Intl.message(
+      'Select Export Format',
+      name: 'exportTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Version {version} (build {build})`
   String aboutDialogVersion(String version, String build) {
     return Intl.message(
@@ -231,6 +291,7 @@ class AppLocalizationDelegate extends LocalizationsDelegate<S> {
   List<Locale> get supportedLocales {
     return const <Locale>[
       Locale.fromSubtags(languageCode: 'en'),
+      Locale.fromSubtags(languageCode: 'zh'),
       Locale.fromSubtags(languageCode: 'zh', countryCode: 'TW'),
     ];
   }

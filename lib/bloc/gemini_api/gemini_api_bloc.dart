@@ -40,15 +40,18 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     add(GeminiApiInitEvent());
   }
 
-  Future<void> _init(GeminiApiInitEvent event, Emitter<GeminiApiState> emit) async {
+  Future<void> _init(
+    GeminiApiInitEvent event,
+    Emitter<GeminiApiState> emit,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final sessionStartMs = prefs.getInt(_sessionStartKey);
 
     _chatList = _repo.loadMessages(since: sessionStartMs).map((m) {
       return switch (m.roleEnum) {
-        ChatMessageRoleEnum.prompt  => ChatEntryPrefix.prompt.wrap(m.content),
+        ChatMessageRoleEnum.prompt => ChatEntryPrefix.prompt.wrap(m.content),
         ChatMessageRoleEnum.aiReply => ChatEntryPrefix.aiReply.wrap(m.content),
-        _                           => ChatEntryPrefix.error.wrap(m.content),
+        _ => ChatEntryPrefix.error.wrap(m.content),
       };
     }).toList();
 
@@ -63,24 +66,17 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_sessionStartKey, DateTime.now().millisecondsSinceEpoch);
     _chatList = [];
-    emit(state.copyWith(
-      status: Status.initial,
-      clearChat: true,
-      clearFile: true,
-    ));
+    emit(
+      state.copyWith(status: Status.initial, clearChat: true, clearFile: true),
+    );
   }
 
-  void _clearAll(
-    GeminiApiClearAllEvent event,
-    Emitter<GeminiApiState> emit,
-  ) {
+  void _clearAll(GeminiApiClearAllEvent event, Emitter<GeminiApiState> emit) {
     _repo.clearAll();
     _chatList = [];
-    emit(state.copyWith(
-      status: Status.initial,
-      clearChat: true,
-      clearFile: true,
-    ));
+    emit(
+      state.copyWith(status: Status.initial, clearChat: true, clearFile: true),
+    );
   }
 
   FutureOr<void> _query(
@@ -93,9 +89,15 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
 
     // 檢查檔案大小是否超過 5MB
     if (fileBytes != null && fileBytes.lengthInBytes > 5 * 1024 * 1024) {
-      _chatList.insert(0, ChatEntryPrefix.prompt.wrap('$prompt\n\n[附件被拒絕：檔案大小超過 5MB 限制]'));
+      _chatList.insert(
+        0,
+        ChatEntryPrefix.prompt.wrap('$prompt\n\n[附件被拒絕：檔案大小超過 5MB 限制]'),
+      );
       _chatList.insert(0, ChatEntryPrefix.error.wrap('上傳檔案大小不得超過 5MB'));
-      _repo.saveMessage(role: ChatMessageRoleEnum.error, content: '上傳檔案大小不得超過 5MB');
+      _repo.saveMessage(
+        role: ChatMessageRoleEnum.error,
+        content: '上傳檔案大小不得超過 5MB',
+      );
       emit(state.copyWith(status: Status.failure, chatList: _chatList));
       return;
     }
@@ -104,7 +106,10 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     _chatList.insert(0, ChatEntryPrefix.prompt.wrap(userMessage));
 
     // ① 使用者送出後寫入快取（base64 圖片替換為佔位符）
-    _repo.saveMessage(role: ChatMessageRoleEnum.prompt, content: _stripBase64(userMessage));
+    _repo.saveMessage(
+      role: ChatMessageRoleEnum.prompt,
+      content: _stripBase64(userMessage),
+    );
 
     emit(state.copyWith(status: Status.newPrompt, chatList: _chatList));
 
@@ -142,7 +147,9 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
                 ..write(_chatList.removeAt(0))
                 ..write(' ${markdownBuffer.toString()}');
             } else {
-              aiReply.write(ChatEntryPrefix.aiReply.wrap(markdownBuffer.toString()));
+              aiReply.write(
+                ChatEntryPrefix.aiReply.wrap(markdownBuffer.toString()),
+              );
             }
             _chatList.insert(0, aiReply.toString());
           }
@@ -153,7 +160,8 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
       }
 
       // ② stream 全數完成後寫入 AI 回覆（Gemini 空回覆時略過）
-      if (_chatList.isNotEmpty && ChatEntryPrefix.aiReply.matches(_chatList.first)) {
+      if (_chatList.isNotEmpty &&
+          ChatEntryPrefix.aiReply.matches(_chatList.first)) {
         _repo.saveMessage(
           role: ChatMessageRoleEnum.aiReply,
           content: _stripContent(_chatList.first),
@@ -222,9 +230,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     _aiModel = FirebaseAI.googleAI().generativeModel(
       model: 'gemini-2.5-flash',
       generationConfig: GenerationConfig(
-        responseModalities: [
-          ResponseModalities.text,
-        ],
+        responseModalities: [ResponseModalities.text],
       ),
     );
   }
@@ -240,7 +246,9 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
       final b64 = base64Encode(fileBytes);
       return '![img](data:$mimeType;base64,$b64)\n\n$prompt';
     } else {
-      final mbSize = (fileBytes.lengthInBytes / (1024 * 1024)).toStringAsFixed(2);
+      final mbSize = (fileBytes.lengthInBytes / (1024 * 1024)).toStringAsFixed(
+        2,
+      );
       return '[附件: $mimeType, 大小: $mbSize MB]\n\n$prompt';
     }
   }

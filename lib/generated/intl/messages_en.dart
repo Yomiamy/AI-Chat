@@ -44,6 +44,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Conversation copied",
     ),
     "errorLabel": MessageLookupByLibrary.simpleMessage("Error"),
+    "exportMd": MessageLookupByLibrary.simpleMessage("Markdown (.md)"),
+    "exportTitle": MessageLookupByLibrary.simpleMessage("Select Export Format"),
+    "exportTxt": MessageLookupByLibrary.simpleMessage("Plain Text (.txt)"),
     "goToSettings": MessageLookupByLibrary.simpleMessage("Go to Settings"),
     "howCanIHelp": MessageLookupByLibrary.simpleMessage(
       "How can I help you today?",
@@ -51,13 +54,21 @@ class MessageLookup extends MessageLookupByLibrary {
     "menuAbout": MessageLookupByLibrary.simpleMessage("About"),
     "menuClearChat": MessageLookupByLibrary.simpleMessage("Clear Chat"),
     "menuCopyAll": MessageLookupByLibrary.simpleMessage("Copy All"),
+    "menuExport": MessageLookupByLibrary.simpleMessage("Export Chat"),
     "menuNewChat": MessageLookupByLibrary.simpleMessage("New Chat"),
+    "noSearchResults": MessageLookupByLibrary.simpleMessage(
+      "No matching messages found",
+    ),
     "onlineStatus": MessageLookupByLibrary.simpleMessage("Online"),
     "permissionPhotoDesc": MessageLookupByLibrary.simpleMessage(
       "Please go to system settings and allow this app to access your photo library so you can select images to send to the AI.",
     ),
     "permissionPhotoTitle": MessageLookupByLibrary.simpleMessage(
       "Photo Access Required",
+    ),
+    "searchHint": MessageLookupByLibrary.simpleMessage("Search messages..."),
+    "startSearching": MessageLookupByLibrary.simpleMessage(
+      "Search through your history",
     ),
     "typeMessageHint": MessageLookupByLibrary.simpleMessage(
       "Type a message...",

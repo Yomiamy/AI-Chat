@@ -32,6 +32,5 @@ enum ChatMessageRoleEnum {
 
   static ChatMessageRoleEnum? fromValue(String value) {
     return ChatMessageRoleEnum.values.firstWhereOrNull((e) => e.value == value);
-  } 
+  }
 }
-  

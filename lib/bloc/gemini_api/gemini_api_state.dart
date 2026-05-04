@@ -24,13 +24,15 @@ class GeminiApiState extends Equatable {
     return GeminiApiState(
       status: status ?? this.status,
       chatList: clearChat ? null : (chatList ?? this.chatList),
-      selectedFileBytes:
-          clearFile ? null : (selectedFileBytes ?? this.selectedFileBytes),
-      selectedMimeType:
-          clearFile ? null : (selectedMimeType ?? this.selectedMimeType),
+      selectedFileBytes: clearFile
+          ? null
+          : (selectedFileBytes ?? this.selectedFileBytes),
+      selectedMimeType: clearFile
+          ? null
+          : (selectedMimeType ?? this.selectedMimeType),
     );
   }
-  
+
   @override
   List<Object?> get props => [
     status,

@@ -6,10 +6,15 @@ abstract interface class ChatRepository {
   /// If [since] is provided, only messages with `timestamp > since` are returned.
   List<ChatMessage> loadMessages({int? since});
 
-  void saveMessage({required ChatMessageRoleEnum role, required String content});
+  void saveMessage({
+    required ChatMessageRoleEnum role,
+    required String content,
+  });
 
   /// Removes ALL messages from the store. Irreversible.
   void clearAll();
+
+  List<ChatMessage> searchMessages(String query);
 
   void dispose();
 }
@@ -39,10 +44,9 @@ class ChatRepo implements ChatRepository {
   /// Returns up to [_maxMessages] messages ordered newest-first (descending timestamp).
   @override
   List<ChatMessage> loadMessages({int? since}) {
-    final builder =
-        since != null
-            ? _box.query(ChatMessage_.timestamp.greaterThan(since))
-            : _box.query();
+    final builder = since != null
+        ? _box.query(ChatMessage_.timestamp.greaterThan(since))
+        : _box.query();
 
     final query =
         (builder..order(ChatMessage_.timestamp, flags: Order.descending))
@@ -56,7 +60,24 @@ class ChatRepo implements ChatRepository {
   }
 
   @override
-  void saveMessage({required ChatMessageRoleEnum role, required String content}) {
+  List<ChatMessage> searchMessages(String query) {
+    if (query.isEmpty) return [];
+    final q = _box
+        .query(ChatMessage_.content.contains(query, caseSensitive: false))
+        .order(ChatMessage_.timestamp, flags: Order.descending)
+        .build();
+    try {
+      return q.find();
+    } finally {
+      q.close();
+    }
+  }
+
+  @override
+  void saveMessage({
+    required ChatMessageRoleEnum role,
+    required String content,
+  }) {
     _box.put(
       ChatMessage(
         content: content,

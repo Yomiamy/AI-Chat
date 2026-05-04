@@ -65,22 +65,20 @@ void main() {
     // Build only the widgets that AiChatPage._buildEmptyState() renders.
     // This avoids constructing GeminiApiBloc (and therefore Firebase).
     Widget buildEmptyStateWidget() {
-      return const MaterialApp(
-        home: Scaffold(
-          body: _EmptyStateSmokeWidget(),
-        ),
-      );
+      return const MaterialApp(home: Scaffold(body: _EmptyStateSmokeWidget()));
     }
 
-    testWidgets('empty state renders chat_bubble_outline icon',
-        (WidgetTester tester) async {
+    testWidgets('empty state renders chat_bubble_outline icon', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(buildEmptyStateWidget());
 
       expect(find.byIcon(Icons.chat_bubble_outline), findsOneWidget);
     });
 
-    testWidgets('AppBar with auto_awesome icon is renderable',
-        (WidgetTester tester) async {
+    testWidgets('AppBar with auto_awesome icon is renderable', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -97,14 +95,11 @@ void main() {
       expect(find.byIcon(Icons.more_vert), findsOneWidget);
     });
 
-    testWidgets('input area renders send and attachment icons',
-        (WidgetTester tester) async {
+    testWidgets('input area renders send and attachment icons', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: _InputAreaSmokeWidget(),
-          ),
-        ),
+        const MaterialApp(home: Scaffold(body: _InputAreaSmokeWidget())),
       );
 
       expect(find.byIcon(Icons.send), findsOneWidget);
@@ -140,10 +135,7 @@ class _EmptyStateSmokeWidget extends StatelessWidget {
           SizedBox(height: 24),
           Text(
             'How can I help you?',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 8),
           Text('Type a message or attach a file'),
@@ -171,10 +163,7 @@ class _AppBarSmokeWidget extends StatelessWidget {
         ],
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.more_vert),
-          onPressed: () {},
-        ),
+        IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
       ],
     );
   }
@@ -203,7 +192,10 @@ class _InputAreaSmokeWidget extends StatelessWidget {
                     color: Color(0x1A673AB7),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.image_outlined, color: Color(0xFF673AB7)),
+                  child: const Icon(
+                    Icons.image_outlined,
+                    color: Color(0xFF673AB7),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -215,7 +207,10 @@ class _InputAreaSmokeWidget extends StatelessWidget {
                     color: Color(0x1A673AB7),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.attach_file, color: Color(0xFF673AB7)),
+                  child: const Icon(
+                    Icons.attach_file,
+                    color: Color(0xFF673AB7),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),

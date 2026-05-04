@@ -60,11 +60,11 @@ class Sizes {
   // ────────────────────────────────────────────
   // 字體大小 (Typography)
   // ────────────────────────────────────────────
-  static const textXS  = 10.0;
-  static const textS   = 12.0;
-  static const textM   = 14.0;
-  static const textL   = 16.0;
-  static const textXL  = 18.0;
+  static const textXS = 10.0;
+  static const textS = 12.0;
+  static const textM = 14.0;
+  static const textL = 16.0;
+  static const textXL = 18.0;
   static const textXXL = 20.0;
   static const textBody = 15.0;
 
