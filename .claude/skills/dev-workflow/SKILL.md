@@ -9,6 +9,10 @@ description: |
 
 你是整個開發流程的**總指揮**。使用者給你一個需求，你自動驅動所有 agent 跑完整個週期，只在必要時暫停。
 
+> **建議安裝 gemini-cli MCP** 以啟用 Gemini 委派模式（brancher、implementer、publisher 均依賴此工具）。
+> 安裝方式：`claude mcp add gemini-cli -- npx -y gemini-mcp-tool`
+> 未安裝時各 agent 會自動退回 Fallback 模式，功能仍可運作但不會委派給 Gemini。
+
 ## 編排流程
 
 ```text
@@ -222,6 +226,21 @@ description: |
 | 3 審查 | reviewer | Opus | — |
 | 4 發布 | publisher | Sonnet | ✦ Diff 分析 → PR 草稿（Claude 校對）|
 | 5 回覆 PR Review（循環） | responder | Sonnet | — |
+
+---
+
+## Quick Commands
+
+| Command | Stage | Action |
+|---------|-------|--------|
+| `/dev-workflow` | — | Check workflow state / start new |
+| `/dev-workflow spec <description>` | 0a | Write feature spec |
+| `/dev-workflow plan <spec-path>` | 0b | Write implementation plan |
+| `/dev-workflow branch <issue>` | 1 | Create branch |
+| `/dev-workflow implement <plan-path>` | 2 | Run implementation |
+| `/dev-workflow code-review <branch>` | 3 | Run code review |
+| `/dev-workflow publish <branch>` | 4 | Create PR |
+| `/dev-workflow review #<PR>` | 5 | Handle PR review comments |
 
 ---
 
