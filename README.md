@@ -78,6 +78,90 @@ flutter pub get
 flutter run
 ```
 
+## 🤖 AI-Assisted Development Workflow
+
+This project uses an automated multi-agent development workflow powered by Claude + Gemini. Simply describe a feature and the orchestrator drives the entire cycle automatically, pausing only at key decision points.
+
+```text
+  User: "Build me feature X"
+         │
+         ▼
+  ┌─────────────────────────────────────────────────────┐
+  │  STAGE 0a: Feature Spec (Planner — Opus)             │
+  │  Produces docs/features/YYYY-MM-DD-<feature>.md      │
+  │  (What & Why: user stories, acceptance criteria)     │
+  │  ⏸ Pause: review spec → user confirms               │
+  └────────────────────────┬────────────────────────────┘
+                           │ confirmed
+                           ▼
+  ┌─────────────────────────────────────────────────────┐
+  │  STAGE 0b: Implementation Plan (Planner — Opus)      │
+  │  Produces docs/plans/YYYY-MM-DD-<feature>.md         │
+  │  (How: data structures, file changes, task breakdown)│
+  │  ⏸ Pause: review plan → user confirms               │
+  └────────────────────────┬────────────────────────────┘
+                           │ confirmed
+                           ▼
+  ┌─────────────────────────────────────────────────────┐
+  │  STAGE 1: Branch Setup (Brancher — Sonnet)           │
+  │  ⏸ Pause: review Issue title/body + branch name     │
+  │  Gemini executes: gh issue create + git checkout     │
+  └────────────────────────┬────────────────────────────┘
+                           │ confirmed
+                           ▼
+  ┌─────────────────────────────────────────────────────┐
+  │  STAGE 2: Implementation (Implementer — Sonnet)      │
+  │  Gemini writes code + tests + commits per task       │
+  │  Claude performs 2-stage review per task:            │
+  │    spec review → code quality review                 │
+  │  ⏸ Pause after each task: show changed files +      │
+  │    test results → user confirms before next task     │
+  └────────────────────────┬────────────────────────────┘
+                           │ all tasks confirmed
+                           ▼
+  ┌─────────────────────────────────────────────────────┐
+  │  STAGE 3: Code Review (Reviewer — Opus)              │
+  │  ⏸ Pause: show review report → user confirms        │
+  │  ├─ Pass → proceed to STAGE 4                       │
+  │  └─ Fail / user requests fix                        │
+  │       → auto rollback to STAGE 2 → re-review        │
+  └────────────────────────┬────────────────────────────┘
+                           │ confirmed
+                           ▼
+  ┌─────────────────────────────────────────────────────┐
+  │  STAGE 4: Publish PR (Publisher — Sonnet)            │
+  │  Gemini analyzes diff → generates PR draft           │
+  │  Claude proofreads draft                             │
+  │  ⏸ Pause: review PR draft → user confirms           │
+  │  gh pr create → PR URL returned                     │
+  └────────────────────────┬────────────────────────────┘
+                           │ PR created ✦ workflow stops
+
+  ──────────────────────────────────────────────────────
+  STAGE 5: PR Review Response (manually triggered)
+  ──────────────────────────────────────────────────────
+  Trigger: /dev-workflow review #<PR>
+  → Responder agent handles each inline comment
+  → Reviewer agent re-reviews
+  → Publisher agent updates PR
+  → Workflow stops again
+```
+
+### Quick Commands
+
+| Command | Stage | Action |
+|---------|-------|--------|
+| `/dev-workflow` | — | Check workflow state / start new |
+| `/dev-workflow spec <description>` | 0a | Write feature spec |
+| `/dev-workflow plan <spec-path>` | 0b | Write implementation plan |
+| `/dev-workflow branch <issue>` | 1 | Create branch |
+| `/dev-workflow implement <plan-path>` | 2 | Run implementation |
+| `/dev-workflow code-review <branch>` | 3 | Run code review |
+| `/dev-workflow publish <branch>` | 4 | Create PR |
+| `/dev-workflow review #<PR>` | 5 | Handle PR review comments |
+
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
