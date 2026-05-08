@@ -67,6 +67,26 @@ bundle install
 | `FIREBASE_RELEASE_NOTES` | 發布備註（可選，留空也可） | `Fix login crash` |
 | `FIREBASE_GROUPS` | Firebase 分發群組（可選，預設 `qa&rd`） | `qa&rd` |
 
+### 關於 KEYCHAIN_NAME 與 KEYCHAIN_PASSWORD
+
+**為什麼需要指定 Keychain？**
+
+`import_certificate` 會把 `.p12` 憑證暫時匯入到指定的 keychain，讓 Xcode 打包時可以找到它來簽名。Xcode 的簽名機制只認 keychain，不認檔案，因此必須先將憑證匯入。
+
+- **`KEYCHAIN_NAME=login`** — 對應 macOS 鑰匙圈存取裡的「登入」keychain（路徑：`/Users/<你的帳號>/Library/Keychains/login.keychain-db`）。憑證項目名稱為 `Apple Distribution: Li-Sheng Hsu (H2724L9BS5)`，可在鑰匙圈存取 → 登入 → 我的憑證中看到。
+- **`KEYCHAIN_PASSWORD`** — 用來解鎖 keychain 才能寫入憑證，`login` keychain 的密碼就是你的 Mac 登入密碼。
+
+**CI 環境（GitHub Actions）的差異**
+
+本機直接使用 `login` keychain 即可。CI 環境因為是全新系統，通常需要先建立臨時 keychain：
+
+```ruby
+create_keychain(name: "ci_keychain", password: "...", temporary: true)
+import_certificate(keychain_name: "ci_keychain", ...)
+```
+
+打包完成後臨時 keychain 會自動刪除，避免污染系統。
+
 ### 設定環境變數範例
 
 ```bash
