@@ -34,6 +34,10 @@ platform :ios do
 
     desc "Build a new Beta Build"
     lane :beta_build do
+        cocoapods(
+            clean_install: true,
+            podfile: "./Podfile",
+        )
         import_certificate(
             certificate_path: "fastlane/stg-distribution.p12",
             certificate_password: ENV["CERTIFICATE_PASSWORD"],
