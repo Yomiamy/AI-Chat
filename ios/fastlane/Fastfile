@@ -1,43 +1,19 @@
 default_platform(:ios)
 
 platform :ios do
-    desc "Build a Local Build"
-    lane :local_build do
-        import_certificate(
-            certificate_path: "fastlane/stg-distribution.p12",
-            certificate_password: ENV["CERTIFICATE_PASSWORD"],
-            keychain_name: ENV["KEYCHAIN_NAME"],
-            keychain_password: ENV["KEYCHAIN_PASSWORD"]
-        )
-        install_provisioning_profile(
-            path: "fastlane/stg-profile.mobileprovision",
-        )
-        update_code_signing_settings(
-            use_automatic_signing: false,
-            path: "Runner.xcodeproj",
-            team_id: ENV["TEAM_ID"],
-            code_sign_identity: "Apple Distribution",
-            profile_name: "(Adhoc)Ai Chat",
-            targets: ["Runner"],
-            build_configurations: ["Profile"],
-        )
-        gym(
-            workspace: "Runner.xcworkspace",
-            scheme: "Runner",
-            export_method: "ad-hoc",
-            configuration: "Profile",
-            output_directory: "../build/ios/profile",
-            output_name: "ai_chat.ipa",
-            clean: true,
-        )
-    end
-
-    desc "Build a new Beta Build"
+desc "Build a new Beta Build"
     lane :beta_build do
         cocoapods(
             clean_install: true,
             podfile: "./Podfile",
         )
+
+        pubspec = File.read("../../pubspec.yaml")
+        version = pubspec.match(/^version:\s(.+)\+/)[1]
+        build = pubspec.match(/\+(\d+)$/)[1]
+        increment_version_number(version_number: version, xcodeproj: "Runner.xcodeproj")
+        increment_build_number(build_number: build, xcodeproj: "Runner.xcodeproj")
+
         import_certificate(
             certificate_path: "fastlane/stg-distribution.p12",
             certificate_password: ENV["CERTIFICATE_PASSWORD"],
