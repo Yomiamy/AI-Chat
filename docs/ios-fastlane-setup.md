@@ -16,7 +16,7 @@ ios/
 │   ├── stg-distribution.p12        ← 手動放置（已 gitignore）
 │   ├── stg-profile.mobileprovision ← 手動放置（已 gitignore）
 │   └── stg-credentials.json        ← 手動放置（已 gitignore）
-├── Gemfile                         ← Ruby 依賴
+├── Gemfile                         ← Ruby 依賴（含 cocoapods）
 └── Gemfile.lock                    ← bundle install 產生（已 gitignore）
 ```
 
@@ -30,6 +30,9 @@ ios/
 cd ios
 bundle install
 ```
+
+> Gemfile 包含三個套件：`fastlane`、`fastlane-plugin-firebase_app_distribution`、`cocoapods`。
+> `cocoapods` 必須列在 Gemfile 中，否則 `beta_build` 裡的 `cocoapods` action 會報錯。
 
 ### 2. 準備敏感檔案（不進版控）
 
@@ -103,30 +106,22 @@ export FIREBASE_GROUPS="qa&rd"   # 需與 Firebase Console 上建立的群組名
 
 ## Lanes 說明
 
-### `local_build` — 本地打包
-
-本地驗證 Ad Hoc 打包流程，不上傳 Firebase。
+### `beta_build` — Beta 打包
 
 ```bash
 cd ios
-bundle exec fastlane local_build
+bundle exec fastlane beta_build
 ```
 
 **執行步驟：**
-1. 匯入 Distribution 憑證到 Keychain
-2. 安裝 Provisioning Profile
-3. 關閉 Xcode Automatic Signing，指定手動簽名
-4. gym 打包 → 輸出 `build/ios/profile/ai_chat.ipa`
+1. `cocoapods` 同步 Pod 依賴（CI 環境全新機器必要）
+2. 從 `pubspec.yaml` 讀取版號，注入 Xcode（確保 Firebase 顯示正確版本）
+3. 匯入 Distribution 憑證到 Keychain
+4. 安裝 Provisioning Profile
+5. 關閉 Xcode Automatic Signing，指定手動簽名
+6. gym 打包 → 輸出 `build/ios/profile/ai_chat.ipa`
 
----
-
-### `beta_build` — Beta 打包
-
-與 `local_build` 相同，單獨打包步驟（給 CI 拆分使用）。
-
-```bash
-bundle exec fastlane beta_build
-```
+> **注意**：`pubspec.yaml` 格式為 `version: 1.0.0+2`，其中 `1.0.0` 為顯示版本，`2` 為 build number。
 
 ---
 
