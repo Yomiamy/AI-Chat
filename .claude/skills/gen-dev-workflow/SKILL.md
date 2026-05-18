@@ -1,8 +1,8 @@
 ---
-name: dev-workflow
+name: gen-dev-workflow
 description: |
   完整開發流程編排器。使用者說「幫我做 X 功能」時觸發，自動依序驅動所有 agent 直到 PR 建立，只在關鍵決策點暫停確認。
-  觸發條件：dev workflow, 開始開發, 新功能開發, 幫我做 X 功能, 繼續, 繼續上次, 繼續開發, /dev-workflow
+  觸發條件：dev workflow, 開始開發, 新功能開發, 幫我做 X 功能, 繼續, 繼續上次, 繼續開發, /gen-dev-workflow
 ---
 
 # Dev Workflow（自動編排模式）
@@ -188,7 +188,7 @@ description: |
 
 | 觸發 | 關鍵字 |
 |------|--------|
-| A | `/dev-workflow` |
+| A | `/gen-dev-workflow` |
 | B | 「幫我做 X 功能」/ 「開始開發」/ 「新功能開發」 |
 | C | 「繼續」/ 「繼續上次」/ 「繼續開發」 |
 
@@ -233,14 +233,14 @@ description: |
 
 | Command | Stage | Action |
 |---------|-------|--------|
-| `/dev-workflow` | — | 查看目前流程狀態 / 開始新流程 |
-| `/dev-workflow spec <description>` | 0a | 撰寫功能規格 |
-| `/dev-workflow plan <spec-path>` | 0b | 產出實作計畫 |
-| `/dev-workflow branch <issue>` | 1 | 建立 Issue + 分支 |
-| `/dev-workflow implement <plan-path>` | 2 | 執行實作 |
-| `/dev-workflow code-review <branch>` | 3 | 執行代碼審查 |
-| `/dev-workflow publish <branch>` | 4 | 建立 PR |
-| `/dev-workflow review #<PR>` | 5 | 處理 PR review 意見 |
+| `/gen-dev-workflow` | — | 查看目前流程狀態 / 開始新流程 |
+| `/gen-dev-workflow spec <description>` | 0a | 撰寫功能規格 |
+| `/gen-dev-workflow plan <spec-path>` | 0b | 產出實作計畫 |
+| `/gen-dev-workflow branch <issue>` | 1 | 建立 Issue + 分支 |
+| `/gen-dev-workflow implement <plan-path>` | 2 | 執行實作 |
+| `/gen-dev-workflow code-review <branch>` | 3 | 執行代碼審查 |
+| `/gen-dev-workflow publish <branch>` | 4 | 建立 PR |
+| `/gen-dev-workflow review #<PR>` | 5 | 處理 PR review 意見 |
 
 ---
 
@@ -250,37 +250,37 @@ description: |
 
 ```
 # 重新規劃功能規格（STAGE 0a）
-/dev-workflow spec <需求描述>
+/gen-dev-workflow spec <需求描述>
 → 寫入狀態檔 { stage: "0a", mode: "jump" }
 → 呼叫 planner agent 產出功能規格
 
 # 重新產出實作計畫（STAGE 0b）
-/dev-workflow plan <spec 路徑>
+/gen-dev-workflow plan <spec 路徑>
 → 寫入狀態檔 { stage: "0b", mode: "jump", spec: "<spec 路徑>" }
 → 呼叫 planner agent 依規格產出實作計畫
 
 # 只需要建分支（STAGE 1）
-/dev-workflow branch <ISSUE-NUMBER>
+/gen-dev-workflow branch <ISSUE-NUMBER>
 → 寫入狀態檔 { stage: 1, mode: "jump", issue: <ISSUE-NUMBER> }
 → 呼叫 brancher agent
 
 # 繼續實作（STAGE 2）
-/dev-workflow implement <plan 路徑>
+/gen-dev-workflow implement <plan 路徑>
 → 寫入狀態檔 { stage: 2, mode: "jump", plan: "<plan 路徑>" }
 → 呼叫 implementer agent
 
 # 只需要審查（STAGE 3）
-/dev-workflow code-review <branch-name>
+/gen-dev-workflow code-review <branch-name>
 → 寫入狀態檔 { stage: 3, mode: "jump", branch: "<branch-name>" }
 → 呼叫 reviewer agent
 
 # 只需要發 PR（STAGE 4）
-/dev-workflow publish <branch-name>
+/gen-dev-workflow publish <branch-name>
 → 寫入狀態檔 { stage: 4, mode: "jump", branch: "<branch-name>" }
 → 呼叫 publisher agent
 
 # 處理 PR review 意見（STAGE 5）
-/dev-workflow review #<PR>
+/gen-dev-workflow review #<PR>
 → 寫入狀態檔 { stage: 5, mode: "jump", pr: <PR> }
 → 呼叫 responder agent 處理所有 review 意見
 → 處理完畢後呼叫 reviewer agent 重新審查

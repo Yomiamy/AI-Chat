@@ -2,9 +2,9 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** 建立 6 個 subagents + 1 個 dev-workflow skill，串起從構思到發 PR 的完整開發流程。
+**Goal:** 建立 6 個 subagents + 1 個 gen-dev-workflow skill，串起從構思到發 PR 的完整開發流程。
 
-**Architecture:** 每個 subagent 封裝一個開發階段的角色，model 依複雜度分配（Opus 給推論/設計，Sonnet 給執行/IO）。dev-workflow skill 作為入口，依序調度各 subagent。
+**Architecture:** 每個 subagent 封裝一個開發階段的角色，model 依複雜度分配（Opus 給推論/設計，Sonnet 給執行/IO）。gen-dev-workflow skill 作為入口，依序調度各 subagent。
 
 **Tech Stack:** Claude Code subagents (AGENT.md), Claude Code skills (SKILL.md), ~/.claude/agents/, ~/.claude/skills/
 
@@ -19,7 +19,7 @@
 - `~/.claude/agents/reviewer.md`
 - `~/.claude/agents/responder.md`
 - `~/.claude/agents/publisher.md`
-- `~/.claude/skills/dev-workflow/SKILL.md`
+- `~/.claude/skills/gen-dev-workflow/SKILL.md`
 
 ---
 
@@ -331,23 +331,23 @@ git -C ~/AiWorkspace/AI-Chat commit -m "feat: add publisher subagent (sonnet)"
 
 ---
 
-### Task 7: dev-workflow skill
+### Task 7: gen-dev-workflow skill
 
 **Files:**
-- Create: `~/.claude/skills/dev-workflow/SKILL.md`
+- Create: `~/.claude/skills/gen-dev-workflow/SKILL.md`
 
 **Step 1: 建立目錄與檔案**
 
 ```bash
-mkdir -p ~/.claude/skills/dev-workflow
+mkdir -p ~/.claude/skills/gen-dev-workflow
 ```
 
 ```markdown
 ---
-name: dev-workflow
+name: gen-dev-workflow
 description: |
   完整開發流程入口。從構思到發 PR，依序調度 planner → brancher → implementer → reviewer → responder → publisher。
-  觸發條件：dev workflow, 開始開發, 新功能開發, /dev-workflow
+  觸發條件：dev workflow, 開始開發, 新功能開發, /gen-dev-workflow
 ---
 
 # Dev Workflow
@@ -528,14 +528,14 @@ description: |
 **Step 2: 驗證**
 
 ```bash
-cat ~/.claude/skills/dev-workflow/SKILL.md
+cat ~/.claude/skills/gen-dev-workflow/SKILL.md
 ```
 
 **Step 3: Commit**
 
 ```bash
 git -C ~/AiWorkspace/AI-Chat add -A
-git -C ~/AiWorkspace/AI-Chat commit -m "feat: add dev-workflow skill"
+git -C ~/AiWorkspace/AI-Chat commit -m "feat: add gen-dev-workflow skill"
 ```
 
 ---
@@ -547,7 +547,7 @@ git -C ~/AiWorkspace/AI-Chat commit -m "feat: add dev-workflow skill"
 ls ~/.claude/agents/ | grep -E "planner|brancher|implementer|reviewer|responder|publisher"
 
 # 確認 workflow skill 存在
-ls ~/.claude/skills/dev-workflow/
+ls ~/.claude/skills/gen-dev-workflow/
 
 # 確認 model 分配
 grep "model:" ~/.claude/agents/planner.md ~/.claude/agents/reviewer.md
