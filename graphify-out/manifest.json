@@ -1,0 +1,262 @@
+{
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/main.dart": {
+    "mtime": 1777815757.5863664,
+    "ast_hash": "b183d8da2e6c68e22905e69f1d32ff7b",
+    "semantic_hash": "b183d8da2e6c68e22905e69f1d32ff7b"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/generated/l10n.dart": {
+    "mtime": 1777906782.7617877,
+    "ast_hash": "bc6bb1d767a1e2aeb374ac1220349af8",
+    "semantic_hash": "bc6bb1d767a1e2aeb374ac1220349af8"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/generated/intl/messages_all.dart": {
+    "mtime": 1777906782.760683,
+    "ast_hash": "34c4c13d01ecee1b32382d566147dc3e",
+    "semantic_hash": "34c4c13d01ecee1b32382d566147dc3e"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/generated/intl/messages_zh_TW.dart": {
+    "mtime": 1777906782.7614675,
+    "ast_hash": "ea13f73accff0f22e7487e52edf1f215",
+    "semantic_hash": "ea13f73accff0f22e7487e52edf1f215"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/generated/intl/messages_zh.dart": {
+    "mtime": 1777906782.7611496,
+    "ast_hash": "4d76999b7488ae1d4592749eef3e94bb",
+    "semantic_hash": "4d76999b7488ae1d4592749eef3e94bb"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/generated/intl/messages_en.dart": {
+    "mtime": 1777906782.7609048,
+    "ast_hash": "66d2439310e7679df9139431999d191a",
+    "semantic_hash": "66d2439310e7679df9139431999d191a"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/generated/objectbox/objectbox-model.json": {
+    "mtime": 1775413141.8154383,
+    "ast_hash": "66b9aca05afd18dcfb4b8b71b5a1f3f9",
+    "semantic_hash": "66b9aca05afd18dcfb4b8b71b5a1f3f9"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/generated/objectbox/objectbox.g.dart": {
+    "mtime": 1775413141.8157384,
+    "ast_hash": "c6825eb143320e438eb712fde2000bfe",
+    "semantic_hash": "c6825eb143320e438eb712fde2000bfe"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/generated/assets/colors.gen.dart": {
+    "mtime": 1775413141.8150496,
+    "ast_hash": "dc4030cee8f48cef3acbab89fe4ea085",
+    "semantic_hash": "dc4030cee8f48cef3acbab89fe4ea085"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/generated/assets/assets.gen.dart": {
+    "mtime": 1775413141.814872,
+    "ast_hash": "01794457e9a481e72274145336c45e43",
+    "semantic_hash": "01794457e9a481e72274145336c45e43"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/l10n/l10n_en.dart": {
+    "mtime": 1778256605.1257322,
+    "ast_hash": "5b582f6128e8a6cfb866b4c9826148e0",
+    "semantic_hash": "5b582f6128e8a6cfb866b4c9826148e0"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/l10n/l10n.dart": {
+    "mtime": 1778256605.1283274,
+    "ast_hash": "c5cec51e01314a53115c7b3bdd82833f",
+    "semantic_hash": "c5cec51e01314a53115c7b3bdd82833f"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/l10n/l10n_zh.dart": {
+    "mtime": 1778256605.1270792,
+    "ast_hash": "6927c8200de27f38f3ad84579ef01b67",
+    "semantic_hash": "6927c8200de27f38f3ad84579ef01b67"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/di/di.dart": {
+    "mtime": 1777906782.7592757,
+    "ast_hash": "f9b81a7faf939f73df42428325924cb3",
+    "semantic_hash": "f9b81a7faf939f73df42428325924cb3"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/di/injection.dart": {
+    "mtime": 1777815757.5858753,
+    "ast_hash": "6b7379cd3549c23abef0a4a9ad987492",
+    "semantic_hash": "6b7379cd3549c23abef0a4a9ad987492"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/features/features.dart": {
+    "mtime": 1777906782.759487,
+    "ast_hash": "ae3b748d5f864d5be0bcf450e7c00c32",
+    "semantic_hash": "ae3b748d5f864d5be0bcf450e7c00c32"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/features/foundation/foundation.dart": {
+    "mtime": 1777213735.0796475,
+    "ast_hash": "995b941d7c62dc2b3c155daa85684db9",
+    "semantic_hash": "995b941d7c62dc2b3c155daa85684db9"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/features/foundation/extension/extensions.dart": {
+    "mtime": 1777906782.7596946,
+    "ast_hash": "db26eae8997c78719ddbf23ec563658b",
+    "semantic_hash": "db26eae8997c78719ddbf23ec563658b"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/features/foundation/extension/platform_file_extension.dart": {
+    "mtime": 1775315616.559071,
+    "ast_hash": "2acea44e7374ac18ea9540ccb00a5bea",
+    "semantic_hash": "2acea44e7374ac18ea9540ccb00a5bea"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/features/foundation/extension/string_extension.dart": {
+    "mtime": 1775315616.5592194,
+    "ast_hash": "7532d031c23cf4ec28cbe57e0f186818",
+    "semantic_hash": "7532d031c23cf4ec28cbe57e0f186818"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/features/foundation/constants/app_constants.dart": {
+    "mtime": 1777213735.0792968,
+    "ast_hash": "f94016e4da7a95b7f3d09036d2973c86",
+    "semantic_hash": "f94016e4da7a95b7f3d09036d2973c86"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/features/foundation/style/sizes.dart": {
+    "mtime": 1777906782.7600567,
+    "ast_hash": "4118c309ad548de9ebcf7f887f6250b0",
+    "semantic_hash": "4118c309ad548de9ebcf7f887f6250b0"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/features/foundation/style/style.dart": {
+    "mtime": 1777906782.760253,
+    "ast_hash": "a119592c6478c96093869aba8568f021",
+    "semantic_hash": "a119592c6478c96093869aba8568f021"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/features/utils/file_pick_manager.dart": {
+    "mtime": 1775315616.559723,
+    "ast_hash": "9e2e649a306d6bcadd479cedd4116d2a",
+    "semantic_hash": "9e2e649a306d6bcadd479cedd4116d2a"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/features/utils/utils.dart": {
+    "mtime": 1777906782.760452,
+    "ast_hash": "c74023df6f4339e2d942aaaab2da1fcd",
+    "semantic_hash": "c74023df6f4339e2d942aaaab2da1fcd"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/features/utils/widget_preview.dart": {
+    "mtime": 1775315616.5599682,
+    "ast_hash": "d34e140a3398225a5099af4d8ff102af",
+    "semantic_hash": "d34e140a3398225a5099af4d8ff102af"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/data/chat_message.dart": {
+    "mtime": 1777906782.7582955,
+    "ast_hash": "6644643007da88bb6bc7b42772481038",
+    "semantic_hash": "6644643007da88bb6bc7b42772481038"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/data/chat_repository.dart": {
+    "mtime": 1777906782.7585042,
+    "ast_hash": "08d025ebf6a92233d4829b3bd1c39529",
+    "semantic_hash": "08d025ebf6a92233d4829b3bd1c39529"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/data/data.dart": {
+    "mtime": 1777906782.7588418,
+    "ast_hash": "db82abb43a0d129400ade7309e6af8ee",
+    "semantic_hash": "db82abb43a0d129400ade7309e6af8ee"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/pages/ai_chat_page.dart": {
+    "mtime": 1777906782.763073,
+    "ast_hash": "afd6fb4a3b07a5042d7624e0cb53ba66",
+    "semantic_hash": "afd6fb4a3b07a5042d7624e0cb53ba66"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/pages/widgets/empty_widget.dart": {
+    "mtime": 1775413141.8170056,
+    "ast_hash": "3c03a032cb0b531c3c578e18610d9e5c",
+    "semantic_hash": "3c03a032cb0b531c3c578e18610d9e5c"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/pages/widgets/input_area_widget.dart": {
+    "mtime": 1777906782.7637966,
+    "ast_hash": "324483e88e4a969b9fb3dc6907fe9a75",
+    "semantic_hash": "324483e88e4a969b9fb3dc6907fe9a75"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/pages/widgets/widgets.dart": {
+    "mtime": 1777906782.7645931,
+    "ast_hash": "d93f9e03e2a655b82c7f5ac00784c1d8",
+    "semantic_hash": "d93f9e03e2a655b82c7f5ac00784c1d8"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/pages/widgets/search_result_item.dart": {
+    "mtime": 1777906782.7643828,
+    "ast_hash": "5c959c47e0095f7b9b9dcb671ce2b87c",
+    "semantic_hash": "5c959c47e0095f7b9b9dcb671ce2b87c"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/pages/widgets/message_bubble_widget.dart": {
+    "mtime": 1775413141.8178787,
+    "ast_hash": "2d46d2cc0ce3418afdb419cd90f039a0",
+    "semantic_hash": "2d46d2cc0ce3418afdb419cd90f039a0"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/pages/widgets/loading_indicator_widget.dart": {
+    "mtime": 1777906782.7639909,
+    "ast_hash": "f1d379c3191ade08d119f6e28e0b7558",
+    "semantic_hash": "f1d379c3191ade08d119f6e28e0b7558"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/pages/widgets/search_app_bar.dart": {
+    "mtime": 1777906782.7642336,
+    "ast_hash": "03930c151bdb72e113aa2f82a93050bb",
+    "semantic_hash": "03930c151bdb72e113aa2f82a93050bb"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/pages/widgets/ai_chat_view.dart": {
+    "mtime": 1777906782.7633874,
+    "ast_hash": "58bccc226cfa5230510c7346e519b0b8",
+    "semantic_hash": "58bccc226cfa5230510c7346e519b0b8"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/pages/widgets/highlight_text.dart": {
+    "mtime": 1777906782.7635653,
+    "ast_hash": "744054da57c1446de160253b082abe8a",
+    "semantic_hash": "744054da57c1446de160253b082abe8a"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/services/export_service.dart": {
+    "mtime": 1777906782.7648346,
+    "ast_hash": "db7e83a3d5a3614f55685acc47495496",
+    "semantic_hash": "db7e83a3d5a3614f55685acc47495496"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/bloc/status.dart": {
+    "mtime": 1775315616.558436,
+    "ast_hash": "698d695be458627af808aebfac582be3",
+    "semantic_hash": "698d695be458627af808aebfac582be3"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/bloc/bloc.dart": {
+    "mtime": 1777906782.7557397,
+    "ast_hash": "0ab813d94457ba7a1f5159cefebc1b7d",
+    "semantic_hash": "0ab813d94457ba7a1f5159cefebc1b7d"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/bloc/gemini_api/gemini_api_bloc.dart": {
+    "mtime": 1777906782.7561688,
+    "ast_hash": "900b18197b61820c2521a345219611a2",
+    "semantic_hash": "900b18197b61820c2521a345219611a2"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/bloc/gemini_api/gemini_api.dart": {
+    "mtime": 1775413141.8114748,
+    "ast_hash": "58088bb1e75b8f133e5a3cd0aed442bd",
+    "semantic_hash": "58088bb1e75b8f133e5a3cd0aed442bd"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/bloc/gemini_api/gemini_api_event.dart": {
+    "mtime": 1777906782.756412,
+    "ast_hash": "cf8a493ce1169b9fb65235354ed5a411",
+    "semantic_hash": "cf8a493ce1169b9fb65235354ed5a411"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/bloc/gemini_api/gemini_api_state.dart": {
+    "mtime": 1777906782.7568111,
+    "ast_hash": "9e32ba2cae55d7b0fd0b8c8e2883cfe5",
+    "semantic_hash": "9e32ba2cae55d7b0fd0b8c8e2883cfe5"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/bloc/gemini_api/models/chat_entry_prefix.dart": {
+    "mtime": 1775413141.812775,
+    "ast_hash": "d32269b81cda308b3c6fa8cd20726f00",
+    "semantic_hash": "d32269b81cda308b3c6fa8cd20726f00"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/bloc/gemini_api/models/models.dart": {
+    "mtime": 1775413141.8131583,
+    "ast_hash": "c044e8ccf5596d46eb61c5010d273a2a",
+    "semantic_hash": "c044e8ccf5596d46eb61c5010d273a2a"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/bloc/search/search_event.dart": {
+    "mtime": 1777906782.7576747,
+    "ast_hash": "099a48eda6985a5ae33fcccd4c44a609",
+    "semantic_hash": "099a48eda6985a5ae33fcccd4c44a609"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/bloc/search/search_state.dart": {
+    "mtime": 1777906782.757926,
+    "ast_hash": "5e1b01dc74325198440d3501ed3b707f",
+    "semantic_hash": "5e1b01dc74325198440d3501ed3b707f"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/bloc/search/search_bloc.dart": {
+    "mtime": 1777906782.757361,
+    "ast_hash": "19c254883e86ba330717a86f7b3d03a5",
+    "semantic_hash": "19c254883e86ba330717a86f7b3d03a5"
+  },
+  "/Users/yomiry/AiWorkspace/AI-Chat/lib/bloc/search/search.dart": {
+    "mtime": 1777906782.7571197,
+    "ast_hash": "ef5b4a15fab34c9fea03af04596d9eac",
+    "semantic_hash": "ef5b4a15fab34c9fea03af04596d9eac"
+  }
+}

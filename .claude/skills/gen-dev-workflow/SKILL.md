@@ -1,8 +1,8 @@
 ---
-name: dev-workflow
+name: gen-dev-workflow
 description: |
   完整開發流程編排器。使用者說「幫我做 X 功能」時觸發，自動依序驅動所有 agent 直到 PR 建立，只在關鍵決策點暫停確認。
-  觸發條件：dev workflow, 開始開發, 新功能開發, 幫我做 X 功能, 繼續, 繼續上次, 繼續開發, /dev-workflow
+  觸發條件：dev workflow, 開始開發, 新功能開發, 幫我做 X 功能, 繼續, 繼續上次, 繼續開發, /gen-dev-workflow
 ---
 
 # Dev Workflow（自動編排模式）
@@ -22,6 +22,10 @@ description: |
     ┌─────────────────────────────────────────────────┐
     │  STAGE 0a：功能規格                              │
     │  → 呼叫 planner agent                           │
+    │  → 🟢 並行 2 條：                                │
+    │     A. 專案 context 收集（讀檔 / git log）       │
+    │     B. 相似功能代碼調查（既有實作參考）          │
+    │     → planner 收斂兩者後撰寫規格                 │
     │  → 產出 docs/features/YYYY-MM-DD-<feature>.md   │
     │    （What & Why：使用者故事、驗收條件、範圍邊界） │
     │  ⏸ 暫停：展示功能規格，等使用者確認              │
@@ -49,8 +53,11 @@ description: |
     ┌─────────────────────────────────────────────────┐
     │  STAGE 2：實作                                   │
     │  → 呼叫 implementer agent                       │
+    │  → 解析計畫，判斷並行模式：                       │
+    │     • ≥2 個獨立任務、寫入路徑不重疊 → 🟢 並行    │
+    │     • 否則 → 🔴 序列逐任務                        │
     │  → Gemini 實作任務，Claude 兩階段驗收            │
-    │  ⏸ 每個任務完成後暫停：                          │
+    │  ⏸ 每個任務（或每批並行）完成後暫停：            │
     │      展示變更檔案 + 測試結果摘要                  │
     │      問「確認繼續下一個任務嗎？」                  │
     │  ⏸ 遇到模糊需求：問使用者後繼續                  │
@@ -102,7 +109,9 @@ description: |
 | 遇到模糊需求 | 問最小必要問題（≤ 2 個），不要問多 | 使用者回答後自動繼續 |
 | PR 草稿完成後 | 展示草稿，問「確認發布嗎？」 | 使用者確認 |
 
-**不應該暫停的情況：** 分支建立、任務切換、審查失敗退回、測試執行。這些全部自動處理。
+**不應該暫停的情況：** 分支建立、任務間自動切換、STAGE 2 內部失敗 retry、STAGE 3 審查失敗退回 STAGE 2、測試執行、並行單元間的協調。這些全部自動處理（失敗 retry 與退回路徑見「並行執行契約」章節）。
+
+**主動中斷（非暫停）：** context > 150k 時依 Token Budget Gate 主動保存並切 session，這不是暫停點，是保護性中斷。
 
 ---
 
@@ -159,9 +168,14 @@ description: |
   "issue": 42,
   "pr": null,
   "completed_tasks": [1, 2],
-  "total_tasks": 5
+  "total_tasks": 5,
+  "interrupted_by": "context_budget"
 }
 ```
+
+`interrupted_by` 欄位（可選）：記錄上次為何中斷，續接時用來決定第一句話。
+- `"context_budget"` → 因 context 超標主動切 session（見下方 Token Budget Gate）
+- `null` 或不存在 → 正常暫停（使用者主動離開）
 
 **jump 模式**（直接指定特定 stage 執行）：
 ```json
@@ -188,7 +202,7 @@ description: |
 
 | 觸發 | 關鍵字 |
 |------|--------|
-| A | `/dev-workflow` |
+| A | `/gen-dev-workflow` |
 | B | 「幫我做 X 功能」/ 「開始開發」/ 「新功能開發」 |
 | C | 「繼續」/ 「繼續上次」/ 「繼續開發」 |
 
@@ -216,16 +230,128 @@ description: |
 
 ---
 
-## Agent 職責速查
+## Token Budget Gate（context 用量控管）
 
-| Stage | Agent | Model | Gemini 委派 |
-|-------|-------|-------|------------|
-| 0 規劃 | planner | Opus | — |
-| 1 建立分支 | brancher | Sonnet | ✦ gh issue create, git checkout |
-| 2 實作 | implementer | Sonnet | ✦ 代碼+測試+commit（Claude 驗收）|
-| 3 審查 | reviewer | Opus | — |
-| 4 發布 | publisher | Sonnet | ✦ Diff 分析 → PR 草稿（Claude 校對）|
-| 5 回覆 PR Review（循環） | responder | Sonnet | — |
+這是長流程（6 stages + 每任務暫停）的存活機制。**每個 stage 切換前、以及 STAGE 2 每個任務完成後**，評估主對話 context 用量並依下表行動：
+
+| Context 用量 | 行為 |
+|---|---|
+| < 60k | 正常流程，不做任何事 |
+| 60–100k | ⚠️ 提示使用者「context 已 <用量>，建議精簡」。委派 agent 時要求只回報摘要，不回貼完整 diff / 檔案內容 |
+| 100–150k | ⚠️ 強制走委派路徑：implementer / publisher 一律走 Gemini 委派（即使 fallback 條件成立也不自行讀大檔），主對話只保留高層判斷 |
+| > 150k | ⛔ **強制 checkpoint，主動切 session** — 走下方「context 超標切 session 閉環」 |
+
+### context 超標切 session 閉環
+
+這是本 skill 相對其他 workflow 的關鍵優勢：**已有 `workflow-state.json`，所以 Token Gate 撞牆時不會丟失進度**。
+
+`> 150k` 觸發時，**不是只丟一句「建議切 session」**，而是執行完整交接：
+
+```
+1. 完成當前正在進行的最小單元（如 STAGE 2 的當前任務），不要切在半途
+2. 寫入 workflow-state.json，並設 "interrupted_by": "context_budget"
+   （完整記錄 stage / mode / spec / plan / branch / completed_tasks）
+3. 若有未 commit 的變更 → 先 commit（避免 session 切換後遺失）
+4. 明確告知使用者：
+   「context 已達 <用量>，為避免品質下降已保存進度至 STAGE <N>。
+     請開新 session 後輸入『繼續』或 /gen-dev-workflow，會自動從 STAGE <N> 接續。」
+5. 停止，不再繼續任何 stage
+```
+
+續接時（新 session 讀到 `"interrupted_by": "context_budget"`）：
+```
+→ 開場白改為：「偵測到上次因 context 超標而保存（STAGE <N>），現在 context 乾淨，直接續接。」
+→ 不問「繼續還是開新流程」（因為這不是使用者主動離開，是系統保護性中斷，意圖明確）
+→ 直接從 state 記錄的 stage 接續
+```
+
+**為什麼這是閉環：** Token Gate 偵測危險 → state 持久化保存全部進度 → 切 session 清空 context → 續接時 state 還原 → 不需重講 spec/plan/branch。沒有 state 的 workflow 在 150k 那一行只能撞牆，本 skill 在這裡反而最強。
+
+---
+
+## Model 與委派策略
+
+Model 不綁死在 agent 身上，而是**依工作性質動態選擇**。這是降低成本與延遲的核心。
+
+### Stage 層級的基準分配
+
+| Stage | Agent | 基準 Model | Gemini 委派 | 不委派的原因 |
+|-------|-------|-----------|------------|------------|
+| 0a/0b 規劃 | planner | Opus | — | 設計與計畫拆解是最高槓桿推論，錯了後面全錯 |
+| 1 建立分支 | brancher | Sonnet | ✦ gh issue create, git checkout | 純 IO |
+| 2 實作 | implementer | **見下方分級** | ✦ 代碼+測試+commit（Claude 驗收）| — |
+| 3 審查 | reviewer | Opus | — | 根因判斷需最強推論，且不該讓產出代碼的同源 model 自審 |
+| 4 發布 | publisher | Sonnet | ✦ Diff 分析 → PR 草稿（Claude 校對）| — |
+| 5 回覆 PR Review | responder | Sonnet | — | 逐條意見處理，短文判斷 |
+
+### STAGE 2 implementer 內部的 model 分級
+
+implementer 不該對所有任務一律用同一 model。讀取實作計畫後，**逐任務依複雜度分級**（對齊 `subagent-driven-development` 的 Model Selection）：
+
+| 任務複雜度信號 | 委派 model | 範例 |
+|---|---|---|
+| 觸及 1–2 檔、規格完整、機械性 | 快/便宜 model | 新增一個 DTO 欄位、補一個 util function |
+| 觸及多檔、需整合協調 | 標準 model | 跨 service 串接、改既有流程 |
+| 需設計判斷或廣泛 codebase 理解 | 最強 model | 重構狀態機、新增跨層架構 |
+
+planner 在實作計畫中**應為每個任務標註複雜度等級**，implementer 直接據此分派；未標註時 implementer 自行依上表判定。
+
+### 不委派 Gemini 的硬規則
+
+以下情況即使 Gemini MCP 可用也**不委派**（短文直生反而更省一次 context 來回）：
+- commit message 生成（Sonnet/實作 model 依 diff 直生）
+- 單一檔案 < 50 行的小修正
+- STAGE 3 審查報告（reviewer 親自判斷，不可委派）
+
+---
+
+## 並行執行契約
+
+並行只在兩處發生：**STAGE 0a 的 context 收集（雙線）** 與 **STAGE 2 的獨立任務並行**。
+
+宣告並行的地方都必須遵守以下契約——光標 🟢 不算數，沒有契約的並行會在衝突時靜默壞掉。
+
+### 何時可並行（判斷條件）
+
+```
+                  待處理工作
+                       │
+          ┌────────────┴────────────┐
+          │ ≥2 個工作單元，且彼此    │
+          │ 無資料依賴、寫入路徑     │
+          │ 互不重疊？               │
+          └────────────┬────────────┘
+              是 ↓            ↓ 否
+        ┌───────────┐   ┌──────────┐
+        │ 🟢 並行    │   │ 🔴 序列   │
+        └───────────┘   └──────────┘
+```
+
+### 並行三規則（缺一不可）
+
+1. **明確 scope**：每個並行單元派發時給定**明確的寫入檔案清單**。STAGE 0a 的兩條是唯讀（只收集，不寫），天然安全；STAGE 2 的並行任務由 planner 在計畫中標好各自的檔案 scope。
+2. **共享資源指定唯一 owner**：`pubspec.yaml`、DI 註冊、generated files 等共享檔案，只能指定**一個**並行單元修改。若多個任務都需動到同一共享檔 → 不可並行，退回序列。
+3. **結果聚合與失敗短路**（這是契約核心）：
+
+| 情境 | 行為 |
+|---|---|
+| 全部並行單元成功 | 收斂所有結果 → 統一在暫停點展示 → 問使用者確認 |
+| 部分失敗，失敗單元與成功單元**無依賴** | 不中止其他單元（讓它們跑完）→ 聚合時明確標出哪些成功哪些失敗 → 失敗者進入 retry（見下方退回路徑） |
+| 部分失敗，且有其他單元**依賴失敗單元的產出** | 立即短路：停止依賴鏈下游，已完成的保留，回報使用者「X 失敗，已暫停依賴它的 Y、Z」 |
+| context 在並行中途超標 | 等當前所有並行單元跑完（不切在半途）→ 才執行 Token Gate 的切 session 閉環 |
+
+### 退回路徑（失敗 retry 迴圈）
+
+並行單元失敗時，**不可無限重試**：
+```
+失敗單元 → 分析原因
+  ├─ context 不足  → 補 context，重派同 model（最多 1 次）
+  ├─ 任務過大      → 拆成更小單元，重新並行/序列
+  ├─ 計畫本身有誤  → 退回 planner（STAGE 0b），不在 STAGE 2 硬修
+  └─ 重派仍失敗 2 次 → 停止，回報使用者，等決策（不自動繼續）
+```
+
+**與 STAGE 3 退回的關係：** STAGE 2 內部失敗在 STAGE 2 內 retry；STAGE 3 審查不通過才退回 STAGE 2 整體重做。兩者是不同層級的迴圈，不可混用。
 
 ---
 
@@ -233,14 +359,14 @@ description: |
 
 | Command | Stage | Action |
 |---------|-------|--------|
-| `/dev-workflow` | — | 查看目前流程狀態 / 開始新流程 |
-| `/dev-workflow spec <description>` | 0a | 撰寫功能規格 |
-| `/dev-workflow plan <spec-path>` | 0b | 產出實作計畫 |
-| `/dev-workflow branch <issue>` | 1 | 建立 Issue + 分支 |
-| `/dev-workflow implement <plan-path>` | 2 | 執行實作 |
-| `/dev-workflow code-review <branch>` | 3 | 執行代碼審查 |
-| `/dev-workflow publish <branch>` | 4 | 建立 PR |
-| `/dev-workflow review #<PR>` | 5 | 處理 PR review 意見 |
+| `/gen-dev-workflow` | — | 查看目前流程狀態 / 開始新流程 |
+| `/gen-dev-workflow spec <description>` | 0a | 撰寫功能規格 |
+| `/gen-dev-workflow plan <spec-path>` | 0b | 產出實作計畫 |
+| `/gen-dev-workflow branch <issue>` | 1 | 建立 Issue + 分支 |
+| `/gen-dev-workflow implement <plan-path>` | 2 | 執行實作 |
+| `/gen-dev-workflow code-review <branch>` | 3 | 執行代碼審查 |
+| `/gen-dev-workflow publish <branch>` | 4 | 建立 PR |
+| `/gen-dev-workflow review #<PR>` | 5 | 處理 PR review 意見 |
 
 ---
 
@@ -250,37 +376,37 @@ description: |
 
 ```
 # 重新規劃功能規格（STAGE 0a）
-/dev-workflow spec <需求描述>
+/gen-dev-workflow spec <需求描述>
 → 寫入狀態檔 { stage: "0a", mode: "jump" }
 → 呼叫 planner agent 產出功能規格
 
 # 重新產出實作計畫（STAGE 0b）
-/dev-workflow plan <spec 路徑>
+/gen-dev-workflow plan <spec 路徑>
 → 寫入狀態檔 { stage: "0b", mode: "jump", spec: "<spec 路徑>" }
 → 呼叫 planner agent 依規格產出實作計畫
 
 # 只需要建分支（STAGE 1）
-/dev-workflow branch <ISSUE-NUMBER>
+/gen-dev-workflow branch <ISSUE-NUMBER>
 → 寫入狀態檔 { stage: 1, mode: "jump", issue: <ISSUE-NUMBER> }
 → 呼叫 brancher agent
 
 # 繼續實作（STAGE 2）
-/dev-workflow implement <plan 路徑>
+/gen-dev-workflow implement <plan 路徑>
 → 寫入狀態檔 { stage: 2, mode: "jump", plan: "<plan 路徑>" }
 → 呼叫 implementer agent
 
 # 只需要審查（STAGE 3）
-/dev-workflow code-review <branch-name>
+/gen-dev-workflow code-review <branch-name>
 → 寫入狀態檔 { stage: 3, mode: "jump", branch: "<branch-name>" }
 → 呼叫 reviewer agent
 
 # 只需要發 PR（STAGE 4）
-/dev-workflow publish <branch-name>
+/gen-dev-workflow publish <branch-name>
 → 寫入狀態檔 { stage: 4, mode: "jump", branch: "<branch-name>" }
 → 呼叫 publisher agent
 
 # 處理 PR review 意見（STAGE 5）
-/dev-workflow review #<PR>
+/gen-dev-workflow review #<PR>
 → 寫入狀態檔 { stage: 5, mode: "jump", pr: <PR> }
 → 呼叫 responder agent 處理所有 review 意見
 → 處理完畢後呼叫 reviewer agent 重新審查
