@@ -65,7 +65,7 @@ discover_local_config_source_roots() {
       continue
     fi
 
-    if [[ -e "${source_root}/eslite_v3/env/.env" || -e "${source_root}/.env" ]]; then
+    if [[ -e "${source_root}/.env" || -e "${source_root}/.env.local" ]]; then
       add_local_config_source_root "${source_root}"
     fi
   done < <(git worktree list --porcelain)
@@ -109,43 +109,30 @@ sync_local_config_files() {
     done
   done
 
-  copy_local_config_path "eslite_v3/env"
-  copy_local_config_path "eslite_v3/env/.env"
-  copy_local_config_path "eslite_v3/android/key.properties"
-  copy_local_config_path "eslite_v3/android/app/google-services.json"
-  copy_local_config_path "eslite_v3/ios/Flutter/Generated.xcconfig"
+  copy_local_config_path "android/key.properties"
+  copy_local_config_path "android/app/google-services.json"
+  copy_local_config_path "ios/Runner/GoogleService-Info.plist"
 
   local signing_path
   for source_root in "${LOCAL_CONFIG_SOURCE_ROOTS[@]}"; do
-    for signing_path in "${source_root}"/eslite_v3/android/*.keystore "${source_root}"/eslite_v3/android/*.jks; do
+    for signing_path in "${source_root}"/android/*.keystore "${source_root}"/android/*.jks; do
       copy_local_config_path "${signing_path#"${source_root}/"}"
     done
-  done
-
-  for source_root in "${LOCAL_CONFIG_SOURCE_ROOTS[@]}"; do
-    while IFS= read -r google_service_path; do
-      copy_local_config_path "${google_service_path#"${source_root}/"}"
-    done < <(
-      find "${source_root}/eslite_v3/ios" \
-        -type f \
-        -name "GoogleService-Info.plist" \
-        2>/dev/null || true
-    )
   done
 
   local fastlane_private_path
   for source_root in "${LOCAL_CONFIG_SOURCE_ROOTS[@]}"; do
     for fastlane_private_path in \
-      "${source_root}"/eslite_v3/ios/fastlane/*.json \
-      "${source_root}"/eslite_v3/ios/fastlane/*.plist \
-      "${source_root}"/eslite_v3/ios/fastlane/*.p8 \
-      "${source_root}"/eslite_v3/ios/fastlane/*.p12 \
-      "${source_root}"/eslite_v3/ios/fastlane/*.mobileprovision \
-      "${source_root}"/eslite_v3/android/fastlane/*.json \
-      "${source_root}"/eslite_v3/android/fastlane/*.plist \
-      "${source_root}"/eslite_v3/android/fastlane/*.p8 \
-      "${source_root}"/eslite_v3/android/fastlane/*.p12 \
-      "${source_root}"/eslite_v3/android/fastlane/*.mobileprovision; do
+      "${source_root}"/ios/fastlane/*.json \
+      "${source_root}"/ios/fastlane/*.plist \
+      "${source_root}"/ios/fastlane/*.p8 \
+      "${source_root}"/ios/fastlane/*.p12 \
+      "${source_root}"/ios/fastlane/*.mobileprovision \
+      "${source_root}"/android/fastlane/*.json \
+      "${source_root}"/android/fastlane/*.plist \
+      "${source_root}"/android/fastlane/*.p8 \
+      "${source_root}"/android/fastlane/*.p12 \
+      "${source_root}"/android/fastlane/*.mobileprovision; do
       copy_local_config_path "${fastlane_private_path#"${source_root}/"}"
     done
   done

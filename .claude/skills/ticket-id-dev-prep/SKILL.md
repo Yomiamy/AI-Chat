@@ -42,9 +42,8 @@ Turn a pasted parsed ticket brief into a safe, ready-to-start workspace:
    - confirm branch and path
    - inspect repo status
    - sync local-only config files needed for real development and local builds when they exist in the source worktree, such as `.env`, Android signing / Firebase config, and iOS Firebase / fastlane signing config
-   - verify `eslite_v3/env/.env` is copied when it exists in the source worktree; if it is missing, report that explicitly before bootstrap
-   - run dependency bootstrap for this repo with `melos bs` after local config sync
-   - run intl generation for this repo with `flutter pub run intl_utils:generate` inside `eslite_v3` after bootstrap
+   - verify `android/app/google-services.json` and `ios/Runner/GoogleService-Info.plist` are copied when they exist in the source worktree; if either is missing, report that explicitly before bootstrap
+   - run dependency bootstrap for this repo with `flutter pub get` after local config sync
 12. Report the result with the parsed ticket brief, chosen slug, branch name, worktree path, and any follow-up notes.
 
 ## Parsed Brief Rules
@@ -117,7 +116,7 @@ Construct names in this order:
 Example:
 
 - branch: `fix/BUG-2351-password-fields-validator-error`
-- worktree: `../eslite-monorepo-app-bug-2351-password-fields-validator-error`
+- worktree: `../ai-chat-bug-2351-password-fields-validator-error`
 
 Additional rules:
 
@@ -157,19 +156,16 @@ Behavior:
 - stops if the target branch already exists locally
 - stops if the target worktree path already exists
 - copies common local-only config files from the source worktree into the new worktree by default
-- falls back to sibling git worktrees that already have local env files when the current worktree is missing `eslite_v3/env/.env`
-- includes `eslite_v3/env/.env` through the `eslite_v3/env/` directory sync when it exists
+- falls back to sibling git worktrees that already have local config files when the current worktree is missing them
 - prints normalized JSON describing the created or intended workspace
 
 Local config sync includes the repo's common development-only files when present, for example:
 
 - any `.env` or `.env.*` files
-- `eslite_v3/env/`
-- `eslite_v3/android/key.properties`
-- `eslite_v3/android/app/google-services.json`
+- `android/key.properties`
+- `android/app/google-services.json`
 - Android signing files such as `*.keystore` and `*.jks`
-- `eslite_v3/ios/Flutter/Generated.xcconfig`
-- iOS Firebase files such as `GoogleService-Info.plist`
+- `ios/Runner/GoogleService-Info.plist`
 - iOS / Android `fastlane` private signing or credential files such as `*.json`, `*.plist`, `*.p8`, `*.p12`, and `*.mobileprovision`
 
 If you explicitly want a clean worktree without copied local secrets, run the script with `--skip-local-config-sync`.
@@ -187,8 +183,7 @@ After creating the worktree:
 
 1. verify `git branch --show-current`
 2. verify `git status --short`
-3. run `melos bs`
-4. run `flutter pub run intl_utils:generate` in `eslite_v3`
+3. run `flutter pub get`
 
 Do not create the branch inside the already-dirty current worktree when the goal is isolated ticket development.
 
@@ -202,10 +197,8 @@ Default completion checklist:
 2. new branch exists and is checked out there
 3. repo status in the new worktree is clean before new edits
 4. required local config files are copied into the new worktree when they exist in the source worktree
-5. `eslite_v3/env/.env` exists in the new worktree when it exists in the source worktree or a sibling worktree
-6. `melos bs` has completed successfully
-7. `flutter pub run intl_utils:generate` in `eslite_v3` has completed successfully
-8. note any required next command if setup cannot be completed automatically
+5. `flutter pub get` has completed successfully
+6. note any required next command if setup cannot be completed automatically
 
 When useful for this repo, also do one or more of:
 
@@ -215,8 +208,7 @@ When useful for this repo, also do one or more of:
 For this repo, prefer the concrete initialization flow below unless the user explicitly asks to skip it:
 
 1. sync local-only config into the new worktree
-2. run `melos bs` at the repo root
-3. run `flutter pub run intl_utils:generate` in `eslite_v3`
+2. run `flutter pub get` at the repo root
 
 Prefer the smallest safe setup that unblocks development quickly.
 

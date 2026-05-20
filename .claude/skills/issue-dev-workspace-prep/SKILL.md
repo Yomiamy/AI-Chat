@@ -56,9 +56,11 @@ scripts/prepare_ticket_dev_workspace.sh --prefix "<fix/|feature/|chore/>" --slug
 The script also syncs local-only development config into the target worktree, including:
 
 - root `.env` and `.env.*`
-- `eslite_v3/env`
-- Android signing / Firebase config
-- iOS Firebase / fastlane private config
+- `android/key.properties`
+- `android/app/google-services.json`
+- Android signing files such as `*.keystore` and `*.jks`
+- `ios/Runner/GoogleService-Info.plist`
+- iOS / Android `fastlane` private signing or credential files
 
 Use `--skip-local-config-sync` only when the user explicitly wants no local config copy.
 
