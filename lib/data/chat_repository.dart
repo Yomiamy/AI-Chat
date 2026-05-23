@@ -1,7 +1,7 @@
 import 'chat_message.dart';
 
 abstract interface class ChatRepository {
-  /// Returns up to 100 messages ordered newest-first.
+  /// Returns up to the maximum allowed messages ordered newest-first.
   /// If [since] is provided, only messages with `timestamp > since` are returned.
   List<ChatMessage> loadMessages({int? since});
 

@@ -27,7 +27,9 @@ class ObjectBoxChatRepository implements ChatRepository {
     final builder = since != null
         ? _box.query(ChatMessage_.timestamp.greaterThan(since))
         : _box.query();
-    final query = (builder..order(ChatMessage_.timestamp, flags: Order.descending)).build()
+    final query = (builder
+          ..order(ChatMessage_.timestamp, flags: Order.descending))
+        .build()
       ..limit = _maxMessages;
     try {
       return query.find();
@@ -70,7 +72,8 @@ class ObjectBoxChatRepository implements ChatRepository {
     final count = _box.count();
     final excess = count - _maxMessages;
     if (excess <= 0) return;
-    final query = _box.query().order(ChatMessage_.timestamp).build()..limit = excess;
+    final query = _box.query().order(ChatMessage_.timestamp).build()
+      ..limit = excess;
     try {
       _box.removeMany(query.findIds());
     } finally {
