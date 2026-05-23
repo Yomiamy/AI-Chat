@@ -26,8 +26,8 @@ Use this skill when the task is to read the current git branch, parse the slug t
    - explicit constraints or edge cases found in code
    - open ambiguities
 5. Distinguish facts from inference. If the slug is too vague to drive a safe recommendation, say what is missing.
-6. **Gemini 優先策略**：收集完程式碼觀察後，優先委派 Gemini 生成「建議方向」段落：
-   - 呼叫 `mcp__gemini-cli__ask-gemini`，傳入以下 prompt（以實際資料填入）：
+6. **agy 優先策略**：收集完程式碼觀察後，優先委派 antigravity-cli（`agy`）生成「建議方向」段落：
+   - 透過 Bash 以 stdin 管道委派（`printf '%s' "<填入下方 prompt>" | agy -p --print-timeout 180s`），prompt 如下（以實際資料填入；務必在結尾要求「只輸出建議內容本文，不要任何開場白或人設評論」）：
      ```
      你是一位資深 Flutter 工程師，請根據以下 branch slug 與程式碼觀察，用繁體中文提出 1 至 3 個具體的實作方向建議（保留英文技術術語）。
 
@@ -55,8 +55,9 @@ Use this skill when the task is to read the current git branch, parse the slug t
      - 建議必須有根據（來自 slug 解析或程式碼觀察），不要憑空推測
      - 若有不確定的地方，在「風險與待確認」中說明
      ```
-   - 若 Gemini 成功回傳包含 `**判斷依據**` 與 `**建議做法**` 的建議內容，直接採用作為「建議方向」段落。
-   - 若 Gemini 呼叫失敗或回傳格式不合法，回退至步驟 7 自行生成建議方向。
+   - 若 `agy` 成功回傳包含 `**判斷依據**` 與 `**建議做法**` 的建議內容，採用作為「建議方向」段落。
+   - **後處理（必做）**：`agy` 會讀取全域 CLAUDE.md 而附加 Linus 人設框架（如「【Linus 式方案】」），且可能在生成時順手建立暫存檔。採用前須剝除人設包裝、只取目標結構內容；並確認 `agy` 未在工作區誤建檔案（如有則刪除）。檔案一律由 Claude 自行寫入正式路徑，不依賴 `agy` 落檔。
+   - 若 `agy` 不在 PATH、呼叫失敗或回傳格式不合法，回退至步驟 7 自行生成建議方向。
 7. （Fallback）自行 propose one or more solution directions under the most suitable category:
    - `開發` for new capability or workflow expansion
    - `修正` for bug, regression, mismatch, or broken behavior

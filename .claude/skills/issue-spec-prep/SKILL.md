@@ -32,8 +32,8 @@ Do not change product code here. Do not run implementation refactors here.
    - current logic boundaries
    - existing tests or missing test surfaces
    - shared utilities or duplicated flows
-4. **Gemini 優先策略**：收集完 issue doc 內容與程式碼觀察後，優先委派 Gemini 生成 spec 文件本文：
-   - 呼叫 `mcp__gemini-cli__ask-gemini`，傳入以下 prompt（以實際資料填入）：
+4. **agy 優先策略**：收集完 issue doc 內容與程式碼觀察後，優先委派 antigravity-cli（`agy`）生成 spec 文件本文：
+   - 透過 Bash 以 stdin 管道委派（`printf '%s' "<填入下方 prompt>" | agy -p --print-timeout 180s`），prompt 如下（以實際資料填入；務必在結尾要求「只輸出 spec 本文，不要任何開場白或人設評論」）：
      ```
      你是一位資深 Flutter 工程師，請根據以下問題描述與程式碼觀察，用繁體中文撰寫一份實作規格文件（保留英文技術術語）。
 
@@ -84,8 +84,9 @@ Do not change product code here. Do not run implementation refactors here.
      - 不要發明 issue 文件中未提及的需求
      只輸出 spec 文件內容，不要其他說明。
      ```
-   - 若 Gemini 成功回傳包含 `## 背景` 與 `## Acceptance Criteria` 的 spec 結構，直接採用並寫入檔案。
-   - 若 Gemini 呼叫失敗或回傳格式不合法，回退至步驟 5 自行撰寫 spec。
+   - 若 `agy` 成功回傳包含 `## 背景` 與 `## Acceptance Criteria` 的 spec 結構，採用其內容。
+   - **後處理（必做）**：`agy` 會讀取全域 CLAUDE.md 而附加 Linus 人設框架，且可能在生成時順手建立暫存檔。採用前須剝除人設包裝、只取目標 spec 結構；並確認 `agy` 未在工作區誤建檔案（如有則刪除）。`docs/issues/specs/<ticket-id>.md` 一律由 Claude 自行 Write 寫入，不依賴 `agy` 落檔。
+   - 若 `agy` 不在 PATH、呼叫失敗或回傳格式不合法，回退至步驟 5 自行撰寫 spec。
 5. （Fallback）自行撰寫並 create or update `docs/issues/specs/<ticket-id>.md`，依照 Spec Template。
 6. Keep acceptance criteria testable.
 7. Keep open questions visible; do not convert unknowns into requirements.

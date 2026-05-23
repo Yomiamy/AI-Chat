@@ -1,6 +1,6 @@
 ---
 name: gen-ticket-workflow
-description: 當使用者輸入 `gen ticket-workflow <TICKET-ID>` 或想要從 YouTrack ticket 一條龍完成「讀取 ticket → 理解 → 建立 worktree → 代碼分析 → 釐清修改範圍 → 提供修改建議 → 寫入 issue / spec 文件 → 實作 → commit」全流程時，請使用此技能。整合多個既有 skill，採用 Claude orchestrator + Gemini generator + Haiku scout 的混合架構以節省 token。
+description: 當使用者輸入 `gen ticket-workflow <TICKET-ID>` 或想要從 YouTrack ticket 一條龍完成「讀取 ticket → 理解 → 建立 worktree → 代碼分析 → 釐清修改範圍 → 提供修改建議 → 寫入 issue / spec 文件 → 實作 → commit」全流程時，請使用此技能。整合多個既有 skill，採用 Claude orchestrator + agy generator + Haiku scout 的混合架構以節省 token。
 ---
 
 # Gen Ticket Workflow
@@ -39,10 +39,10 @@ description: 當使用者輸入 `gen ticket-workflow <TICKET-ID>` 或想要從 Y
                               ↓
 ┌──────────────────────────────────────────────────────────────────┐
 │ Phase 2b: 解決方案建議                    🔴 序列                  │
-│ 🔵 Opus 4.7 (主) + 💎 Gemini (建議方向長文)                         │
+│ 🔵 Opus 4.7 (主) + 💎 agy (建議方向長文)                         │
 │                                                                    │
 │   → branch-ticket-solution-advisor                                │
-│     ✨ Gemini 優先：mcp__gemini-cli__ask-gemini                     │
+│     ✨ agy 優先：agy -p（stdin 管道傳 prompt）                     │
 │     🔍 驗證 fallback：格式 + 分層提示 + 具體檔案路徑                 │
 │                                                                    │
 │   產出: implementation brief                                       │
@@ -67,10 +67,10 @@ description: 當使用者輸入 `gen ticket-workflow <TICKET-ID>` 或想要從 Y
                               ↓
 ┌──────────────────────────────────────────────────────────────────┐
 │ Phase 4+5: 寫入 Issue + Spec 文件         🔴 序列（合併委派）       │
-│ 🤖 Sonnet 4.6 (主) + 💎 Gemini (單次雙產出)                         │
+│ 🤖 Sonnet 4.6 (主) + 💎 agy (單次雙產出)                         │
 │                                                                    │
 │   → branch-ticket-issue-doc + issue-spec-prep                     │
-│     ✨ Gemini 單次委派產出兩份文件（節省 1 次 context 傳輸）          │
+│     ✨ agy 單次委派產出兩份文件（節省 1 次 context 傳輸）          │
 │     🔍 驗證 fallback：                                              │
 │       SECTION-A (issue doc): ## 問題描述 + ## 已知事實               │
 │       SECTION-B (spec)     : ## 背景 + ## AC + 分層 + 檔案路徑       │
@@ -87,7 +87,7 @@ description: 當使用者輸入 `gen ticket-workflow <TICKET-ID>` 或想要從 Y
                               ↓
 ┌──────────────────────────────────────────────────────────────────┐
 │ Phase 6: Commit 文件                      🔴 序列                  │
-│ 🤖 Sonnet 4.6（直接生成，❌ 不委派 Gemini）                         │
+│ 🤖 Sonnet 4.6（直接生成，❌ 不委派 agy）                         │
 │                                                                    │
 │   → gen-commit                                                     │
 │     • Sonnet 依 diff 直生 gitmoji commit message                   │
@@ -141,7 +141,7 @@ description: 當使用者輸入 `gen ticket-workflow <TICKET-ID>` 或想要從 Y
                               ↓
 ┌──────────────────────────────────────────────────────────────────┐
 │ Phase 9: Commit 實作                      🔴 序列                  │
-│ 🤖 Sonnet 4.6（直接生成，❌ 不委派 Gemini）                         │
+│ 🤖 Sonnet 4.6（直接生成，❌ 不委派 agy）                         │
 │                                                                    │
 │   → gen-commit × N（依變更性質拆分）                                │
 │     • Sonnet 依 diff 直生每個 gitmoji commit message               │
@@ -155,7 +155,7 @@ description: 當使用者輸入 `gen ticket-workflow <TICKET-ID>` 或想要從 Y
                               ↓
 ╔══════════════════════════════════════════════════════════════════╗
 ║  ✅ 完成                                                            ║
-║     後續銜接（保留 Gemini 委派，長文 PR description 值得）           ║
+║     後續銜接（保留 agy 委派，長文 PR description 值得）           ║
 ║     gen-pr (💎) → pr-publish-main-zh-tw (💎)                       ║
 ║     → ticket-fix-progress-report (💎)                              ║
 ╚══════════════════════════════════════════════════════════════════╝
@@ -165,7 +165,7 @@ description: 當使用者輸入 `gen ticket-workflow <TICKET-ID>` 或想要從 Y
 
 ## Model 分配總覽
 
-| Phase | Skill / Agent | Model | Gemini 委派 |
+| Phase | Skill / Agent | Model | agy 委派 |
 |---|---|---|---|
 | 1 | context-collector | 🤖 **Haiku 4.5** | ❌ |
 | 1 | ticket-code-investigator | 🔵 **Opus 4.7**（跨層依賴追蹤、代碼判定） | ❌ |
@@ -183,23 +183,23 @@ description: 當使用者輸入 `gen ticket-workflow <TICKET-ID>` 或想要從 Y
 
 ---
 
-## Gemini 委派點摘要（共 2 個 Phase）
+## agy 委派點摘要（共 2 個 Phase）
 
 | Phase | 委派內容 | 預估字數 | MCP Tool |
 |---|---|---|---|
-| 2b | implementation brief「建議方向」 | 300-500 字 | `mcp__gemini-cli__ask-gemini` |
-| 4+5 | issue doc + spec（單次雙產出） | 800-1500 字 | `mcp__gemini-cli__ask-gemini` |
+| 2b | implementation brief「建議方向」 | 300-500 字 | `agy -p`（stdin 管道傳 prompt） |
+| 4+5 | issue doc + spec（單次雙產出） | 800-1500 字 | `agy -p`（stdin 管道傳 prompt） |
 
 **委派策略**：「**優先策略 + Sonnet fallback**」
-- 先呼叫 Gemini 生成內容
+- 先呼叫 agy 生成內容
 - 驗證結構 + 內容雙重檢查
 - 任一未通過 → Sonnet 自行撰寫
 
-**委派門檻**：**輸出 > 300 字才委派 Gemini**，否則 Sonnet 直生。
+**委派門檻**：**輸出 > 300 字才委派 agy**，否則 Sonnet 直生。
 
 ---
 
-## Gemini Fallback 驗證規則
+## agy Fallback 驗證規則
 
 ### Phase 2b 驗證
 - ✅ 結構 heading 存在
@@ -253,7 +253,7 @@ description: 當使用者輸入 `gen ticket-workflow <TICKET-ID>` 或想要從 Y
 |---|---|
 | < 60k | 正常流程 |
 | 60-100k | ⚠️ 警告，建議精簡 Phase 1+2 的 raw output |
-| > 100k | ⚠️ 強制走 Gemini 委派路徑（無 fallback） |
+| > 100k | ⚠️ 強制走 agy 委派路徑（無 fallback） |
 | > 150k | ⛔ 強制 checkpoint，建議切新 session |
 
 ---
@@ -335,8 +335,8 @@ description: 當使用者輸入 `gen ticket-workflow <TICKET-ID>` 或想要從 Y
 |---|---|---|---|
 | Phase 1+2 重複工作（移除 Explore subagent） | +30% | 0% | ~15k token |
 | Phase 4+5 委派傳輸（合併單次） | 2 次 context | 1 次 context | ~8k token |
-| Phase 6 commit msg（改 Sonnet 直生） | Gemini 8k | Sonnet 1k | ~7k token |
-| Phase 9 N × commit（改 Sonnet 直生） | Gemini N×8k | Sonnet N×1k | ~35k token（5 次） |
+| Phase 6 commit msg（改 Sonnet 直生） | agy 8k | Sonnet 1k | ~7k token |
+| Phase 9 N × commit（改 Sonnet 直生） | agy N×8k | Sonnet N×1k | ~35k token（5 次） |
 | **總計** | **基準** | **-65k token** | **~30-35% 成本** |
 
 ---
@@ -346,9 +346,9 @@ description: 當使用者輸入 `gen ticket-workflow <TICKET-ID>` 或想要從 Y
 實作完成（Phase 9）後，銜接既有 skill：
 
 ```
-→ gen-pr           (產生 PR description，💎 Gemini)
-→ pr-publish-main-zh-tw  (發布 PR，💎 Gemini)
-→ ticket-fix-progress-report  (回報 YouTrack 並轉 To Verify，💎 Gemini)
+→ gen-pr           (產生 PR description，💎 agy)
+→ pr-publish-main-zh-tw  (發布 PR，💎 agy)
+→ ticket-fix-progress-report  (回報 YouTrack 並轉 To Verify，💎 agy)
 → finishing-a-development-branch  (收尾)
 → worktree-close-cleanup  (清理 worktree)
 ```
@@ -366,7 +366,7 @@ description: 當使用者輸入 `gen ticket-workflow <TICKET-ID>` 或想要從 Y
 | ⚠️ | 環境切換注意點 |
 | 🤖 | Claude Sonnet 4.6 |
 | 🔵 | Claude Opus 4.7（高槓桿決策點） |
-| 💎 | Gemini 委派點 |
+| 💎 | agy 委派點 |
 | ✨ | 優化策略標示 |
 | ❌ | 已移除或不適用 |
 | ✅ | 已啟用或必要 |
@@ -377,6 +377,6 @@ description: 當使用者輸入 `gen ticket-workflow <TICKET-ID>` 或想要從 Y
 
 1. **每個 Phase 結束都要回報結果**（簡短一行）給使用者，讓使用者知道進度
 2. **遇到 🛑 Checkpoint 必須暫停等使用者確認**，不可自動跳過
-3. **Gemini 委派失敗時必須明確回報「fallback 到 Sonnet」**，不要靜默切換
+3. **agy 委派失敗時必須明確回報「fallback 到 Sonnet」**，不要靜默切換
 4. **Phase 3 完成後務必確認工作目錄已切到新 worktree**，後續所有指令都在新 worktree 下執行
 5. **若 spec 中出現 secrets 或敏感資訊**，立即警告並停止流程
