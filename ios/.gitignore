@@ -35,3 +35,16 @@ Runner/GeneratedPluginRegistrant.*
 
 # Fastlane
 /Gemfile.lock
+
+# Fastlane - distribution certificate
+fastlane/stg-distribution.p12
+
+# Fastlane - ad-hoc provisioning profile
+fastlane/stg-profile.mobileprovision
+
+# Fastlane - Firebase service account credentials
+fastlane/stg-credentials.json
+
+# Fastlane - generated artifacts
+fastlane/report.xml
+fastlane/README.md
