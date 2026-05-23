@@ -12,3 +12,9 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Fastlane
+/Gemfile.lock
+/fastlane/stg-credentials.json
+/fastlane/report.xml
+/fastlane/README.md

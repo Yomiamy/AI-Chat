@@ -1,0 +1,30 @@
+default_platform(:android)
+
+platform :android do
+    desc "Build a new Beta Build"
+    lane :beta_build do
+        pubspec = File.read("../../pubspec.yaml")
+        version = pubspec.match(/^version:\s(.+)\+/)[1]
+        build = pubspec.match(/\+(\d+)$/)[1]
+
+        sh("cd ../.. && flutter build apk --release --build-name=#{version} --build-number=#{build}")
+    end
+
+    desc "Deploy to Firebase App Distribution"
+    lane :beta_deploy do
+        release_notes = ENV["FIREBASE_RELEASE_NOTES"].to_s.strip
+        firebase_app_distribution(
+            app: ENV["FIREBASE_APP_ID"],
+            service_credentials_file: "fastlane/stg-credentials.json",
+            apk_path: "../build/app/outputs/flutter-apk/app-release.apk",
+            groups: ENV["FIREBASE_GROUPS"] || "qa&rd",
+            release_notes: release_notes.empty? ? "This is a beta build upload by Fastlane" : release_notes
+        )
+    end
+
+    desc "Submit a new Beta Build to Firebase App Distribution"
+    lane :beta do
+        beta_build
+        beta_deploy
+    end
+end
