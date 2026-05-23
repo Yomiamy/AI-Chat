@@ -18,8 +18,6 @@ import 'package:ai_chat/bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ai_chat/bloc/status.dart';
-
 // ---------------------------------------------------------------------------
 // 1. Unit tests — GeminiApiState (no Firebase, no widget tree)
 // ---------------------------------------------------------------------------
