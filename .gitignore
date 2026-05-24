@@ -4,6 +4,9 @@
 # Claude Code workflow state (local only, not shared across developers)
 .claude/workflow-state.json
 
+# Antigravity CLI state
+.antigravitycli/
+
 # Miscellaneous
 *.class
 *.lock
