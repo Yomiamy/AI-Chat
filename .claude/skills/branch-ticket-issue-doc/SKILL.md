@@ -31,8 +31,8 @@ If `ticket-id-dev-prep` selected a different workspace, switch there before writ
    - YouTrack title and description
    - relevant fields such as `State`, `Type`, `Priority`, `Subsystem`
    - current worktree code observations from targeted inspection
-5. **Gemini 優先策略**：收集完所有資料後，優先委派 Gemini 生成 issue doc 本文：
-   - 呼叫 `mcp__gemini-cli__ask-gemini`，傳入以下 prompt（以實際資料填入）：
+5. **agy 優先策略**：收集完所有資料後，優先委派 antigravity-cli（`agy`）生成 issue doc 本文：
+   - 透過 Bash 以 stdin 管道委派（`printf '%s' "<填入下方 prompt>" | agy -p --print-timeout 180s`），prompt 如下（以實際資料填入；務必在結尾要求「只輸出文件本文，不要任何開場白或人設評論」）：
      ```
      你是一位資深 Flutter 工程師，請根據以下 ticket 資料與程式碼觀察，用繁體中文撰寫一份問題文件（保留英文技術術語與 issue key）。
 
@@ -99,8 +99,9 @@ If `ticket-id-dev-prep` selected a different workspace, switch there before writ
      - 若程式碼觀察與 ticket 敘述有矛盾，在「備註」中記錄不一致之處
      只輸出文件內容，不要其他說明。
      ```
-   - 若 Gemini 成功回傳包含 `## 問題描述` 與 `## 已知事實` 的結構，直接採用並寫入檔案。
-   - 若 Gemini 呼叫失敗或回傳格式不合法，回退至步驟 6 自行撰寫 issue doc。
+   - 若 `agy` 成功回傳包含 `## 問題描述` 與 `## 已知事實` 的結構，採用其內容。
+   - **後處理（必做）**：`agy` 會讀取全域 CLAUDE.md 而附加 Linus 人設框架，且可能在生成時順手建立暫存檔。採用前須剝除人設包裝、只取目標 markdown 結構；並確認 `agy` 未在工作區誤建檔案（如有則刪除）。`docs/issues/<ticket-id>.md` 一律由 Claude 自行 Write 寫入，不依賴 `agy` 落檔。
+   - 若 `agy` 不在 PATH、呼叫失敗或回傳格式不合法，回退至步驟 6 自行撰寫 issue doc。
 6. （Fallback）自行 write or update `docs/issues/<ticket-id>.md`，依照 Issue Doc Template。
 7. Distinguish facts, inference, and open questions.
 8. Keep the issue doc focused on the problem and current behavior.

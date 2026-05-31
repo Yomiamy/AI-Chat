@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 
 import '../bloc/gemini_api/gemini_api_bloc.dart';
 import '../bloc/search/search.dart';
-import '../data/data.dart';
 import '../features/utils/widget_preview.dart';
 import 'widgets/ai_chat_view.dart';
 
@@ -15,15 +15,18 @@ class AiChatPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => GeminiApiBloc(GetIt.I<ChatRepository>())),
-        BlocProvider(
-          create: (_) => SearchBloc(repository: GetIt.I<ChatRepository>()),
-        ),
+        BlocProvider(create: (_) => GeminiApiBloc(repository: GetIt.I())),
+        BlocProvider(create: (_) => SearchBloc(repository: GetIt.I())),
       ],
       child: const AiChatView(),
     );
   }
 }
 
-@DevicePreviewAll()
+@Preview(
+  name: 'Pixel 6',
+  size: Size(411, 914),
+  group: 'Android',
+  localizations: zhTwLocalizations,
+)
 Widget previewPage() => const AiChatPage();

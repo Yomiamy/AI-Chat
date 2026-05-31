@@ -29,7 +29,9 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
   List<ChatMessage> _messages = [];
   final ChatRepository _repo;
 
-  GeminiApiBloc(this._repo) : super(const GeminiApiState()) {
+  GeminiApiBloc({required ChatRepository repository})
+    : _repo = repository,
+      super(const GeminiApiState()) {
     on<GeminiApiInitEvent>(_init);
     on<GeminiApiQueryEvent>(_query);
     on<GeminiApiPickFileEvent>(_pickFile);
@@ -58,10 +60,12 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     }).toList();
 
     await _initFirebaseAiLogic();
-    emit(state.copyWith(
-      chatList: _chatList.isEmpty ? null : _chatList,
-      messages: _messages.isEmpty ? null : _messages,
-    ));
+    emit(
+      state.copyWith(
+        chatList: _chatList.isEmpty ? null : _chatList,
+        messages: _messages.isEmpty ? null : _messages,
+      ),
+    );
   }
 
   Future<void> _newChat(
@@ -183,7 +187,10 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
       if (_chatList.isNotEmpty &&
           ChatEntryPrefix.aiReply.matches(_chatList.first)) {
         final aiContent = _stripContent(_chatList.first);
-        _repo.saveMessage(role: ChatMessageRoleEnum.aiReply, content: aiContent);
+        _repo.saveMessage(
+          role: ChatMessageRoleEnum.aiReply,
+          content: aiContent,
+        );
 
         _messages.insert(
           0,
@@ -278,7 +285,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
 
   Future<void> _initFirebaseAiLogic() async {
     _aiModel = FirebaseAI.googleAI().generativeModel(
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.1-flash-lite',
       generationConfig: GenerationConfig(
         responseModalities: [ResponseModalities.text],
       ),

@@ -27,6 +27,12 @@ final class DevicePreviewAll extends MultiPreview {
   List<Preview> get previews => const [
     // ── Android ──────────────────────────────────────────
     Preview(
+      name: 'Pixel 6',
+      size: Size(411, 914),
+      group: 'Android',
+      localizations: zhTwLocalizations,
+    ),
+    Preview(
       name: 'Pixel 7',
       size: Size(412, 915),
       group: 'Android',

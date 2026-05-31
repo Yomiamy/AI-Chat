@@ -59,8 +59,8 @@ Findings come first.
    - run `git diff <fork_point>...HEAD` and `git log --oneline <fork_point>..HEAD`
    - collect `git diff --stat` for a file overview
 5. Inspect changed files and read surrounding code where needed before judging behavior.
-6. **Gemini 優先策略**：收集完 diff 與程式碼觀察後，優先委派 Gemini 生成審查報告本文：
-   - 呼叫 `mcp__gemini-cli__ask-gemini`，傳入以下 prompt（以實際資料填入）：
+6. **agy 優先策略**：收集完 diff 與程式碼觀察後，優先委派 antigravity-cli（`agy`）生成審查報告本文：
+   - 透過 Bash 以 stdin 管道委派（`printf '%s' "<填入下方 prompt>" | agy -p --print-timeout 180s`），prompt 如下（以實際資料填入；務必在結尾要求「只輸出報告本文，不要任何開場白或人設評論」）：
      ```
      你是一位資深 Flutter 工程師，同時也是嚴格的 Code Reviewer。
      請根據以下 branch diff 與 commit 紀錄，用繁體中文撰寫一份代碼審查報告（保留英文技術術語）。
@@ -106,8 +106,9 @@ Findings come first.
 
      Findings 優先，不以讚美開頭。
      ```
-   - 若 Gemini 成功回傳包含 `### Findings` 的結構化審查報告，直接採用。
-   - 若 Gemini 呼叫失敗或回傳格式不合法，回退至步驟 7 自行撰寫審查報告。
+   - 若 `agy` 成功回傳包含 `### Findings` 的結構化審查報告，採用其內容。
+   - **後處理（必做）**：`agy` 會讀取全域 CLAUDE.md 而附加 Linus 人設框架，且可能在生成時順手建立暫存檔。採用前須剝除人設包裝、只取 `### Findings` 起的報告本文（注意：本 skill 結尾的文學創作 ritual 為刻意保留，不可剝除）；並確認 `agy` 未在工作區誤建檔案（如有則刪除）。
+   - 若 `agy` 不在 PATH、呼叫失敗或回傳格式不合法，回退至步驟 7 自行撰寫審查報告。
 7. （Fallback）自行依 diff 與程式碼觀察撰寫審查報告，遵循 Output Rules 格式。
 8. Prefer evidence from the repository over speculation.
 9. When a suspected issue depends on unseen runtime behavior, mark it as a risk or open question instead of overstating certainty.
