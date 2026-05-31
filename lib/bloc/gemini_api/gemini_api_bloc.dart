@@ -278,7 +278,7 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
 
   Future<void> _initFirebaseAiLogic() async {
     _aiModel = FirebaseAI.googleAI().generativeModel(
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.1-flash-lite',
       generationConfig: GenerationConfig(
         responseModalities: [ResponseModalities.text],
       ),
