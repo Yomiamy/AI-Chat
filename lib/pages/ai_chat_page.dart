@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 
@@ -25,5 +26,10 @@ class AiChatPage extends StatelessWidget {
   }
 }
 
-@DevicePreviewAll()
+@Preview(
+  name: 'Pixel 6',
+  size: Size(411, 914),
+  group: 'Android',
+  localizations: zhTwLocalizations,
+)
 Widget previewPage() => const AiChatPage();

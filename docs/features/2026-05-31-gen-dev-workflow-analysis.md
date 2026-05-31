@@ -240,18 +240,6 @@ graph LR
 | **文件 vs 執行** | Skill 是文件，不是程式 | 🔴 高 | 整個 workflow 是 markdown 指令文件，靠 LLM「讀懂後遵守」。沒有程式碼強制執行流程、沒有 state machine 實作、沒有 guard clause。LLM 可能跳過暫停點、忘記寫 state、算錯 context 用量——一切靠「希望」|
 | **錯誤傳播** | 早期 stage 錯誤會放大 | 🟡 中 | 如果 STAGE 0a 的功能規格就有偏差，使用者確認了（可能沒仔細看），後面所有 stage 都在錯誤基礎上工作。flow 沒有後期發現早期問題的回溯機制 |
 
-### ⚖️ 設計權衡（Trade-offs）
-
-| 權衡 | 選擇 | 代價 |
-|------|------|------|
-| 自動化 vs 控制 | 每步暫停確認 | 效率下降，但防止脫韁 |
-| 成本 vs 品質 | Model 動態分級 | 便宜 model 可能漏掉邊界 case |
-| 韌性 vs 簡潔 | Token Budget Gate + state 持久化 | 增加了大量管理複雜度 |
-| 通用 vs 專用 | 綁定 agy + Claude model 族 | 不可移植到其他 AI 平台 |
-| 完整 vs 輕量 | 6 stage 全流程 | 小任務過重 |
-
----
-
 ## 🐧 Linus 式總結
 
 > 「這個 workflow 設計的核心問題是：它試圖用 markdown 文件模擬一個 state machine，然後『希望』LLM 會遵守所有規則。這就像寫一份『請不要碰記憶體』的備忘錄給 C 程式員，然後期待 segfault 不會發生。」
