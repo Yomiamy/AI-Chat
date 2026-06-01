@@ -153,9 +153,33 @@ description: |
 [5/5] 完成 ✦ PR: <URL>
 ```
 
-### 狀態檔：`.claude/workflow-state.json`
+### 狀態檔：每個 workflow 一個檔，用 branch 命名
 
-**每個 stage 完成後寫入狀態檔**，讓新 session 可以從中斷點繼續：
+**多 session 並行的隔離 key 是 git branch。** 同一 repo 上兩個並行 workflow 必然在兩個不同 branch，所以每個 workflow 寫自己 branch 對應的 state 檔，彼此天然零衝突——不需要任何鎖。
+
+**檔案路徑規則：**
+
+```
+.claude/workflow-state/<branch-slug>.json    ← 已建 branch 的 workflow（STAGE 1 之後）
+.claude/workflow-state/.pending-<ts>.json     ← 尚無 branch 時的暫存（STAGE 0a / 0b）
+```
+
+- `<branch-slug>`：當前 branch 名稱把 `/` 換成 `-`。
+  例：`feature/202605/42-cart` → `feature-202605-42-cart.json`
+- `<ts>`：啟動當下的 epoch 秒數（`date +%s`），用來區分同時段多個尚無 branch 的流程。
+
+**state 檔生命週期（解決「尚無 branch」這個唯一邊界）：**
+
+| 時機 | 動作 |
+|------|------|
+| STAGE 0a 啟動（流程剛開始，還沒 branch） | 建 `.pending-<ts>.json`，**在本 session context 記住這個路徑**，後續只寫它 |
+| STAGE 1 建好 branch 後 | `mv .claude/workflow-state/.pending-<ts>.json .claude/workflow-state/<branch-slug>.json`，並把 state 內 `branch` 欄位補上 |
+| STAGE 1 之後每次寫入 | 寫 `<branch-slug>.json`，零衝突 |
+| 直接 jump 進 STAGE 1+（已知 branch） | 略過 pending，直接寫 `<branch-slug>.json` |
+
+> 關鍵：每個 session 只寫**自己**那一個檔（pending 路徑記在 context 裡、或由當前 branch 推導），絕不掃別人的檔來寫，所以兩個並行 session 不會互踩。
+
+**每個 stage 完成後寫入對應 state 檔**，讓新 session 可以從中斷點繼續：
 
 **sequence 模式**（正常流程跑到這裡）：
 ```json
@@ -206,11 +230,24 @@ description: |
 | B | 「幫我做 X 功能」/ 「開始開發」/ 「新功能開發」 |
 | C | 「繼續」/ 「繼續上次」/ 「繼續開發」 |
 
-**狀態檔存在時（A / B / C 共用）：**
+**先定位「本 session 對應的 state 檔」（A / B / C 共用）：**
 ```
-→ 讀取 .claude/workflow-state.json
+→ slug = 當前 branch（git branch --show-current）把 / 換成 -
+→ 候選檔 = .claude/workflow-state/<slug>.json
+→ 若候選檔存在 → 它就是本 session 的 state，走「狀態檔存在時」
+→ 若候選檔不存在：
+   ├─ 列出 .claude/workflow-state/*.json（排除 .pending-*）
+   │   ├─ 0 個 → 走「狀態檔不存在時」
+   │   ├─ 1 個 → 提示「當前 branch 無對應流程，但找到 1 個其他流程 <slug>，要接續它嗎？」
+   │   └─ ≥2 個 → 列出全部讓使用者選，或開新流程
+   └─（並行情境下，每個 session 都待在自己的 branch，候選檔通常一擊命中）
+```
+
+**狀態檔存在時（即上面定位到的 `<slug>.json`）：**
+```
+→ 讀取該檔
 → 若 pr 欄位有值 → gh pr view <pr> --json state --jq '.state'
-   ├─ MERGED → 自動刪除狀態檔，告知「PR 已合併，開發週期完成 ✦」
+   ├─ MERGED → 自動刪除該檔，告知「PR 已合併，開發週期完成 ✦」
    ├─ CLOSED → 問使用者「PR 已關閉，要重新開 PR 還是放棄？」
    └─ OPEN   → 展示目前狀態（STAGE <N>），問「繼續還是開新流程？」
 → 若 pr 欄位為 null → 展示目前狀態（STAGE <N>），問「繼續還是開新流程？」
@@ -220,13 +257,15 @@ description: |
 ```
 → 觸發 A → 問「要開始新的開發流程嗎？請描述需求」
 → 觸發 B → 直接用使用者描述的需求啟動新流程
-→ 觸發 C → 告知「找不到未完成的流程，要開始新的嗎？」
+→ 觸發 C → 告知「當前 branch 找不到未完成的流程，要開始新的嗎？」
 ```
 
 **狀態檔刪除時機：**
-- PR 狀態為 `MERGED` → 自動刪除
-- 使用者說「放棄這個功能」→ 自動刪除
+- PR 狀態為 `MERGED` → 自動刪除該 branch 的 state 檔
+- 使用者說「放棄這個功能」→ 自動刪除該 branch 的 state 檔
 - 其他情況一律保留，直到明確完成
+
+> 刪除只動「本 session 對應的那一個」state 檔，絕不清整個 `.claude/workflow-state/` 目錄——別的 session 的進度不可被波及。
 
 ---
 
@@ -243,13 +282,13 @@ description: |
 
 ### context 超標切 session 閉環
 
-這是本 skill 相對其他 workflow 的關鍵優勢：**已有 `workflow-state.json`，所以 Token Gate 撞牆時不會丟失進度**。
+這是本 skill 相對其他 workflow 的關鍵優勢：**已有 per-branch state 檔，所以 Token Gate 撞牆時不會丟失進度**。
 
 `> 150k` 觸發時，**不是只丟一句「建議切 session」**，而是執行完整交接：
 
 ```
 1. 完成當前正在進行的最小單元（如 STAGE 2 的當前任務），不要切在半途
-2. 寫入 workflow-state.json，並設 "interrupted_by": "context_budget"
+2. 寫入本 branch 的 state 檔（<branch-slug>.json），並設 "interrupted_by": "context_budget"
    （完整記錄 stage / mode / spec / plan / branch / completed_tasks）
 3. 若有未 commit 的變更 → 先 commit（避免 session 切換後遺失）
 4. 明確告知使用者：
