@@ -13,6 +13,8 @@ description: |
 > 需求：`agy` 須在 PATH（預設於 `~/.local/bin/agy`）。
 > `agy` 不在 PATH 時各 agent 會自動退回 Fallback 模式，功能仍可運作但不會委派給 `agy`。
 
+> **多 workflow 並行：** 同一 repo 可同時跑多個獨立 workflow（多個終端 / 多個 session）。隔離 key 是 **git branch**——每個 workflow 跑在自己的 branch 上，寫自己 branch 對應的 state 檔，彼此天然零衝突，不需要任何鎖或中央索引。唯一需要額外處理的窗口是「兩個流程都還在 STAGE 0a/0b（尚無 branch）」，靠 **workflow-id** 持久化區分（見「狀態追蹤」章節）。
+
 ## 編排流程
 
 ```text
@@ -20,7 +22,7 @@ description: |
            │
            ▼
     ┌─────────────────────────────────────────────────┐
-    │  STAGE 0a：功能規格                              │
+    │  STAGE 0a：功能規格            [Model: Opus]     │
     │  → 呼叫 planner agent                           │
     │  → 🟢 並行 2 條：                                │
     │     A. 專案 context 收集（讀檔 / git log）       │
@@ -33,7 +35,7 @@ description: |
                            │ 使用者確認
                            ▼
     ┌─────────────────────────────────────────────────┐
-    │  STAGE 0b：實作計畫                              │
+    │  STAGE 0b：實作計畫            [Model: Opus]     │
     │  → 呼叫 planner agent（依據已確認的功能規格）    │
     │  → 產出 docs/plans/YYYY-MM-DD-<feature>.md      │
     │    （How：資料結構、檔案異動、任務拆分）          │
@@ -42,7 +44,7 @@ description: |
                            │ 使用者確認
                            ▼
     ┌─────────────────────────────────────────────────┐
-    │  STAGE 1：建立分支                               │
+    │  STAGE 1：建立分支            [Model: Sonnet]    │
     │  → 呼叫 brancher agent 產出草稿                  │
     │  ⏸ 暫停：展示 Issue 標題/內容 + 分支名稱         │
     │          等使用者確認或修改                       │
@@ -51,11 +53,13 @@ description: |
                            │ 使用者確認
                            ▼
     ┌─────────────────────────────────────────────────┐
-    │  STAGE 2：實作                                   │
+    │  STAGE 2：實作      [Model: 逐任務動態分級]       │
     │  → 呼叫 implementer agent                       │
     │  → 解析計畫，判斷並行模式：                       │
     │     • ≥2 個獨立任務、寫入路徑不重疊 → 🟢 並行    │
     │     • 否則 → 🔴 序列逐任務                        │
+    │  → 逐任務選 model：機械性→快/便宜｜整合→標準     │
+    │     ｜設計判斷/跨層→最強（見 Model 策略章節）    │
     │  → agy 實作任務，Claude 兩階段驗收            │
     │  ⏸ 每個任務（或每批並行）完成後暫停：            │
     │      展示變更檔案 + 測試結果摘要                  │
@@ -65,8 +69,8 @@ description: |
                            │ 所有任務確認完成
                            ▼
     ┌─────────────────────────────────────────────────┐
-    │  STAGE 3：審查                                   │
-    │  → 呼叫 reviewer agent                          │
+    │  STAGE 3：審查                [Model: Opus]      │
+    │  → 呼叫 reviewer agent（不委派 agy，親自判斷）  │
     │  ⏸ 暫停：展示審查報告，問「確認繼續嗎？」         │
     │  ┌─ 使用者確認（通過）                      ─┐   │
     │  └─ 不通過 / 使用者要求修正                   │   │
@@ -75,7 +79,7 @@ description: |
                            │ 使用者確認通過
                            ▼
     ┌─────────────────────────────────────────────────┐
-    │  STAGE 4：發布                                   │
+    │  STAGE 4：發布                [Model: Sonnet]    │
     │  → 呼叫 publisher agent                         │
     │  → agy 分析 Diff，Claude 校對草稿             │
     │  ⏸ 暫停：展示 PR 草稿，等使用者確認發布          │
@@ -86,12 +90,18 @@ description: |
                       流程結束，Claude 停止。
 
     ──────────────────────────────────────────────────
+    [Model: ...] = 該 stage 委派時選用的基準 model。
+    主對話（總指揮）全程不換 model；切換發生在委派出去的
+    agy 子進程。STAGE 2 為逐任務動態分級。
+    詳見下方「Model 與委派策略」章節。
+
+    ──────────────────────────────────────────────────
     STAGE 5：回覆 PR Review（獨立入口，由你手動觸發）
     ──────────────────────────────────────────────────
     觸發方式：你說「PR #42 有新的 review 意見」
-    → 呼叫 responder agent 處理每條意見
-    → 處理完畢 → 呼叫 reviewer agent 重新審查
-    → 審查通過 → 呼叫 publisher agent 更新 PR
+    → 呼叫 responder agent 處理每條意見      [Model: Sonnet]
+    → 處理完畢 → 呼叫 reviewer agent 重新審查 [Model: Opus]
+    → 審查通過 → 呼叫 publisher agent 更新 PR [Model: Sonnet]
     → 完成後流程再次結束，Claude 停止等待。
 ```
 
@@ -143,23 +153,76 @@ description: |
 
 ## 狀態追蹤
 
-每個 stage 開始前，輸出一行進度提示：
+每個 stage 開始前，輸出一行進度提示。**前綴帶流程識別**（pending 階段帶 `<wf-id>`，已建 branch 後帶 branch slug），讓多個並行 workflow 的輸出能一眼分辨：
 
 ```
-[1/5] 建立分支中...
-[2/5] 實作中（共 N 個任務）...
-[3/5] 審查中...
-[4/5] 發布準備中...
-[5/5] 完成 ✦ PR: <URL>
+[wf-1717400000-3f9a] [0a/5] 撰寫功能規格中...   ← 尚無 branch，帶 wf-id
+[feature-202605-42-cart] [1/5] 建立分支中...     ← 已建 branch，帶 slug
+[feature-202605-42-cart] [2/5] 實作中（共 N 個任務）...
+[feature-202605-42-cart] [3/5] 審查中...
+[feature-202605-42-cart] [4/5] 發布準備中...
+[feature-202605-42-cart] [5/5] 完成 ✦ PR: <URL>
 ```
 
-### 狀態檔：`.claude/workflow-state.json`
+### 狀態檔：每個 workflow 一個檔，用 branch 命名
 
-**每個 stage 完成後寫入狀態檔**，讓新 session 可以從中斷點繼續：
+**多 workflow 並行的隔離 key 是 git branch。** 同一 repo 上兩個並行 workflow 一旦各自建了 branch，就寫各自 branch 對應的 state 檔，彼此天然零衝突——不需要任何鎖、不需要中央索引。
+
+**檔案路徑規則：**
+
+```
+.claude/workflow-state/<branch-slug>.json      ← 已建 branch 的 workflow（STAGE 1 之後）
+.claude/workflow-state/.pending-<wf-id>.json   ← 尚無 branch 時的暫存（STAGE 0a / 0b）
+```
+
+- `<branch-slug>`：當前 branch 名稱把 `/` 換成 `-`。
+  例：`feature/202605/42-cart` → `feature-202605-42-cart.json`
+- `<wf-id>`：**workflow-id**，流程啟動當下產生的唯一識別碼，格式 `wf-<epoch>-<rand4>`
+  （`echo "wf-$(date +%s)-$(head -c2 /dev/urandom | xxd -p)"`，例 `wf-1717400000-3f9a`）。
+  即使兩個流程在「同一秒、同一 base branch」上同時啟動，`<rand4>` 也保證檔名不撞。
+
+**workflow-id 是 pending 階段的隔離 key（取代舊的「靠 context 記住路徑」）：**
+
+舊設計把「本 session 對應哪個 pending 檔」只存在對話 context 裡——session 一中斷，pending 檔就成了無主孤兒，新 session 因為還沒 branch 而推導不到它。改用 workflow-id 後，這個識別碼**同時寫進 state 檔內容、並由 session 在每次進度回報行帶上**，所以續接時能精準認領自己的 pending 檔，不會誤撿別人的。
+
+```json
+// .pending-<wf-id>.json 內容（STAGE 0a/0b 階段）
+{
+  "workflow_id": "wf-1717400000-3f9a",
+  "stage": "0a",
+  "mode": "sequence",
+  "branch": null,
+  "spec": null,
+  "plan": null
+}
+```
+
+進度回報行格式（每次 stage 切換、每個任務完成時輸出）：
+```
+[wf-1717400000-3f9a] [1/5] 建立分支中...
+```
+branch 建立後改帶 branch slug，不再需要 workflow-id：
+```
+[feature-202605-42-cart] [2/5] 實作中（共 5 個任務）...
+```
+
+**state 檔生命週期（解決「尚無 branch」這個唯一邊界）：**
+
+| 時機 | 動作 |
+|------|------|
+| STAGE 0a 啟動（流程剛開始，還沒 branch） | 產生 `<wf-id>` → 建 `.pending-<wf-id>.json`（內含 `workflow_id`）→ 之後進度行都帶 `[<wf-id>]` |
+| STAGE 1 建好 branch 後 | `mv .claude/workflow-state/.pending-<wf-id>.json .claude/workflow-state/<branch-slug>.json`，補上 `branch` 欄位（`workflow_id` 保留，便於追溯） |
+| STAGE 1 之後每次寫入 | 寫 `<branch-slug>.json`，零衝突 |
+| 直接 jump 進 STAGE 1+（已知 branch） | 略過 pending，直接寫 `<branch-slug>.json` |
+
+> 關鍵：每個 session 只寫**自己**那一個檔——pending 階段靠 `<wf-id>` 認領、STAGE 1 之後靠當前 branch 推導，絕不掃別人的檔來寫，所以任意數量的並行 workflow 都不會互踩。
+
+**每個 stage 完成後寫入對應 state 檔**，讓新 session 可以從中斷點繼續：
 
 **sequence 模式**（正常流程跑到這裡）：
 ```json
 {
+  "workflow_id": "wf-1717400000-3f9a",
   "stage": 2,
   "mode": "sequence",
   "spec": "docs/features/2026-05-03-cart.md",
@@ -180,6 +243,7 @@ description: |
 **jump 模式**（直接指定特定 stage 執行）：
 ```json
 {
+  "workflow_id": "wf-1717400500-b21c",
   "stage": 5,
   "mode": "jump",
   "pr": 42,
@@ -206,11 +270,34 @@ description: |
 | B | 「幫我做 X 功能」/ 「開始開發」/ 「新功能開發」 |
 | C | 「繼續」/ 「繼續上次」/ 「繼續開發」 |
 
-**狀態檔存在時（A / B / C 共用）：**
+**先定位「本 session 對應的 state 檔」（A / B / C 共用）：**
 ```
-→ 讀取 .claude/workflow-state.json
+→ 若本 session context 已持有 <wf-id>（這個流程在本 session 啟動過 STAGE 0a/0b）
+   → 直接認領 .pending-<wf-id>.json，走「狀態檔存在時」（不必看 branch）
+
+→ 否則 slug = 當前 branch（git branch --show-current）把 / 換成 -
+→ 候選檔 = .claude/workflow-state/<slug>.json
+→ 若候選檔存在 → 它就是本 session 的 state，走「狀態檔存在時」
+→ 若候選檔不存在：
+   ├─ 列出 .claude/workflow-state/*.json（已建 branch 的流程，排除 .pending-*）
+   │   ├─ 0 個 → 再看有沒有 pending：
+   │   │         列出 .claude/workflow-state/.pending-*.json
+   │   │         ├─ 0 個 → 走「狀態檔不存在時」
+   │   │         ├─ 1 個 → 提示「找到 1 個尚未建 branch 的流程 <wf-id>（STAGE <N>），要接續它嗎？」
+   │   │         └─ ≥2 個 → 列出全部 <wf-id> + stage 讓使用者選，或開新流程
+   │   ├─ 1 個 → 提示「當前 branch 無對應流程，但找到 1 個其他流程 <slug>，要接續它嗎？」
+   │   └─ ≥2 個 → 列出全部讓使用者選，或開新流程
+   └─（並行情境下，每個 session 都待在自己的 branch，候選檔通常一擊命中；
+       多個流程同時卡在 STAGE 0a/0b 時，靠各自 context 的 <wf-id> 一擊命中，不會誤撿別人的 pending 檔）
+```
+
+> **絕不**用 `git branch --show-current` 推導去認領 pending 檔——pending 階段可能多個流程共用同一 base branch，branch 推不出唯一的 pending 檔。pending 階段的唯一識別永遠是 `<wf-id>`。
+
+**狀態檔存在時（即上面定位到的 `<slug>.json`）：**
+```
+→ 讀取該檔
 → 若 pr 欄位有值 → gh pr view <pr> --json state --jq '.state'
-   ├─ MERGED → 自動刪除狀態檔，告知「PR 已合併，開發週期完成 ✦」
+   ├─ MERGED → 自動刪除該檔，告知「PR 已合併，開發週期完成 ✦」
    ├─ CLOSED → 問使用者「PR 已關閉，要重新開 PR 還是放棄？」
    └─ OPEN   → 展示目前狀態（STAGE <N>），問「繼續還是開新流程？」
 → 若 pr 欄位為 null → 展示目前狀態（STAGE <N>），問「繼續還是開新流程？」
@@ -220,13 +307,15 @@ description: |
 ```
 → 觸發 A → 問「要開始新的開發流程嗎？請描述需求」
 → 觸發 B → 直接用使用者描述的需求啟動新流程
-→ 觸發 C → 告知「找不到未完成的流程，要開始新的嗎？」
+→ 觸發 C → 告知「當前 branch 找不到未完成的流程，要開始新的嗎？」
 ```
 
 **狀態檔刪除時機：**
-- PR 狀態為 `MERGED` → 自動刪除
-- 使用者說「放棄這個功能」→ 自動刪除
+- PR 狀態為 `MERGED` → 自動刪除該 branch 的 state 檔
+- 使用者說「放棄這個功能」→ 自動刪除該 branch 的 state 檔
 - 其他情況一律保留，直到明確完成
+
+> 刪除只動「本 session 對應的那一個」state 檔，絕不清整個 `.claude/workflow-state/` 目錄——別的 session 的進度不可被波及。
 
 ---
 
@@ -243,24 +332,27 @@ description: |
 
 ### context 超標切 session 閉環
 
-這是本 skill 相對其他 workflow 的關鍵優勢：**已有 `workflow-state.json`，所以 Token Gate 撞牆時不會丟失進度**。
+這是本 skill 相對其他 workflow 的關鍵優勢：**已有 per-branch state 檔，所以 Token Gate 撞牆時不會丟失進度**。
 
 `> 150k` 觸發時，**不是只丟一句「建議切 session」**，而是執行完整交接：
 
 ```
 1. 完成當前正在進行的最小單元（如 STAGE 2 的當前任務），不要切在半途
-2. 寫入 workflow-state.json，並設 "interrupted_by": "context_budget"
-   （完整記錄 stage / mode / spec / plan / branch / completed_tasks）
+2. 寫入本 workflow 的 state 檔，並設 "interrupted_by": "context_budget"
+   ├─ 已建 branch → <branch-slug>.json（記錄 stage / mode / spec / plan / branch / completed_tasks）
+   └─ 尚無 branch（STAGE 0a/0b）→ .pending-<wf-id>.json（務必含 workflow_id，否則新 session 認不回）
 3. 若有未 commit 的變更 → 先 commit（避免 session 切換後遺失）
-4. 明確告知使用者：
-   「context 已達 <用量>，為避免品質下降已保存進度至 STAGE <N>。
+4. 明確告知使用者，並把識別碼一起給出去（讓使用者知道續接的是哪個流程）：
+   「[<wf-id 或 branch-slug>] context 已達 <用量>，為避免品質下降已保存進度至 STAGE <N>。
      請開新 session 後輸入『繼續』或 /gen-dev-workflow，會自動從 STAGE <N> 接續。」
 5. 停止，不再繼續任何 stage
 ```
 
 續接時（新 session 讀到 `"interrupted_by": "context_budget"`）：
 ```
-→ 開場白改為：「偵測到上次因 context 超標而保存（STAGE <N>），現在 context 乾淨，直接續接。」
+→ 定位本 workflow 的 state 檔（已建 branch 靠當前 branch；尚無 branch 靠使用者帶回的 <wf-id>，
+   或在只有單一 pending 檔時直接認領）
+→ 開場白改為：「[<wf-id 或 branch-slug>] 偵測到上次因 context 超標而保存（STAGE <N>），現在 context 乾淨，直接續接。」
 → 不問「繼續還是開新流程」（因為這不是使用者主動離開，是系統保護性中斷，意圖明確）
 → 直接從 state 記錄的 stage 接續
 ```

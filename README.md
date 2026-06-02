@@ -80,7 +80,11 @@ flutter run
 
 ## 🤖 AI-Assisted Development Workflow
 
-This project uses an automated multi-agent development workflow powered by Claude + Gemini. Simply describe a feature and the orchestrator drives the entire cycle automatically, pausing only at key decision points.
+This project uses an automated multi-agent development workflow powered by Claude as orchestrator + the `agy` (antigravity-cli) delegation backend. Simply describe a feature and the orchestrator drives the entire cycle automatically, pausing only at key decision points.
+
+> **Delegation backend:** `brancher`, `implementer`, and `publisher` delegate execution to `agy` (must be on `PATH`, default `~/.local/bin/agy`). When `agy` is unavailable, each agent falls back to running natively — the workflow still works, it just doesn't delegate.
+
+> **Multiple workflows in parallel:** You can run several independent workflows on the same repo at once (multiple terminals / sessions). The isolation key is the **git branch** — each workflow runs on its own branch and writes its own per-branch state file under `.claude/workflow-state/`, so they never collide and need no lock. The only window needing extra handling is "both flows are still in STAGE 0a/0b (no branch yet)", which is disambiguated by a persisted **workflow-id**.
 
 ```text
   User: "Build me feature X"
@@ -105,13 +109,14 @@ This project uses an automated multi-agent development workflow powered by Claud
   ┌─────────────────────────────────────────────────────┐
   │  STAGE 1: Branch Setup (Brancher — Sonnet)           │
   │  ⏸ Pause: review Issue title/body + branch name     │
-  │  Gemini executes: gh issue create + git checkout     │
+  │  agy executes: gh issue create + git checkout        │
   └────────────────────────┬────────────────────────────┘
                            │ confirmed
                            ▼
   ┌─────────────────────────────────────────────────────┐
-  │  STAGE 2: Implementation (Implementer — Sonnet)      │
-  │  Gemini writes code + tests + commits per task       │
+  │  STAGE 2: Implementation (Implementer — dynamic)     │
+  │  Model picked per-task by complexity (cheap→Opus)    │
+  │  agy writes code + tests + commits per task          │
   │  Claude performs 2-stage review per task:            │
   │    spec review → code quality review                 │
   │  ⏸ Pause after each task: show changed files +      │
@@ -130,7 +135,7 @@ This project uses an automated multi-agent development workflow powered by Claud
                            ▼
   ┌─────────────────────────────────────────────────────┐
   │  STAGE 4: Publish PR (Publisher — Sonnet)            │
-  │  Gemini analyzes diff → generates PR draft           │
+  │  agy analyzes diff → generates PR draft               │
   │  Claude proofreads draft                             │
   │  ⏸ Pause: review PR draft → user confirms           │
   │  gh pr create → PR URL returned                     │
@@ -140,7 +145,7 @@ This project uses an automated multi-agent development workflow powered by Claud
   ──────────────────────────────────────────────────────
   STAGE 5: PR Review Response (manually triggered)
   ──────────────────────────────────────────────────────
-  Trigger: /dev-workflow review #<PR>
+  Trigger: /gen-dev-workflow review #<PR>
   → Responder agent handles each inline comment
   → Reviewer agent re-reviews
   → Publisher agent updates PR
@@ -151,14 +156,16 @@ This project uses an automated multi-agent development workflow powered by Claud
 
 | Command | Stage | Action |
 |---------|-------|--------|
-| `/dev-workflow` | — | Check workflow state / start new |
-| `/dev-workflow spec <description>` | 0a | Write feature spec |
-| `/dev-workflow plan <spec-path>` | 0b | Write implementation plan |
-| `/dev-workflow branch <issue>` | 1 | Create branch |
-| `/dev-workflow implement <plan-path>` | 2 | Run implementation |
-| `/dev-workflow code-review <branch>` | 3 | Run code review |
-| `/dev-workflow publish <branch>` | 4 | Create PR |
-| `/dev-workflow review #<PR>` | 5 | Handle PR review comments |
+| `/gen-dev-workflow` | — | Check workflow state / start new |
+| `/gen-dev-workflow spec <description>` | 0a | Write feature spec |
+| `/gen-dev-workflow plan <spec-path>` | 0b | Write implementation plan |
+| `/gen-dev-workflow branch <issue>` | 1 | Create branch |
+| `/gen-dev-workflow implement <plan-path>` | 2 | Run implementation |
+| `/gen-dev-workflow code-review <branch>` | 3 | Run code review |
+| `/gen-dev-workflow publish <branch>` | 4 | Create PR |
+| `/gen-dev-workflow review #<PR>` | 5 | Handle PR review comments |
+
+> **Running parallel workflows:** open a new terminal/session for each feature. After STAGE 1 each lives on a distinct branch (state at `.claude/workflow-state/<branch-slug>.json`); say `繼續` / `/gen-dev-workflow` from the matching branch to resume the right one. Progress lines are prefixed with the branch slug (or `wf-id` before a branch exists) so concurrent outputs stay distinguishable.
 
 ---
 
