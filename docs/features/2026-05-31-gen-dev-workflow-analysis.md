@@ -189,10 +189,31 @@ graph LR
 
 ## 狀態持久化與 Token Budget Gate
 
-### 狀態檔：`.claude/workflow-state.json`
-- 每個 stage 完成後寫入
+### 狀態檔：每個 workflow 一個檔（per-branch）
+
+state 不是單一檔，而是 `.claude/workflow-state/` 目錄下**每個 workflow 一個檔**：
+
+```
+.claude/workflow-state/<branch-slug>.json      ← 已建 branch 的 workflow（STAGE 1 之後）
+.claude/workflow-state/.pending-<wf-id>.json   ← 尚無 branch 時的暫存（STAGE 0a / 0b）
+```
+
+- 每個 stage 完成後寫入對應 workflow 的檔
 - 支援 `sequence`（完整流程）和 `jump`（跳入特定 stage）兩種模式
 - 記錄 `interrupted_by` 欄位追蹤中斷原因
+- 記錄 `workflow_id`（`wf-<epoch>-<rand4>`）作為 pending 階段的唯一識別
+
+### 多 workflow 並行（隔離設計）
+
+**隔離 key = git branch。** 同一 repo 可同時跑多個獨立 workflow（多終端 / 多 session），各自跑在不同 branch、寫不同 state 檔，彼此天然零衝突——不需要鎖、不需要中央索引。
+
+唯一邊界是「兩個流程都還在 STAGE 0a/0b（尚無 branch）」這個短暫窗口。此時 branch 推導不出唯一檔，改靠 **workflow-id 持久化**識別：
+
+| 機制 | 解決的問題 |
+|------|-----------|
+| `workflow_id` 寫進 `.pending-<wf-id>.json` 內容 | session 中斷後，pending 檔不再是無主孤兒，可被精準認領 |
+| 進度行帶 `[<wf-id>]` / `[<branch-slug>]` 前綴 | 多個並行流程的輸出一眼可辨 |
+| 狀態定位「先認 wf-id、再認 branch」 | 不再用 `git branch --show-current` 誤撿別人的 pending 檔 |
 
 ### Token Budget Gate
 
@@ -217,7 +238,8 @@ graph LR
 | **成本優化** | Model 動態分級 | 不是所有任務都用 Opus，機械性工作用便宜 model，真正降成本 |
 | **品質保障** | 交叉審查 | implementer 和 reviewer 刻意用不同 model，避免「自己審自己」 |
 | **韌性** | Token Budget Gate 閉環 | 長流程不會因 context 爆炸而丟失進度，state 持久化是真正的救生圈 |
-| **可恢復性** | `workflow-state.json` | session 中斷後可續接，`interrupted_by` 區分主動離開 vs 系統保護 |
+| **可恢復性** | per-branch state 檔 | session 中斷後可續接，`interrupted_by` 區分主動離開 vs 系統保護 |
+| **多流程並行** | per-branch 隔離 + workflow-id | 同 repo 可同時跑多個 workflow，branch 為隔離 key 達成零鎖並行；pending 階段靠 workflow-id 持久化補上唯一缺口 |
 | **並行效率** | 條件式並行 + 三規則契約 | 不盲目並行，有明確的衝突偵測和失敗處理策略 |
 | **人在迴路** | 關鍵暫停點 | 規格、計畫、分支、每個任務、審查、PR 都有確認點，不會脫韁 |
 | **靈活入口** | Quick Commands + jump mode | 可以從任意 stage 切入，不強迫跑完整流程 |
@@ -232,7 +254,7 @@ graph LR
 | **暫停點過多** | Human-in-the-loop 頻率太高 | 🟡 中 | 光是正常流程就有 7 個暫停點，使用者必須一直盯著等確認。「自動驅動」的承諾被密集的確認打斷，特別是 STAGE 2 每個任務都暫停 |
 | **agy 依賴** | 外部 CLI 是單點故障 | 🟡 中 | 雖說有 fallback，但 `agy` 不在 PATH 時的 fallback 行為描述模糊——「功能仍可運作但不會委派」到底怎麼運作？哪些 stage 受影響？ |
 | **Model 假設** | 綁定 Anthropic 模型族 | 🟡 中 | Opus / Sonnet / Haiku 是 Claude 系列的專有名稱。如果使用者用 GPT-4 或 Gemini，整套 model 分級策略就不適用。文件沒有 model-agnostic 的 fallback |
-| **狀態檔脆弱** | JSON 手動管理無校驗 | 🟡 中 | `workflow-state.json` 沒有 schema validation、沒有版本號、沒有 checksum。手動編輯或 stage 寫入半途中斷就會腐壞，下次續接時可能靜默出錯 |
+| **狀態檔脆弱** | JSON 手動管理無校驗 | 🟡 中 | per-branch state 檔仍是 LLM 手寫 JSON，沒有 schema validation、沒有版本號、沒有 checksum。手動編輯或 stage 寫入半途中斷就會腐壞，下次續接時可能靜默出錯。（workflow-id 持久化已解決「pending 檔無主孤兒」這一子問題，但 JSON 本身的完整性校驗仍缺） |
 | **並行複雜度** | 契約規則難以程式化驗證 | 🟡 中 | 「寫入路徑不重疊」「共享資源指定唯一 owner」靠 planner 在計畫中標好——但 planner 本身是 LLM，標錯怎麼辦？沒有靜態檢查機制 |
 | **Context 估算** | Token 用量無法精確測量 | 🟡 中 | Token Budget Gate 依賴「評估主對話 context 用量」，但 LLM 無法精確知道自己的 context 用了多少 token。60k / 100k / 150k 的閾值在實務上只能靠啟發式猜測 |
 | **缺乏回滾** | 沒有 undo/rollback 機制 | 🟡 中 | STAGE 2 如果 implementer 寫了爛 code 且已 commit，STAGE 3 退回 STAGE 2 只是「重做」，不會自動 `git revert`。壞 commit 會留在歷史中 |
@@ -244,7 +266,7 @@ graph LR
 
 > 「這個 workflow 設計的核心問題是：它試圖用 markdown 文件模擬一個 state machine，然後『希望』LLM 會遵守所有規則。這就像寫一份『請不要碰記憶體』的備忘錄給 C 程式員，然後期待 segfault 不會發生。」
 
-**最值得保留的設計：** Token Budget Gate 閉環 + `workflow-state.json` 的中斷續接。這是解決 LLM context 爆炸這個**真實問題**的務實方案。
+**最值得保留的設計：** Token Budget Gate 閉環 + per-branch state 檔的中斷續接。這是解決 LLM context 爆炸這個**真實問題**的務實方案。多 workflow 並行更是把「並行衝突」這個特殊情況用數據結構（branch 當隔離 key）直接消滅，而不是加鎖去處理它——好品味。
 
 **最該修的問題：** 缺少輕量模式。一個 10 行 fix 不該跑 6 個 stage。加一個 `--quick` flag 讓小任務直接 STAGE 1 → 2 → 4 就好。
 
