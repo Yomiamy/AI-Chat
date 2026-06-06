@@ -1,19 +1,42 @@
 #!/bin/bash
-# PostToolUse(Bash) hook: re-index the codebase whenever a PR is created.
-# Fires after every Bash call; only acts when the command ran `gh pr create`.
+# PostToolUse(Bash) hook: re-index the codebase on PR creation or git sync.
+# Fires after every Bash call; only acts on `gh pr create`, `git push`, or `git pull`.
 # Indexing runs in the background (fast mode) so it never blocks the agent.
 
 input=$(cat)
 
-# Extract the command string from the tool input JSON.
-command=$(printf '%s' "$input" | python3 -c \
-  'import json,sys; print(json.load(sys.stdin).get("tool_input",{}).get("command",""))' \
-  2>/dev/null)
+# Tokenize the command (shlex) and decide whether to act, all in one Python pass.
+# Parsing into a token list — instead of regex-matching the raw string — kills the
+# false positives: `git commit -m "add push button"` has subcommand `commit`, so the
+# "push" inside the quoted message never counts. Exits 0 (skip) unless the command is:
+#   - `gh pr create`                  → PR creation
+#   - `git [global-opts] push|pull`   → repo sync (git's first non-option token)
+should_act=$(printf '%s' "$input" | python3 -c '
+import json, shlex, sys
+try:
+    cmd = json.load(sys.stdin).get("tool_input", {}).get("command", "")
+    toks = shlex.split(cmd)
+except Exception:
+    sys.exit(0)
+# gh pr create
+if toks[:3] == ["gh", "pr", "create"]:
+    print(1); sys.exit(0)
+# git <global opts> <subcommand> ...  — find first token that is not an option.
+# git global opts that take a value: -C <path>, -c <name=val>, --git-dir <path>, etc.
+if toks[:1] == ["git"]:
+    i, takes_val = 1, {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path"}
+    while i < len(toks):
+        t = toks[i]
+        if t in takes_val:
+            i += 2; continue          # skip the option and its value
+        if t.startswith("-"):
+            i += 1; continue          # skip a standalone/inline-value option
+        if t in ("push", "pull"):
+            print(1)
+        break                          # first non-option token = the subcommand
+' 2>/dev/null)
 
-# Only trigger on `gh pr create` (tolerate extra flags / whitespace).
-if ! printf '%s' "$command" | grep -qE 'gh[[:space:]]+pr[[:space:]]+create'; then
-  exit 0
-fi
+[ -n "$should_act" ] || exit 0
 
 repo="${CLAUDE_PROJECT_DIR:-$PWD}"
 cli="$HOME/.local/bin/codebase-memory-mcp"
@@ -23,5 +46,5 @@ cli="$HOME/.local/bin/codebase-memory-mcp"
 nohup "$cli" cli index_repository "{\"repo_path\":\"$repo\",\"mode\":\"fast\"}" \
   >/dev/null 2>&1 &
 
-echo "[cbm] PR detected → re-indexing $repo in background (fast mode)."
+echo "[cbm] repo sync detected → re-indexing $repo in background (fast mode)."
 exit 0
