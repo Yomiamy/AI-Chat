@@ -15,7 +15,7 @@ void main() {
       await app.main();
       // 不用 pumpAndSettle：chat 初始狀態有 CircularProgressIndicator（無限動畫），
       // 永遠 settle 不了。改用固定時長 pump 推進初始 frame。
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       await tester.tap(find.byIcon(Icons.search));
       // _isSearching 由 setState 同步切換，pump 一幀即可完成 AppBar 替換。

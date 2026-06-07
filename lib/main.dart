@@ -13,7 +13,7 @@ import 'extensions/extensions.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized.traceCode('WidgetsFlutterBinding');
 
-  Future.wait([
+  await Future.wait([
     Firebase.initializeApp.traceCodeAsync('Firebase.initializeApp'),
     _initLocale.traceCodeAsync('initLocale'),
     configureDependencies.traceCodeAsync('configureDependencies'),
