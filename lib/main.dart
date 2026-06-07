@@ -6,20 +6,20 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ai_chat/generated/l10n.dart';
-import 'dart:developer';
 
 import 'di/di.dart';
+import 'extensions/extensions.dart';
 
 Future<void> main() async {
-  Timeline.timeSync(
-    'WidgetsFlutterBinding',
-    WidgetsFlutterBinding.ensureInitialized,
-  );
-  await Timeline.timeSync('Firebase.initializeApp', Firebase.initializeApp);
-  await Timeline.timeSync('initLocale', _initLocale);
-  await Timeline.timeSync('configureDependencies', configureDependencies);
+  WidgetsFlutterBinding.ensureInitialized.traceCode('WidgetsFlutterBinding');
 
-  Timeline.timeSync('runApp', () => runApp(const MyApp()));
+  Future.wait([
+    Firebase.initializeApp.traceCodeAsync('Firebase.initializeApp'),
+    _initLocale.traceCodeAsync('initLocale'),
+    configureDependencies.traceCodeAsync('configureDependencies'),
+  ]).then((_) {
+    (() => runApp(const MyApp())).traceCode('runApp');
+  });
 }
 
 Future _initLocale() async {
