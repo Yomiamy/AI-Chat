@@ -8,14 +8,18 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ai_chat/generated/l10n.dart';
 
 import 'di/di.dart';
+import 'extensions/extensions.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  await _initLocale();
-  await configureDependencies();
+  WidgetsFlutterBinding.ensureInitialized.traceCode('WidgetsFlutterBinding');
 
-  runApp(const MyApp());
+  await Future.wait([
+    Firebase.initializeApp.traceCodeAsync('Firebase.initializeApp'),
+    _initLocale.traceCodeAsync('initLocale'),
+    configureDependencies.traceCodeAsync('configureDependencies'),
+  ]).then((_) {
+    (() => runApp(const MyApp())).traceCode('runApp');
+  });
 }
 
 Future _initLocale() async {
