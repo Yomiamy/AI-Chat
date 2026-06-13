@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'dart:io';
 
 import 'package:ai_chat/data/data.dart';
 import 'models/models.dart';
@@ -237,20 +236,14 @@ class GeminiApiBloc extends Bloc<GeminiApiEvent, GeminiApiState> {
     GeminiApiPickFileEvent event,
     Emitter<GeminiApiState> emit,
   ) async {
-    final result = await FilePickManager.pickFile();
+    final file = await FilePickManager.pickFile();
 
-    if (result == null || result.files.isEmpty) {
+    if (file == null) {
       emit(state.copyWith(status: Status.failure, clearFile: true));
       return;
     }
 
-    final file = result.files.first;
-    Uint8List? bytes = file.bytes;
-    if (bytes == null && !file.path.isNullOrBlank) {
-      bytes = await File(file.path!).readAsBytes();
-    }
-
-    if (bytes == null) return;
+    final bytes = await file.readAsBytes();
 
     emit(
       state.copyWith(selectedFileBytes: bytes, selectedMimeType: file.mimeType),

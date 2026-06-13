@@ -1,3 +1,4 @@
+import 'package:ai_chat/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,8 +9,22 @@ import '../bloc/search/search.dart';
 import '../features/utils/widget_preview.dart';
 import 'widgets/ai_chat_view.dart';
 
-class AiChatPage extends StatelessWidget {
+class AiChatPage extends StatefulWidget {
   const AiChatPage({super.key});
+
+  @override
+  State<AiChatPage> createState() => _AiChatPageState();
+}
+
+class _AiChatPageState extends State<AiChatPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Show FAB after frame builds
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   inspector.attach(context: context);
+    // });
+  }
 
   @override
   Widget build(BuildContext context) {

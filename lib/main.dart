@@ -4,11 +4,18 @@ import 'package:ai_chat/generated/assets/colors.gen.dart';
 import 'package:ai_chat/pages/ai_chat_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_inspector_kit/flutter_inspector_kit.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ai_chat/generated/l10n.dart';
 
 import 'di/di.dart';
 import 'extensions/extensions.dart';
+
+final navigatorKey = GlobalKey<NavigatorState>();
+final inspector = FlutterInspector(
+  showNetworkNotification: true,
+  navigatorKey: navigatorKey,
+);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized.traceCode('WidgetsFlutterBinding');
@@ -44,6 +51,18 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: ColorName.colorFf673ab7),
         useMaterial3: true,
+      ),
+      navigatorObservers: [inspector.navigatorObserver],
+      navigatorKey: navigatorKey,
+      builder: (context, child) => FlutterInspectorMagicalTap(
+        onTap: () {
+          final context = navigatorKey.currentContext;
+
+          if (context == null) return;
+
+          inspector.openDashboard(context);
+        },
+        child: child ?? const SizedBox.shrink(),
       ),
       home: const AiChatPage(),
     );
