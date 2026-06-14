@@ -1,72 +1,72 @@
 ---
 name: issue-dev-workspace-prep
-description: Use after context-collector has produced issue context and the user wants to prepare a development branch or worktree. Uses .agent-output/context/* as the source for issue id, slug, work type, and blockers; when creating a new worktree, it must copy the current context output into the new worktree before any issue-doc-writer or issue-spec-writer runs.
+description: 在 context-collector 已產出 issue 脈絡、且使用者想準備開發分支或 worktree 之後使用。以 .agent-output/context/* 作為 issue id、slug、工作類型與 blocker 的來源；建立新 worktree 時，必須在任何 issue-doc-writer 或 issue-spec-writer 執行之前，將當前脈絡輸出複製進新 worktree。
 ---
 
 # Issue Dev Workspace Prep
 
-Use this skill to prepare a development workspace from context output.
+使用此 skill 從脈絡輸出準備開發工作區。
 
-## Can modify
+## 可修改
 
-- Git branch / worktree state.
-- Local copied context files under `.agent-output/context/*` in the target worktree.
+- Git branch / worktree 狀態。
+- 目標 worktree 中 `.agent-output/context/*` 底下本地複製的脈絡檔。
 
-## Cannot modify
+## 不可修改
 
-- Production code.
-- Tests.
-- `docs/issues/*`.
-- `docs/issues/specs/*`.
-- PRs.
-- YouTrack comments or State.
+- Production code。
+- Tests。
+- `docs/issues/*`。
+- `docs/issues/specs/*`。
+- PRs。
+- YouTrack 留言或 State。
 
-## Required Input
+## 必要輸入
 
-- A current `context-collector` output file under `.agent-output/context/*`.
+- `.agent-output/context/*` 底下一份當前的 `context-collector` 輸出檔。
 
-If missing, route to `context-collector`.
+若缺少，路由至 `context-collector`。
 
-## Workflow
+## 工作流程
 
-1. Read the context file.
-2. Confirm `Handoff` is `workspace-prep-ready`.
-3. Resolve issue id if present, work type, slug, and blockers.
-4. Inspect current branch/status and existing worktrees.
-5. Choose `current-branch`, `current-worktree-new-branch`, `new-worktree`, or `no-prep`.
-6. Execute the selected workspace strategy.
-7. If creating `new-worktree`, copy the current context file into the target worktree.
-8. Verify the copied context file exists in the target worktree.
-9. Report workspace result and next skill.
+1. 讀取脈絡檔。
+2. 確認 `Handoff` 為 `workspace-prep-ready`。
+3. 解析 issue id（若存在）、工作類型、slug 與 blocker。
+4. 檢視當前 branch/status 與既有 worktree。
+5. 選擇 `current-branch`、`current-worktree-new-branch`、`new-worktree` 或 `no-prep`。
+6. 執行所選的工作區策略。
+7. 若建立 `new-worktree`，將當前脈絡檔複製進目標 worktree。
+8. 驗證複製的脈絡檔存在於目標 worktree。
+9. 回報工作區結果與下一個 skill。
 
-## New Worktree Script
+## 新 Worktree 腳本
 
-Prefer the bundled script when creating a new worktree:
+建立新 worktree 時優先使用內附腳本：
 
 ```bash
 scripts/prepare_ticket_dev_workspace.sh --ticket-id "<ISSUE-ID>" --prefix "<fix/|feature/|chore/>" --slug "<slug>"
 ```
 
-Omit `--ticket-id` for no-ticket issues:
+無 ticket 的 issue 省略 `--ticket-id`：
 
 ```bash
 scripts/prepare_ticket_dev_workspace.sh --prefix "<fix/|feature/|chore/>" --slug "<slug>"
 ```
 
-The script also syncs local-only development config into the target worktree, including:
+該腳本也會將僅限本地的開發設定同步進目標 worktree，包括：
 
-- root `.env` and `.env.*`
+- 根目錄 `.env` 與 `.env.*`
 - `android/key.properties`
 - `android/app/google-services.json`
-- Android signing files such as `*.keystore` and `*.jks`
+- Android 簽章檔，例如 `*.keystore` 與 `*.jks`
 - `ios/Runner/GoogleService-Info.plist`
-- iOS / Android `fastlane` private signing or credential files
+- iOS / Android `fastlane` 私有簽章或憑證檔
 
-Use `--skip-local-config-sync` only when the user explicitly wants no local config copy.
+只有在使用者明確不要複製本地設定時才使用 `--skip-local-config-sync`。
 
-## Mandatory Context Handoff
+## 強制脈絡交接
 
-If strategy is `new-worktree`:
+若策略為 `new-worktree`：
 
 ```text
 copy .agent-output/context/<subject>.md from source workspace to target worktree
@@ -74,29 +74,29 @@ verify target .agent-output/context/<subject>.md exists
 stop if copy or verification fails
 ```
 
-Do this before running `issue-doc-writer` or `issue-spec-writer`.
+在執行 `issue-doc-writer` 或 `issue-spec-writer` 之前完成此事。
 
-## Naming
+## 命名
 
-Use issue id when present. Otherwise use slug.
+存在時使用 issue id。否則使用 slug。
 
-Branch examples:
+Branch 範例：
 
 - `fix/<ISSUE-ID>-<slug>`
 - `feature/<ISSUE-ID>-<slug>`
 - `chore/<ISSUE-ID>-<slug>`
-- Without issue id: `<type>/<slug>`
+- 無 issue id：`<type>/<slug>`
 
-## Output Rules
+## 輸出規則
 
-Report:
+回報：
 
-- context file used.
-- strategy.
-- branch.
-- worktree.
-- context copy result.
-- blockers.
-- next skill: usually `issue-doc-writer`.
+- 使用的脈絡檔。
+- 策略。
+- branch。
+- worktree。
+- 脈絡複製結果。
+- blocker。
+- 下一個 skill：通常是 `issue-doc-writer`。
 
-Primary language: `zh-tw`.
+主要語言：`zh-tw`。

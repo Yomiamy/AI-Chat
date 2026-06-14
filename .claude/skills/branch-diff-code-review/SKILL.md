@@ -1,6 +1,6 @@
 ---
 name: branch-diff-code-review
-description: Use this skill when the user wants a general code review of all changes made on the current branch since it diverged from its base branch, without defaulting the review scope to origin/main. It should determine the branch fork point, inspect the full branch diff, prioritize bugs and regression risks, and present review findings in zh-tw while following the repository's .gemini/styleguide.md code review persona and closing ritual.
+description: 當使用者想對當前分支自其 base 分支分岔以來的所有變更做一般性程式碼審查、且不將審查範圍預設為 origin/main 時，使用此 skill。它應判定分支的 fork point、檢視完整的 branch diff、優先處理 bug 與回歸風險，並以 zh-tw 呈現審查結果，同時遵循 repository 的 .gemini/styleguide.md 程式碼審查人設與結尾儀式。
 ---
 
 # Branch Diff Code Review

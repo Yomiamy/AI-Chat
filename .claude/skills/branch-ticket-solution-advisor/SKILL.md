@@ -1,31 +1,31 @@
 ---
 name: branch-ticket-solution-advisor
-description: Use this skill when the user wants to analyze the current branch slug, inspect the relevant code paths in the current repo, condense the task into a clear implementation brief, and propose practical development, bug-fix, or improvement approaches without inventing missing requirements.
+description: 當使用者想分析當前分支 slug、檢視當前 repo 中相關的程式碼路徑、將任務濃縮成清楚的實作 brief，並在不發明缺漏需求的前提下提出務實的開發、修 bug 或改善做法時使用此 skill。
 ---
 
 # Branch Solution Advisor
 
-Use this skill when the task is to read the current git branch, parse the slug to understand the intent, inspect the repository for the most relevant implementation context, summarize the task into a concise working brief, and propose actionable implementation directions.
+當任務是讀取當前 git 分支、解析 slug 以理解意圖、檢視 repository 以取得最相關的實作脈絡、將任務摘要成精簡的工作 brief，並提出可執行的實作方向時，使用此 skill。
 
-## Workflow
+## 工作流程
 
-1. Read the current git branch name unless the user explicitly provides a branch name.
-2. Parse the branch slug to infer the task type and scope:
-   - `fix/` prefix → bug fix or regression
-   - `feature/` prefix → new capability
-   - `chore/` prefix → refactor, maintenance, or non-user-facing cleanup
-   - slug words describe the affected area (e.g., `chat-message-scroll`, `firebase-auth-token`)
-3. Inspect the repository before recommending implementation work:
-   - find likely modules, screens, routes, services, tests, or shared utilities related to the slug
-   - prefer fast local discovery such as `rg`, targeted file reads, and existing project conventions
-   - compare slug intent with the current implementation and note mismatches
-   - if multiple flows are mentioned, check whether they share logic or duplicate it
-4. Condense the task into a working brief:
-   - problem or goal inferred from slug and code inspection
-   - user-facing impact
-   - explicit constraints or edge cases found in code
-   - open ambiguities
-5. Distinguish facts from inference. If the slug is too vague to drive a safe recommendation, say what is missing.
+1. 讀取當前 git 分支名稱，除非使用者明確提供分支名稱。
+2. 解析分支 slug 以推斷任務類型與範圍：
+   - `fix/` 前綴 → bug 修復或回歸
+   - `feature/` 前綴 → 新能力
+   - `chore/` 前綴 → 重構、維護或非使用者可見的清理
+   - slug 字詞描述受影響的區域（例如 `chat-message-scroll`、`firebase-auth-token`）
+3. 在推薦實作工作之前檢視 repository：
+   - 找出與 slug 相關的可能模組、畫面、route、service、tests 或共用工具
+   - 偏好快速的本地探索，例如 `rg`、針對性的檔案讀取，以及既有的專案慣例
+   - 比較 slug 意圖與當前實作，記下不一致之處
+   - 若提及多個流程，檢查它們是否共用邏輯或重複邏輯
+4. 將任務濃縮成工作 brief：
+   - 從 slug 與程式碼檢視推斷的問題或目標
+   - 對使用者可見的影響
+   - 在程式碼中發現的明確限制或 edge case
+   - 待解的曖昧之處
+5. 區分事實與推論。若 slug 太模糊而無法驅動一個安全的建議，說出缺少了什麼。
 6. **agy 優先策略**：收集完程式碼觀察後，優先委派 antigravity-cli（`agy`）生成「建議方向」段落：
    - 透過 Bash 以 stdin 管道委派（`printf '%s' "<填入下方 prompt>" | agy -p --print-timeout 180s`），prompt 如下（以實際資料填入；務必在結尾要求「只輸出建議內容本文，不要任何開場白或人設評論」）：
      ```
@@ -58,76 +58,76 @@ Use this skill when the task is to read the current git branch, parse the slug t
    - 若 `agy` 成功回傳包含 `**判斷依據**` 與 `**建議做法**` 的建議內容，採用作為「建議方向」段落。
    - **後處理（必做）**：`agy` 會讀取全域 CLAUDE.md 而附加 Linus 人設框架（如「【Linus 式方案】」），且可能在生成時順手建立暫存檔。採用前須剝除人設包裝、只取目標結構內容；並確認 `agy` 未在工作區誤建檔案（如有則刪除）。檔案一律由 Claude 自行寫入正式路徑，不依賴 `agy` 落檔。
    - 若 `agy` 不在 PATH、呼叫失敗或回傳格式不合法，回退至步驟 7 自行生成建議方向。
-7. （Fallback）自行 propose one or more solution directions under the most suitable category:
-   - `開發` for new capability or workflow expansion
-   - `修正` for bug, regression, mismatch, or broken behavior
-   - `改善` for refactor, UX polish, performance, maintainability, or process optimization
-8. If the best category is unclear, state the likely category and why.
-9. Keep recommendations concrete: mention affected layers, validation ideas, likely risks, and whether the current implementation already has reusable logic.
-10. If the slug is too vague to produce a safe recommendation, stop and ask the user to clarify the task intent.
+7. （Fallback）自行在最合適的類別下提出一個或多個解決方向：
+   - `開發` 用於新能力或工作流程擴充
+   - `修正` 用於 bug、回歸、不一致或損壞的行為
+   - `改善` 用於重構、UX 打磨、效能、可維護性或流程優化
+8. 若最佳類別不明確，陳述可能的類別與原因。
+9. 讓建議具體：提及受影響的層級、驗證想法、可能的風險，以及當前實作是否已有可複用的邏輯。
+10. 若 slug 太模糊而無法產出安全的建議，停下並請使用者釐清任務意圖。
 
-## Branch Detection
+## 分支偵測
 
-- Default source: `git branch --show-current`
-- If the user supplies a branch name, use that instead.
-- Parse the prefix (`fix/`, `feature/`, `chore/`) and slug words to infer task type and scope.
-- If an issue-key-like pattern (e.g. `ABC-1234`) is present in the slug, surface it as context but do not attempt to fetch it from any external system.
+- 預設來源：`git branch --show-current`
+- 若使用者提供分支名稱，改用該名稱。
+- 解析前綴（`fix/`、`feature/`、`chore/`）與 slug 字詞以推斷任務類型與範圍。
+- 若 slug 中出現類似 issue key 的樣態（例如 `ABC-1234`），將其作為脈絡呈現，但不要嘗試從任何外部系統取得它。
 
-## Summarization Rules
+## 摘要規則
 
-Summaries should help implementation, not restate the branch name verbatim.
+摘要應有助於實作，而非逐字重述分支名稱。
 
-Always capture:
+永遠涵蓋：
 
-- branch name and inferred task type
-- condensed task description in plain `zh-tw` based on slug and code inspection
-- current-code observations when repository inspection was possible
-- explicit constraints found in the codebase
-- dependencies, assumptions, or unanswered questions
+- 分支名稱與推斷的任務類型
+- 基於 slug 與程式碼檢視、以淺白 `zh-tw` 寫成的濃縮任務描述
+- 在可檢視 repository 時的當前程式碼觀察
+- 在程式庫中發現的明確限制
+- 依賴、假設或未回答的問題
 
-When the slug is short and unambiguous, produce a concise one-paragraph brief.
+當 slug 簡短且無歧義時，產出精簡的單段 brief。
 
-## Recommendation Rules
+## 建議規則
 
-Recommendations must be practical and bounded by slug inference and code observation.
-Prefer repo-aware recommendations over slug-only speculation when the codebase is available.
+建議必須務實，並受 slug 推斷與程式碼觀察所界定。
+當程式庫可用時，偏好理解 repo 的建議，勝過僅憑 slug 的推測。
 
-For each proposed direction, prefer this structure:
+對每個提出的方向，偏好此結構：
 
-- `類型`: `開發` / `修正` / `改善`
-- `判斷依據`: why this category fits the task
-- `建議做法`: concrete implementation direction
-- `驗證方式`: tests, manual checks, or rollout checks
-- `風險與待確認`: missing context, side-effect risk, or unclear requirement
+- `類型`：`開發` / `修正` / `改善`
+- `判斷依據`：為何此類別符合任務
+- `建議做法`：具體的實作方向
+- `驗證方式`：測試、手動檢查或上線檢查
+- `風險與待確認`：缺少的脈絡、副作用風險或不明確的需求
 
-Good recommendation patterns:
+好的建議模式：
 
-- identify likely modules or app layers
-- point out existing validators, shared helpers, duplicated logic, or missing abstraction
-- note data flow, API, state management, UI, analytics, or localization impact when relevant
-- mention regression surfaces and test focus
-- call out when a staged delivery is safer than a single large change
+- 辨識可能的模組或 app 層級
+- 指出既有的 validator、共用 helper、重複邏輯或缺少的抽象
+- 相關時記下資料流、API、狀態管理、UI、analytics 或 localization 的影響
+- 提及回歸面與測試重點
+- 當分階段交付比單次大變更更安全時點出來
 
-Avoid:
+避免：
 
-- pretending the branch slug already contains full technical design when it does not
-- offering only vague advice such as `check logic` or `optimize code`
-- converting unknowns into false requirements
+- 在分支 slug 尚未包含完整技術設計時假裝它已包含
+- 只給出模糊建議，例如 `check logic` 或 `optimize code`
+- 把未知項目轉成虛假的需求
 
-## Output Rules
+## 輸出規則
 
-Keep the response concise but decision-useful.
+讓回應精簡但對決策有用。
 
-Preferred output shape:
+偏好的輸出形狀：
 
-1. `Branch`: detected branch name and inferred task type
-2. `程式碼現況`: only when repository inspection was possible and relevant
-3. `任務摘要`: condensed problem statement and key constraints
-4. `建議方向`: one to three concrete options, each labeled `開發` / `修正` / `改善`
-5. `待確認`: only when meaningful gaps remain
+1. `Branch`：偵測到的分支名稱與推斷的任務類型
+2. `程式碼現況`：僅在可檢視 repository 且相關時
+3. `任務摘要`：濃縮的問題陳述與關鍵限制
+4. `建議方向`：一到三個具體選項，各標示 `開發` / `修正` / `改善`
+5. `待確認`：僅在仍有實質缺口時
 
-## Style Rules
+## 風格規則
 
-- Primary language: `zh-tw`
-- Allowed exceptions: necessary `en-us` proper nouns and technical terms such as `State`, `API`, `UI`, `Backend`, `QA`, branch names, and issue keys
-- Preferred tone: concise, analytical, and implementation-oriented
+- 主要語言：`zh-tw`
+- 允許的例外：必要的 `en-us` 專有名詞與技術術語，例如 `State`、`API`、`UI`、`Backend`、`QA`、分支名稱與 issue key
+- 偏好語氣：精簡、分析性、且以實作為導向

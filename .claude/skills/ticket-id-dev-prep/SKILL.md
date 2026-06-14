@@ -1,138 +1,138 @@
 ---
 name: ticket-id-dev-prep
-description: Use this skill when the user provides a YouTrack ticket id together with a parsed ticket brief and wants Codex to create a new git branch and worktree from a safe base, keeping the existing naming rules and completing the minimal development setup without relying on the current branch name.
+description: 當使用者提供 YouTrack ticket id 連同已解析的 ticket brief、並希望 Codex 從安全的 base 建立新的 git 分支與 worktree、保留既有命名規則並完成最小開發設定、且不依賴當前分支名稱時使用此 skill。
 ---
 
 # Ticket Id Dev Prep
 
-Use this skill when the user gives a specific YouTrack ticket id such as `BUG-2351` together with a parsed ticket brief and wants branch/worktree preparation, not a fresh end-to-end ticket investigation.
+當使用者給出明確的 YouTrack ticket id（例如 `BUG-2351`）連同已解析的 ticket brief、且想要分支/worktree 準備而非全新的端到端 ticket 調查時，使用此 skill。
 
-## Goal
+## 目標
 
-Turn a pasted parsed ticket brief into a safe, ready-to-start workspace:
+將貼上的已解析 ticket brief 轉成安全、可立即開工的工作區：
 
-1. start from the parsed ticket brief
-2. condense the ticket into one short English slug for naming
-3. create a new worktree
-4. create a new branch
-5. complete practical setup checks so development can start immediately
+1. 從已解析的 ticket brief 開始
+2. 將 ticket 濃縮成一個簡短的英文 slug 供命名
+3. 建立新的 worktree
+4. 建立新的分支
+5. 完成務實的設定檢查，使開發能立即開始
 
-## Workflow
+## 工作流程
 
-1. Read the ticket id from the user message.
-2. Prefer using a parsed ticket brief pasted by the user in the current conversation.
-3. If a reliable parsed brief already exists earlier in the same conversation, you may reuse it.
-4. If no reliable parsed brief is available yet, first run or request the equivalent investigation flow from `ticket-code-investigator` before doing any naming or git write work.
-5. Base all naming and setup decisions on the parsed result, especially:
-   - the problem or goal
-   - the likely implementation area
-   - whether the work is a bug fix, feature, or maintenance task
-   - any ambiguity that could make naming unreliable
-6. Condense that parsed result into one short implementation brief in `zh-tw`.
-7. Produce one concise English naming phrase that works as both:
+1. 從使用者訊息讀取 ticket id。
+2. 優先使用使用者在當前對話中貼上的已解析 ticket brief。
+3. 若同一對話稍早已存在可靠的解析 brief，可重複使用。
+4. 若尚無可靠的解析 brief，在進行任何命名或 git 寫入工作之前，先執行或請求 `ticket-code-investigator` 的等效調查流程。
+5. 所有命名與設定決策都以解析結果為依據，特別是：
+   - 問題或目標
+   - 可能的實作區域
+   - 此工作是 bug 修復、feature 或維護任務
+   - 任何可能使命名不可靠的曖昧之處
+6. 將該解析結果濃縮成一份 `zh-tw` 的簡短實作 brief。
+7. 產出一個精簡的英文命名片語，可同時作為：
    - branch slug
    - worktree suffix
-8. Choose the branch prefix from the parsed ticket intent:
-   - `fix/` for bug, regression, error, mismatch, or validator issues
-   - `feature/` for new capability or user-facing expansion
-   - `chore/` for refactor, maintenance, internal tooling, or non-user-facing cleanup
-9. Default the base branch to `origin/main` unless the user explicitly requests another base.
-10. Create the worktree from that base and create the new branch at the same time.
-11. Run the minimal setup checks needed to confirm the new workspace is ready:
-   - confirm branch and path
-   - inspect repo status
-   - sync local-only config files needed for real development and local builds when they exist in the source worktree, such as `.env`, Android signing / Firebase config, and iOS Firebase / fastlane signing config
-   - verify `android/app/google-services.json` and `ios/Runner/GoogleService-Info.plist` are copied when they exist in the source worktree; if either is missing, report that explicitly before bootstrap
-   - run dependency bootstrap for this repo with `flutter pub get` after local config sync
-12. Report the result with the parsed ticket brief, chosen slug, branch name, worktree path, and any follow-up notes.
+8. 從解析出的 ticket 意圖選擇分支前綴：
+   - `fix/` 用於 bug、回歸、錯誤、不一致或 validator 問題
+   - `feature/` 用於新能力或使用者可見的擴充
+   - `chore/` 用於重構、維護、內部工具或非使用者可見的清理
+9. base 分支預設為 `origin/main`，除非使用者明確要求其他 base。
+10. 從該 base 建立 worktree，並同時建立新分支。
+11. 執行確認新工作區就緒所需的最小設定檢查：
+   - 確認分支與路徑
+   - 檢視 repo 狀態
+   - 當來源 worktree 存在時，同步真實開發與本地 build 所需的僅限本地設定檔，例如 `.env`、Android 簽章 / Firebase 設定，以及 iOS Firebase / fastlane 簽章設定
+   - 當來源 worktree 存在時，驗證 `android/app/google-services.json` 與 `ios/Runner/GoogleService-Info.plist` 已複製；若任一缺少，在 bootstrap 前明確回報
+   - 在本地設定同步後，以 `flutter pub get` 執行此 repo 的依賴 bootstrap
+12. 回報結果，附上已解析的 ticket brief、所選 slug、分支名稱、worktree 路徑與任何後續備註。
 
-## Parsed Brief Rules
+## 解析 Brief 規則
 
-The pasted parsed ticket brief is the source of truth for:
+貼上的已解析 ticket brief 是以下事項的真實來源：
 
-- implementation brief
-- branch prefix choice
-- slug generation
-- uncertainty that should remain visible in the prep result
+- 實作 brief
+- 分支前綴選擇
+- slug 生成
+- 應在準備結果中保持可見的不確定性
 
-If the pasted brief conflicts with current conversation context, mention the mismatch and ask whether to refresh the investigation before any git write work.
+若貼上的 brief 與當前對話脈絡衝突，提及該不一致，並在任何 git 寫入工作前詢問是否要刷新調查。
 
-## Parsed Input Rules
+## 解析輸入規則
 
-Treat the parsed ticket brief as the source of truth for setup decisions.
+將已解析的 ticket brief 視為設定決策的真實來源。
 
-Always distinguish:
+永遠區分：
 
-- fact from the parsed result
-- naming inference made during prep
-- open ambiguity that still needs confirmation
+- 來自解析結果的 fact
+- 準備過程中所做的命名 inference
+- 仍需確認的待解曖昧
 
-The brief should capture:
+Brief 應涵蓋：
 
-- problem or goal
-- user-facing impact
-- explicit requirements already identified during parsing
-- technical clues already observed during parsing
-- risks or missing details
+- 問題或目標
+- 對使用者可見的影響
+- 解析過程中已辨識的明確需求
+- 解析過程中已觀察的技術線索
+- 風險或缺漏的細節
 
-Do not invent acceptance criteria that are not present.
+不要發明不存在的 acceptance criteria。
 
-If the parsed result says the issue may not exist or still needs verification, keep that uncertainty visible in the prep output instead of hiding it behind a confident slug.
+若解析結果表明此 issue 可能不存在或仍需驗證，將該不確定性保持在準備輸出中可見，而非藏在一個看似篤定的 slug 之後。
 
-## Slug Rules
+## Slug 規則
 
-The English naming phrase should be short, concrete, and reusable.
+英文命名片語應簡短、具體且可複用。
 
-Requirements:
+要求：
 
-- based on the parsed ticket brief, not just the issue key
-- prefer 2 to 6 English words
-- lowercase kebab-case in final slug form
-- keep it implementation-relevant, not overly broad
-- avoid filler words such as `handle`, `update`, `improve`, `fix-issue`, `ticket-work`
-- prefer the smallest phrase that still identifies the work clearly
+- 以已解析的 ticket brief 為依據，而非只憑 issue key
+- 偏好 2 到 6 個英文單字
+- 最終 slug 形式為小寫 kebab-case
+- 保持與實作相關，不過度寬泛
+- 避免填充詞，例如 `handle`、`update`、`improve`、`fix-issue`、`ticket-work`
+- 偏好仍能清楚辨識工作的最短片語
 
-Good examples:
+好的範例：
 
 - `password-fields-validator-error`
 - `member-card-expired-state`
 - `checkout-delivery-note`
 - `apple-login-token-refresh`
 
-Avoid:
+避免：
 
 - `bug-2351`
 - `misc-fix`
 - `update-something`
 - `temporary-change`
 
-## Branch And Worktree Rules
+## 分支與 Worktree 規則
 
-Construct names in this order:
+依此順序建構名稱：
 
-1. branch name: `<prefix><TICKET-ID>-<slug>`
-2. worktree directory name: `<repo-name>-<TICKET-ID-lowercase>-<slug>`
+1. 分支名稱：`<prefix><TICKET-ID>-<slug>`
+2. worktree 目錄名稱：`<repo-name>-<TICKET-ID-lowercase>-<slug>`
 
-Example:
+範例：
 
-- branch: `fix/BUG-2351-password-fields-validator-error`
-- worktree: `../ai-chat-bug-2351-password-fields-validator-error`
+- branch：`fix/BUG-2351-password-fields-validator-error`
+- worktree：`../ai-chat-bug-2351-password-fields-validator-error`
 
-Additional rules:
+額外規則：
 
-- preserve the ticket id casing in the branch name
-- use lowercase ticket id in the worktree directory suffix
-- prefer creating the new worktree beside the current repo unless the user asks for another location
-- if the target branch already exists locally, stop and report it instead of silently reusing it
-- if the target worktree path already exists, stop and report it instead of overwriting anything
+- 在分支名稱中保留 ticket id 的大小寫
+- 在 worktree 目錄 suffix 中使用小寫 ticket id
+- 偏好在當前 repo 旁建立新 worktree，除非使用者要求其他位置
+- 若目標分支已存在於本地，停下並回報，而非靜默地重用它
+- 若目標 worktree 路徑已存在，停下並回報，而非覆寫任何東西
 
-## Git Execution Rules
+## Git 執行規則
 
-Prefer the bundled script for deterministic setup:
+優先使用內附腳本以取得確定性的設定：
 
 [`scripts/prepare_ticket_dev_workspace.sh`](./scripts/prepare_ticket_dev_workspace.sh)
 
-Usage:
+用法：
 
 ```bash
 ./scripts/prepare_ticket_dev_workspace.sh \
@@ -147,96 +147,96 @@ Usage:
   --base "origin/main"
 ```
 
-Behavior:
+行為：
 
-- validates required inputs before any git write
-- defaults base branch to `origin/main`
-- defaults worktree parent to the current repo parent directory
-- fetches the base ref when it points to `origin/*`
-- stops if the target branch already exists locally
-- stops if the target worktree path already exists
-- copies common local-only config files from the source worktree into the new worktree by default
-- falls back to sibling git worktrees that already have local config files when the current worktree is missing them
-- prints normalized JSON describing the created or intended workspace
+- 在任何 git 寫入前驗證必要輸入
+- base 分支預設為 `origin/main`
+- worktree 父目錄預設為當前 repo 的父目錄
+- 當 base ref 指向 `origin/*` 時 fetch 它
+- 若目標分支已存在於本地則停止
+- 若目標 worktree 路徑已存在則停止
+- 預設將常見的僅限本地設定檔從來源 worktree 複製進新 worktree
+- 當當前 worktree 缺少本地設定檔時，回退至已有這些檔案的鄰近 git worktree
+- 印出描述已建立或預定工作區的標準化 JSON
 
-Local config sync includes the repo's common development-only files when present, for example:
+本地設定同步在存在時涵蓋此 repo 常見的僅限開發檔案，例如：
 
-- any `.env` or `.env.*` files
+- 任何 `.env` 或 `.env.*` 檔案
 - `android/key.properties`
 - `android/app/google-services.json`
-- Android signing files such as `*.keystore` and `*.jks`
+- Android 簽章檔，例如 `*.keystore` 與 `*.jks`
 - `ios/Runner/GoogleService-Info.plist`
-- iOS / Android `fastlane` private signing or credential files such as `*.json`, `*.plist`, `*.p8`, `*.p12`, and `*.mobileprovision`
+- iOS / Android `fastlane` 私有簽章或憑證檔，例如 `*.json`、`*.plist`、`*.p8`、`*.p12` 與 `*.mobileprovision`
 
-If you explicitly want a clean worktree without copied local secrets, run the script with `--skip-local-config-sync`.
+若你明確想要一個不複製本地機密的乾淨 worktree，以 `--skip-local-config-sync` 執行腳本。
 
-Manual fallback flow:
+手動回退流程：
 
 ```bash
 git fetch origin main --prune
 git worktree add -b "<branch-name>" "<worktree-path>" "origin/main"
 ```
 
-If the user requested a different base branch, replace `origin/main` accordingly.
+若使用者要求不同的 base 分支，相應替換 `origin/main`。
 
-After creating the worktree:
+建立 worktree 後：
 
-1. verify `git branch --show-current`
-2. verify `git status --short`
-3. run `flutter pub get`
+1. 驗證 `git branch --show-current`
+2. 驗證 `git status --short`
+3. 執行 `flutter pub get`
 
-Do not create the branch inside the already-dirty current worktree when the goal is isolated ticket development.
+當目標是隔離的 ticket 開發時，不要在已經 dirty 的當前 worktree 內建立分支。
 
-## Setup Completion Rules
+## 設定完成規則
 
-The skill should finish with a usable development workspace, not only a naming suggestion.
+此 skill 應以一個可用的開發工作區作結，而不只是命名建議。
 
-Default completion checklist:
+預設完成檢查清單：
 
-1. new worktree exists
-2. new branch exists and is checked out there
-3. repo status in the new worktree is clean before new edits
-4. required local config files are copied into the new worktree when they exist in the source worktree
-5. `flutter pub get` has completed successfully
-6. note any required next command if setup cannot be completed automatically
+1. 新 worktree 存在
+2. 新分支存在且已於該處 checkout
+3. 新 worktree 中的 repo 狀態在新編輯前是乾淨的
+4. 當來源 worktree 存在時，必要的本地設定檔已複製進新 worktree
+5. `flutter pub get` 已成功完成
+6. 若設定無法自動完成，記下任何必要的後續指令
 
-When useful for this repo, also do one or more of:
+對此 repo 有用時，也執行以下一項或多項：
 
-- inspect package or workspace dependency files
-- confirm whether code generation or other bootstrap steps are required
+- 檢視 package 或 workspace 依賴檔
+- 確認是否需要 code generation 或其他 bootstrap 步驟
 
-For this repo, prefer the concrete initialization flow below unless the user explicitly asks to skip it:
+對此 repo，除非使用者明確要求跳過，否則偏好以下具體初始化流程：
 
-1. sync local-only config into the new worktree
-2. run `flutter pub get` at the repo root
+1. 將僅限本地的設定同步進新 worktree
+2. 在 repo 根目錄執行 `flutter pub get`
 
-Prefer the smallest safe setup that unblocks development quickly.
+偏好能快速解除開發阻塞的最小安全設定。
 
-## Safety Rules
+## 安全規則
 
-- Never infer a ticket id from the current branch in this skill; the user must provide it.
-- If there is no reliable parsed brief yet, stop before any git write operation and run or request investigation first.
-- If the ticket summary is too vague to create a reliable slug, produce the best concise slug you can and say it is a naming inference.
-- If the current repo has unrelated dirty changes, do not modify them; creating a separate worktree is still preferred.
-- If `git fetch` or other network-dependent git commands fail because of environment restrictions, report that clearly.
-- Do not overwrite existing directories or force-create branches.
+- 在此 skill 中絕不從當前分支推斷 ticket id；必須由使用者提供。
+- 若尚無可靠的解析 brief，在任何 git 寫入操作前停下，並先執行或請求調查。
+- 若 ticket 摘要太模糊而無法建立可靠 slug，產出你能給的最佳精簡 slug，並說明它是一個命名 inference。
+- 若當前 repo 有無關的 dirty 變更，不要修改它們；建立獨立 worktree 仍是首選。
+- 若 `git fetch` 或其他依賴網路的 git 指令因環境限制失敗，清楚回報。
+- 不要覆寫既有目錄或強制建立分支。
 
-## Output Rules
+## 輸出規則
 
-Keep the response concise and execution-oriented.
+讓回應精簡且以執行為導向。
 
-Preferred output shape:
+偏好的輸出形狀：
 
-1. `Ticket`: issue key and summary
-2. `Ticket 摘要`: short implementation brief
-3. `English Slug`: the naming phrase
-4. `Branch`: final branch name
-5. `Worktree`: final worktree path
-6. `Setup`: what was created or what blocked creation
-7. `待確認`: only when meaningful ambiguity remains
+1. `Ticket`：issue key 與摘要
+2. `Ticket 摘要`：簡短實作 brief
+3. `English Slug`：命名片語
+4. `Branch`：最終分支名稱
+5. `Worktree`：最終 worktree 路徑
+6. `Setup`：建立了什麼，或什麼阻塞了建立
+7. `待確認`：僅在仍有實質曖昧時
 
-## Style Rules
+## 風格規則
 
-- Primary language: `zh-tw`
-- Allowed exceptions: necessary `en-us` proper nouns and technical terms such as `YouTrack`, `State`, `branch`, `worktree`, `slug`, `API`, `UI`, `Backend`, and issue keys
-- Preferred tone: concise, reliable, and directly actionable
+- 主要語言：`zh-tw`
+- 允許的例外：必要的 `en-us` 專有名詞與技術術語，例如 `YouTrack`、`State`、`branch`、`worktree`、`slug`、`API`、`UI`、`Backend` 與 issue key
+- 偏好語氣：精簡、可靠、且可直接執行

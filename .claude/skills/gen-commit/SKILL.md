@@ -5,44 +5,44 @@ description: Analyze unstaged/staged git changes, group files by functional rele
 
 # gen-commit
 
-Analyze current git changes, group files by functional relevance, and execute multiple semantic commits — one per logical unit.
+分析當前 git 變更，依功能相關性將檔案分組，並執行多個語意化 commit——每個邏輯單元一個。
 
-## Workflow
+## 工作流程
 
-### 1. Inspect Changes
+### 1. 檢視變更
 
 ```bash
 git status
 git diff --stat
 ```
 
-Include both staged and unstaged changes. Also check untracked files that belong to the work.
+涵蓋 staged 與 unstaged 變更。也檢查屬於本次工作的 untracked 檔案。
 
-### 2. Group Files by Functional Unit
+### 2. 依功能單元分組檔案
 
-Examine `git diff` content for each file to understand what changed, then cluster into groups where **all files in a group serve the same logical purpose**.
+逐一檢視每個檔案的 `git diff` 內容以理解變動了什麼，再叢集成數組，使得**同一組內所有檔案服務於相同的邏輯目的**。
 
-**Grouping heuristics:**
+**分組啟發法：**
 
-| Group type | Typical file patterns |
+| 組別類型 | 典型檔案樣態 |
 |---|---|
-| `feat` | New feature files + their direct tests |
-| `refactor` | Style/constant/naming changes across related files |
-| `test` | Test files only (when decoupled from implementation) |
-| `fix` | Bug fix files, often narrow scope |
-| `chore` | Config, tooling, Makefile, CI, lock files |
-| `build` / `ci` | Build scripts, pubspec, package.json, pipelines |
-| `docs` | Documentation-only changes |
+| `feat` | 新功能檔案 + 其直接測試 |
+| `refactor` | 跨相關檔案的風格/常數/命名變更 |
+| `test` | 僅測試檔（當與實作解耦時） |
+| `fix` | bug 修復檔，通常範圍狹窄 |
+| `chore` | 設定、工具、Makefile、CI、lock 檔 |
+| `build` / `ci` | build 腳本、pubspec、package.json、pipeline |
+| `docs` | 僅文件的變更 |
 
-**Key rule:** One commit = one reason to change. If two files could be explained by the same sentence, they belong together.
+**關鍵規則：** 一個 commit = 一個變更理由。若兩個檔案能用同一句話解釋，它們就該放在一起。
 
-### 3. Order Commits
+### 3. 排序 commit
 
-Commit in dependency order — foundational changes first (e.g., config before generated files, constants before UI that uses them).
+依依賴順序提交——基礎性變更優先（例如：設定先於產生檔，常數先於使用它的 UI）。
 
-### 4. Execute Commits
+### 4. 執行 commit
 
-For each group, stage only those files and commit:
+對每一組，只 stage 那些檔案並提交：
 
 ```bash
 git add <file1> <file2> ...
@@ -54,19 +54,19 @@ EOF
 )"
 ```
 
-**Message rules:**
-- Type: `feat` / `fix` / `refactor` / `test` / `chore` / `build` / `ci` / `docs`
-- Subject line ≤ 72 chars, imperative mood ("add", "fix", "remove" — not "added", "fixes")
-- Body: explain *why* or *what changed*, not line-by-line summary
-- Do NOT append any attribution trailer (no `Co-Authored-By`, no `Generated with ...`)
+**訊息規則：**
+- 類型：`feat` / `fix` / `refactor` / `test` / `chore` / `build` / `ci` / `docs`
+- 主旨行 ≤ 72 字元，祈使語氣（"add"、"fix"、"remove"——而非 "added"、"fixes"）
+- 內文：解釋*為何*或*變更了什麼*，而非逐行摘要
+- 不要附加任何署名 trailer（不要 `Co-Authored-By`、不要 `Generated with ...`）
 
-### 5. Confirm
+### 5. 確認
 
-After all commits, run `git log --oneline -N` (N = number of commits made) and show the user the result.
+所有 commit 完成後，執行 `git log --oneline -N`（N = 本次提交數），並向使用者展示結果。
 
-## Edge Cases
+## 邊界情況
 
-- **Untracked files**: Include if clearly part of a logical unit; skip generated or binary files unless they're the point of the commit.
-- **Single logical change**: One commit is correct — don't split artificially.
-- **Generated files** (e.g., `*.gen.dart`, `pubspec.lock`): Group with the config/source that triggered their generation, not separately.
-- **Ambiguous grouping**: Prefer fewer, broader commits over many micro-commits that are hard to reason about.
+- **Untracked 檔案**：若明顯屬於某個邏輯單元則納入；除非它正是 commit 的重點，否則跳過產生檔或二進位檔。
+- **單一邏輯變更**：一個 commit 才正確——不要刻意拆分。
+- **產生檔**（例如 `*.gen.dart`、`pubspec.lock`）：與觸發其產生的設定/原始碼放同一組，不要單獨分組。
+- **分組曖昧時**：寧可少而廣的 commit，也不要多個難以理解的微 commit。
