@@ -58,6 +58,7 @@ EOF
 - Type: `feat` / `fix` / `refactor` / `test` / `chore` / `build` / `ci` / `docs`
 - Subject line ≤ 72 chars, imperative mood ("add", "fix", "remove" — not "added", "fixes")
 - Body: explain *why* or *what changed*, not line-by-line summary
+- Do NOT append any attribution trailer (no `Co-Authored-By`, no `Generated with ...`)
 
 ### 5. Confirm
 
