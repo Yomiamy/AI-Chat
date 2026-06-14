@@ -9,7 +9,7 @@
 
 本文件為**逆向補檔**：所有 code 變更皆已完成並 commit（分支上共 6 個 commit），本計畫並非待執行的任務清單，而是逆向描述「已完成的變更如何組織成實作單元、各動了哪些檔、如何驗證已正確落地」。
 
-本批變更全部落在 `.claude/agents/` 與 `.claude/skills/` 兩個目錄，屬於 dev workflow 工具鏈（流程定義與規範）的調整，**不涉及任何應用程式碼**。總計 6 檔、103 insertions / 21 deletions。
+本批變更全部落在 `.claude/agents/` 與 `.claude/skills/` 兩個目錄，屬於 dev workflow 工具鏈（流程定義與規範）的調整，**不涉及任何應用程式碼**。總計 6 個 code 檔、104 insertions / 21 deletions（不含本 spec/plan 兩份文件本身）。
 
 實作單元與 spec 的 6 項變更一對一對應；其中前 5 項各對一個 commit，第 6 項為本次流程追加的後續強化（單獨一個 commit）。
 
@@ -18,7 +18,7 @@
 ### 單元 1：強制 spec/plan 文件使用繁體中文
 
 - **對應 spec 變更**：變更 1
-- **commit**：`151b2b6` — `feat(gen-dev-workflow): adjust the planner agent to force spec/plan document used in Tradition Chinese`
+- **commit**：`151b2b6` — `feat(gen-dev-workflow): adjust the planner agent to force spec/plan document used in Tradition Chinese`（原 message 拼字 `Tradition` 為 `Traditional` 之誤，因不改寫歷史故保留原樣）
 - **動到的檔案**：`.claude/agents/planner.md`（+1）
 - **變更性質**：設計判斷（語言規範決策）
 - **複雜度**：低（單行規則新增）

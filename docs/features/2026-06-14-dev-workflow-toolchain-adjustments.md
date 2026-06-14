@@ -2,7 +2,7 @@
 
 - 日期：2026-06-14
 - 分支：`feature/202605/adjust-project-skill-and-agent-4`
-- 性質：逆向補檔（事後撰寫的功能規格，描述已完成的 5 個 commit）
+- 性質：逆向補檔（事後撰寫的功能規格，描述已完成的 6 個 commit：原 5 個 + 1 個後續追加強化）
 
 ## 功能概述
 
@@ -23,7 +23,7 @@
 
 - **What**：在 `.claude/agents/planner.md` 的工作原則新增規則——spec（`docs/features/`）與 plan（`docs/plans/`）文件一律以繁體中文撰寫；程式碼、識別字、指令、技術術語保留原文。
 - **Why**：統一文件語言，降低閱讀與維護成本，同時避免把技術原文翻譯成中文造成歧義。
-- **對應 commit**：`feat(gen-dev-workflow): adjust the planner agent to force spec/plan document used in Tradition Chinese`
+- **對應 commit**：`feat(gen-dev-workflow): adjust the planner agent to force spec/plan document used in Tradition Chinese`（原 commit message 拼字 `Tradition` 為 `Traditional` 之誤，因不改寫歷史故保留原樣）
 - **動到的檔案**：`.claude/agents/planner.md`
 
 ### 變更 2：新增可選的 Claude Workflow 並行層
@@ -75,7 +75,7 @@
 
 - **只動 `.claude/` 下的 agents 與 skills**：本批變更全部落在 `.claude/agents/` 與 `.claude/skills/` 兩個目錄內，純屬流程定義與工具鏈規範的調整。
 - **不碰應用程式碼**：不涉及任何 application code、不改變產品功能、不動 build/test/部署管線本身。
-- **變更檔案清單**（共 6 檔，103 insertions / 21 deletions）：
+- **變更檔案清單**（共 6 個 code 檔，104 insertions / 21 deletions；不含本 spec/plan 兩份文件本身）：
   - `.claude/agents/planner.md`
   - `.claude/agents/publisher.md`
   - `.claude/agents/reviewer.md`
