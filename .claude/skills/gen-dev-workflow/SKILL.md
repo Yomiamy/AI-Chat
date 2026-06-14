@@ -522,7 +522,7 @@ const results = await pipeline(
 const LENSES = ['correctness', 'security', '回歸風險', '測試覆蓋']
 const findings = (await parallel(LENSES.map(lens => () =>
   agent(`以 ${lens} 視角審查 <branch> 的 diff，盡力挑出真實問題`, {label: `review:${lens}`, schema: FINDING_SCHEMA})
-))).filter(Boolean).flatMap(r => r.findings)
+))).filter(Boolean).flatMap(r => r?.findings ?? [])
 // 回到主對話：reviewer 親自收斂 findings、去重、判定真偽 → 撰寫審查報告 → 暫停展示（不委派 agy）
 ```
 

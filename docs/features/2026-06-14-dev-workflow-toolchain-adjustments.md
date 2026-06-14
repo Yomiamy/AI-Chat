@@ -90,7 +90,6 @@
 1. **繁體中文規範**：`planner.md` 工作原則明載 spec/plan 須以繁體中文撰寫，且註明程式碼、識別字、指令、技術術語保留原文。
 2. **Claude Workflow 並行層**：`gen-dev-workflow/SKILL.md` 描述 STAGE 0a / STAGE 2 / STAGE 3 的 opt-in fan-out；並明確聲明暫停點由主 orchestrator 掌控、state/model/委派語意不變。
 3. **移除 Co-Authored-By**：`gen-commit/SKILL.md` 已無 `Co-Authored-By` trailer 行，且已無「Always append the Co-Authored-By trailer」規則。
-6. **明文禁止 attribution trailer**：`gen-commit/SKILL.md` 的 Message rules 含 `Do NOT append any attribution trailer (no Co-Authored-By, no Generated with ...)`，且措辭與全域版本一致。
 4. **永不刪 branch**：
    - `publisher.md` description、工作原則、完成條件皆反映「不刪本地 branch」。
    - `finishing-a-development-branch/SKILL.md` Option 1 不含 `git branch -d`；表格 Cleanup Branch 欄為 Option 1 = `-`、Option 4 = `✓ (force, explicit confirm only)`；Common Mistakes 含對應條目。
@@ -98,3 +97,4 @@
 5. **Fable 優先**：
    - `planner.md` 與 `reviewer.md` 的 `model` 為 `fable`。
    - `gen-dev-workflow/SKILL.md` 載明「Fable 優先原則」——planning / review / STAGE 2 最強分級優先用 Fable，僅 Fable 不可用時單次 fallback 回 Opus；Sonnet 等級 stage 不受影響。
+6. **明文禁止 attribution trailer**：`gen-commit/SKILL.md` 的 Message rules 含 `Do NOT append any attribution trailer (no Co-Authored-By, no Generated with ...)`，且措辭與全域版本一致。
