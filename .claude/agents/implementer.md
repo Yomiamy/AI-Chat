@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Use for executing implementation plans task-by-task using subagent-driven development. Handles coding, testing, and committing. Best for well-specified tasks with clear acceptance criteria.
+description: 用於以 subagent-driven development 逐任務執行實作計畫。負責編碼、測試與提交。最適合具備明確驗收標準、規格清楚的任務。
 model: claude-sonnet-4-5
 tools: [Read, Write, Edit, Bash, Glob, Grep]
 ---
