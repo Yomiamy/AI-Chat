@@ -124,7 +124,7 @@ description: 在 ticket-id-dev-prep 已選定或準備好開發工作區，且 C
 
 以下列指令解析 suffix：
 ```bash
-git rev-parse --abbrev-ref HEAD | sed 's|.*/||' | sed 's/^[A-Z][A-Z]*-[0-9]*-//'
+git rev-parse --abbrev-ref HEAD | sed 's|.*/||' | sed -E 's/^([A-Z][A-Z0-9]*-)?[0-9]+-//'
 ```
 
 保留 ticket id 的大小寫。

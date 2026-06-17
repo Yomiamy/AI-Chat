@@ -44,13 +44,13 @@ description: 在 context-collector 產出 issue context 後、且使用者想準
 建立新的 worktree 時，優先使用內附腳本：
 
 ```bash
-scripts/prepare_ticket_dev_workspace.sh --ticket-id "<ISSUE-ID>" --prefix "<fix/|feature/|chore/>" --slug "<slug>"
+scripts/prepare_issue_dev_workspace.sh --issue-id "<ISSUE-ID>" --prefix "<fix/|feature/|chore/>" --slug "<slug>"
 ```
 
-無 ticket 的 issue 則省略 `--ticket-id`：
+無 ticket 的 issue 則省略 `--issue-id`：
 
 ```bash
-scripts/prepare_ticket_dev_workspace.sh --prefix "<fix/|feature/|chore/>" --slug "<slug>"
+scripts/prepare_issue_dev_workspace.sh --prefix "<fix/|feature/|chore/>" --slug "<slug>"
 ```
 
 此腳本也會把僅限本地的開發設定同步進目標 worktree，包括：
