@@ -1,8 +1,9 @@
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
 
-extension PlatformFileX on PlatformFile {
+extension XFileMimeTypeX on XFile {
   String get mimeType {
-    final ext = extension?.toLowerCase() ?? '';
+    final dotIndex = name.lastIndexOf('.');
+    final ext = dotIndex == -1 ? '' : name.substring(dotIndex + 1).toLowerCase();
     return switch (ext) {
       'pdf' => 'application/pdf',
       'txt' => 'text/plain',

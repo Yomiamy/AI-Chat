@@ -1,4 +1,4 @@
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -45,10 +45,8 @@ class FilePickManager {
   /// 開啟系統檔案選擇器選取一般檔案 (PDF, TXT 等)
   ///
   /// 一般取檔在現代系統中透過內建的 Document Picker 直接處理，無需額外的應用程式層級權限。
-  static Future<FilePickerResult?> pickFile() async {
-    return await FilePicker.platform.pickFiles(
-      type: FileType.any,
-      withData: true, // 為了讓網頁或部分平台能直接拿 bytes
-    );
+  /// 回傳 [XFile] 如果成功選取，否則回傳 null（使用者取消）。
+  static Future<XFile?> pickFile() async {
+    return await openFile();
   }
 }

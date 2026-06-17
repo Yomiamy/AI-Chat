@@ -25,16 +25,18 @@ dependencies:
   url_launcher: ^6.3.2
   image_picker: ^1.1.2
   permission_handler: ^12.0.1
-  file_picker: ^10.3.10
+  file_selector: ^1.1.0
 
   get_it: ^8.0.0
   objectbox: ^5.2.0
   objectbox_flutter_libs: ^5.2.0
   collection: ^1.19.1
   shared_preferences: ^2.3.3
-  share_plus: ^10.0.0
+  share_plus: ^13.0.0
   rxdart: ^0.28.0
   path_provider: ^2.1.0
+
+  flutter_inspector_kit: ^0.2.3
 
 dev_dependencies:
   integration_test:
@@ -72,4 +74,3 @@ flutter_intl:
 
 objectbox:
   output_dir: generated/objectbox
-  
