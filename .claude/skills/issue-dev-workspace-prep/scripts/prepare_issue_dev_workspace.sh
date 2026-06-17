@@ -14,7 +14,7 @@ LOCAL_CONFIG_SOURCE_ROOTS=()
 usage() {
   cat <<'EOF'
 Usage:
-  prepare_issue_dev_workspace.sh --ticket-id "2351" --prefix "fix/" --slug "password-fields-validator-error" [options]
+  prepare_issue_dev_workspace.sh --issue-id "2351" --prefix "fix/" --slug "password-fields-validator-error" [options]
   prepare_issue_dev_workspace.sh --prefix "chore/" --slug "cleanup-skill-docs" [options]
 
 Required:
