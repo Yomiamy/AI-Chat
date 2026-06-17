@@ -86,12 +86,18 @@ This project uses an automated multi-agent development workflow powered by Claud
 
 > **Multiple workflows in parallel:** You can run several independent workflows on the same repo at once (multiple terminals / sessions). The isolation key is the **git branch** — each workflow runs on its own branch and writes its own per-branch state file under `.claude/workflow-state/`, so they never collide and need no lock. The only window needing extra handling is "both flows are still in STAGE 0a/0b (no branch yet)", which is disambiguated by a persisted **workflow-id**.
 
+> **Optional Claude Workflow acceleration:** Three specific stages (0a context collection, STAGE 2 independent tasks, STAGE 3 multi-angle review) support opt-in `Workflow` fan-out for parallel execution. Pause points are always controlled by the main orchestrator outside any Workflow call. To opt-in, mention "ultracode", "用 workflow", or "多 agent".
+
 ```text
   User: "Build me feature X"
          │
          ▼
   ┌─────────────────────────────────────────────────────┐
-  │  STAGE 0a: Feature Spec (Planner — Opus)             │
+  │  STAGE 0a: Feature Spec        [Planner — Opus]      │
+  │  🟢 Parallel context collection (opt-in Workflow):   │
+  │     A. Project context (README / pubspec / git log)  │
+  │     B. Similar feature code survey                   │
+  │     → Planner converges both into spec               │
   │  Produces docs/features/YYYY-MM-DD-<feature>.md      │
   │  (What & Why: user stories, acceptance criteria)     │
   │  ⏸ Pause: review spec → user confirms               │
@@ -99,7 +105,7 @@ This project uses an automated multi-agent development workflow powered by Claud
                            │ confirmed
                            ▼
   ┌─────────────────────────────────────────────────────┐
-  │  STAGE 0b: Implementation Plan (Planner — Opus)      │
+  │  STAGE 0b: Implementation Plan [Planner — Opus]      │
   │  Produces docs/plans/YYYY-MM-DD-<feature>.md         │
   │  (How: data structures, file changes, task breakdown)│
   │  ⏸ Pause: review plan → user confirms               │
@@ -107,25 +113,35 @@ This project uses an automated multi-agent development workflow powered by Claud
                            │ confirmed
                            ▼
   ┌─────────────────────────────────────────────────────┐
-  │  STAGE 1: Branch Setup (Brancher — Sonnet)           │
+  │  STAGE 1: Branch Setup         [Sonnet]              │
+  │  → gen-gh-issue skill produces Issue body            │
+  │    (5-section zh-tw: Problem / Root cause / Fix /    │
+  │     Out of scope / Verification)                     │
+  │  → Brancher agent drafts branch name                 │
   │  ⏸ Pause: review Issue title/body + branch name     │
   │  agy executes: gh issue create + git checkout        │
   └────────────────────────┬────────────────────────────┘
                            │ confirmed
                            ▼
   ┌─────────────────────────────────────────────────────┐
-  │  STAGE 2: Implementation (Implementer — dynamic)     │
-  │  Model picked per-task by complexity (cheap→Opus)    │
+  │  STAGE 2: Implementation       [dynamic per-task]    │
+  │  Model picked per-task by complexity:                │
+  │    mechanical → cheap | integration → standard       │
+  │    design judgment / cross-layer → Opus              │
+  │  🟢 Independent tasks may run in parallel            │
+  │     (opt-in Workflow fan-out, path-disjoint only)    │
   │  agy writes code + tests + commits per task          │
-  │  Claude performs 2-stage review per task:            │
-  │    spec review → code quality review                 │
-  │  ⏸ Pause after each task: show changed files +      │
-  │    test results → user confirms before next task     │
+  │  Claude performs 2-stage acceptance per task          │
+  │  ⏸ Pause after each task/batch: show changed files  │
+  │    + test results → user confirms next               │
   └────────────────────────┬────────────────────────────┘
                            │ all tasks confirmed
                            ▼
   ┌─────────────────────────────────────────────────────┐
-  │  STAGE 3: Code Review (Reviewer — Opus)              │
+  │  STAGE 3: Code Review          [Reviewer — Opus]     │
+  │  Reviewer judges directly (never delegated to agy)   │
+  │  🟢 Opt-in: multi-angle adversarial review           │
+  │     (parallel verifiers per lens → reviewer merges)  │
   │  ⏸ Pause: show review report → user confirms        │
   │  ├─ Pass → proceed to STAGE 4                       │
   │  └─ Fail / user requests fix                        │
@@ -134,11 +150,12 @@ This project uses an automated multi-agent development workflow powered by Claud
                            │ confirmed
                            ▼
   ┌─────────────────────────────────────────────────────┐
-  │  STAGE 4: Publish PR (Publisher — Sonnet)            │
+  │  STAGE 4: Publish PR           [Publisher — Sonnet]   │
   │  agy analyzes diff → generates PR draft               │
   │  Claude proofreads draft                             │
   │  ⏸ Pause: review PR draft → user confirms           │
   │  gh pr create → PR URL returned                     │
+  │  (local branch is always preserved, never deleted)   │
   └────────────────────────┬────────────────────────────┘
                            │ PR created ✦ workflow stops
 
@@ -159,11 +176,13 @@ This project uses an automated multi-agent development workflow powered by Claud
 | `/gen-dev-workflow` | — | Check workflow state / start new |
 | `/gen-dev-workflow spec <description>` | 0a | Write feature spec |
 | `/gen-dev-workflow plan <spec-path>` | 0b | Write implementation plan |
-| `/gen-dev-workflow branch <issue>` | 1 | Create branch |
+| `/gen-dev-workflow branch <issue>` | 1 | Create Issue + branch |
 | `/gen-dev-workflow implement <plan-path>` | 2 | Run implementation |
 | `/gen-dev-workflow code-review <branch>` | 3 | Run code review |
 | `/gen-dev-workflow publish <branch>` | 4 | Create PR |
 | `/gen-dev-workflow review #<PR>` | 5 | Handle PR review comments |
+
+> **Token budget gate:** When main-conversation context exceeds ~150k tokens, the orchestrator checkpoints progress to the state file and prompts you to start a fresh session. Say `繼續` / `/gen-dev-workflow` to auto-resume from the saved stage.
 
 > **Running parallel workflows:** open a new terminal/session for each feature. After STAGE 1 each lives on a distinct branch (state at `.claude/workflow-state/<branch-slug>.json`); say `繼續` / `/gen-dev-workflow` from the matching branch to resume the right one. Progress lines are prefixed with the branch slug (or `wf-id` before a branch exists) so concurrent outputs stay distinguishable.
 
