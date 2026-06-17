@@ -13,7 +13,7 @@
 | 項目 | 內容 |
 |------|------|
 | **Agent** | planner |
-| **Model** | Opus（最強推論） |
+| **Model** | Opus (xHigh effort)（最強推論） |
 | **委派** | 無 agy 委派，Claude 親自執行 |
 | **並行** | 🟢 並行 2 條線：A. 專案 context 收集（讀檔 / git log）B. 相似功能代碼調查 |
 | **產出** | `docs/features/YYYY-MM-DD-<feature>.md`（使用者故事、驗收條件、範圍邊界） |
@@ -32,7 +32,7 @@
 | 項目 | 內容 |
 |------|------|
 | **Agent** | planner |
-| **Model** | Opus |
+| **Model** | Opus (xHigh effort) |
 | **委派** | 無 agy 委派 |
 | **並行** | 無 |
 | **產出** | `docs/plans/YYYY-MM-DD-<feature>.md`（資料結構、檔案異動、任務拆分 + 複雜度標註） |
@@ -52,7 +52,7 @@
 | 項目 | 內容 |
 |------|------|
 | **Agent** | brancher |
-| **Model** | Sonnet（純 IO，不需強推論） |
+| **Model** | Sonnet (Max effort)（純 IO，不需強推論） |
 | **委派** | ✦ agy 執行 `gh issue create` + `git checkout` |
 | **並行** | 無 |
 | **產出** | GitHub Issue + Git 分支 |
@@ -82,8 +82,8 @@
 | 任務複雜度 | Model 選擇 | 範例 |
 |-----------|-----------|------|
 | 觸及 1–2 檔、規格完整、機械性 | 快/便宜 model（如 Haiku） | 新增 DTO 欄位、補 util function |
-| 觸及多檔、需整合協調 | 標準 model（如 Sonnet） | 跨 service 串接、改既有流程 |
-| 需設計判斷或廣泛 codebase 理解 | 最強 model（如 Opus） | 重構狀態機、新增跨層架構 |
+| 觸及多檔、需整合協調 | 標準 model（如 Sonnet (Max effort)） | 跨 service 串接、改既有流程 |
+| 需設計判斷或廣泛 codebase 理解 | 最強 model（如 Opus (xHigh effort)） | 重構狀態機、新增跨層架構 |
 
 **執行工作：**
 1. 解析實作計畫，判斷並行/序列模式
@@ -104,7 +104,7 @@
 | 項目 | 內容 |
 |------|------|
 | **Agent** | reviewer |
-| **Model** | Opus（根因判斷需最強推論） |
+| **Model** | Opus (xHigh effort)（根因判斷需最強推論） |
 | **委派** | **不委派 agy**（審查不可外包） |
 | **並行** | 無 |
 | **產出** | 審查報告 |
@@ -115,7 +115,7 @@
 2. 產出審查報告
 3. 不通過 → 退回 STAGE 2 修正 → 再回 STAGE 3（迴圈）
 
-**設計考量：** Opus 做審查是為了避免「自己審自己」（implementer 可能用 Sonnet/Haiku，reviewer 刻意用不同源的 Opus 來交叉驗證）。
+**設計考量：** Opus (xHigh effort) 做審查是為了避免「自己審自己」（implementer 可能用 Sonnet (Max effort)/Haiku，reviewer 刻意用不同源的 Opus (xHigh effort) 來交叉驗證）。
 
 ---
 
@@ -124,7 +124,7 @@
 | 項目 | 內容 |
 |------|------|
 | **Agent** | publisher |
-| **Model** | Sonnet |
+| **Model** | Sonnet (Max effort) |
 | **委派** | ✦ agy 分析 Diff → 產 PR 草稿；Claude 校對 |
 | **並行** | 無 |
 | **產出** | GitHub PR |
@@ -143,7 +143,7 @@
 | 項目 | 內容 |
 |------|------|
 | **Agent** | responder → reviewer → publisher |
-| **Model** | Sonnet（responder）→ Opus（reviewer）→ Sonnet（publisher） |
+| **Model** | Sonnet (Max effort)（responder）→ Opus (xHigh effort)（reviewer）→ Sonnet (Max effort)（publisher） |
 | **委派** | 無 agy 委派 |
 | **並行** | 無 |
 | **觸發** | 使用者說「PR #42 有新的 review 意見」 |
@@ -160,10 +160,10 @@
 ```mermaid
 graph LR
     subgraph "Model 分配"
-        A["STAGE 0a/0b<br/>Opus"] --> B["STAGE 1<br/>Sonnet"]
+        A["STAGE 0a/0b<br/>Opus (xHigh effort)"] --> B["STAGE 1<br/>Sonnet (Max effort)"]
         B --> C["STAGE 2<br/>動態分級"]
-        C --> D["STAGE 3<br/>Opus"]
-        D --> E["STAGE 4<br/>Sonnet"]
+        C --> D["STAGE 3<br/>Opus (xHigh effort)"]
+        D --> E["STAGE 4<br/>Sonnet (Max effort)"]
     end
 
     subgraph "agy 委派"
