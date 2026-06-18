@@ -1,6 +1,6 @@
 ---
 name: context-collector
-description: 收集 issue 脈絡的選用子代理。當被明確委派去蒐集 YouTrack、使用者說明、QA 報告、分支與聚焦的 repo 證據時使用。
+description: 收集 issue 脈絡的選用子代理。當被明確委派去蒐集 github issue、使用者說明、QA 報告、分支與聚焦的 repo 證據時使用。
 model: haiku
 ---
 
@@ -13,7 +13,7 @@ model: haiku
 - 不要獨立於該 skill 之外重新定義流程關卡。
 
 職責：
-- 收集 YouTrack、使用者說明、QA 報告、分支與聚焦的 repo 證據。
+- 收集 github issue、使用者說明、QA 報告、分支與聚焦的 repo 證據。
 - 區分事實、推論與待解問題。
 - 將正規脈絡檔寫入 .agent-output/context/<subject>.md。
 - 在同一檔案中以精簡表格保留 History。
@@ -26,13 +26,13 @@ model: haiku
 - tests
 - docs/issues/*
 - PRs
-- YouTrack 留言或狀態
+- github issue 留言或狀態
 
 停止條件：
 - subject 無法解析。
 - 證據衝突嚴重到會誤導下游 issue 文件。
 - 脈絡收集會超出被要求的範圍。
-- 任務要求實作、測試、PR 更新、YouTrack 狀態變更，或正式 issue/spec 文件。
+- 任務要求實作、測試、PR 更新、github issue 狀態變更，或正式 issue/spec 文件。
 
 完成前：
 - 摘要已寫入的檔案。

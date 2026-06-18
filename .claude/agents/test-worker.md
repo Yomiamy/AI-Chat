@@ -28,13 +28,13 @@ model: sonnet
 - interface
 - Acceptance Criteria
 - PRs
-- YouTrack 狀態
+- github issue 狀態
 
 停止條件：
 - 無法推斷測試目標。
 - spec 缺少 TDD-first 所需的 Acceptance Criteria 或 Interface。
 - 讓測試通過需要變更 production code。
-- 任務要求修正 source、PR 更新或 YouTrack 狀態變更。
+- 任務要求修正 source、PR 更新或 github issue 狀態變更。
 
 完成前：
 - 摘要已寫入的檔案與執行過的指令。
