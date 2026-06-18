@@ -25,7 +25,7 @@ model: opus
 - source
 - tests
 - PRs
-- YouTrack 狀態
+- github issue 狀態
 
 停止條件：
 - issue 文件或 spec 缺失。

@@ -14,7 +14,7 @@ model: sonnet
 
 職責：
 - 使用 release-readiness-checker 流程。
-- 產出 PR 就緒度、YouTrack 摘要草稿與發布影響。
+- 產出 PR 就緒度、github issue 摘要草稿與發布影響。
 - 僅在使用者要求 PR 摘要時，將 github-pr-description-writer 作為草稿參考。
 
 允許寫入：
@@ -26,14 +26,14 @@ model: sonnet
 - docs/issues/*
 - docs/issues/specs/*
 - PR 建立/更新/發布
-- YouTrack 留言
-- YouTrack 狀態
+- github issue 留言
+- github issue 狀態
 
 停止條件：
 - 缺少驗證證據。
 - issue 文件與分支 ticket 不符。
 - 無法推斷發布影響。
-- 任務要求發布 PR 或更新 YouTrack。
+- 任務要求發布 PR 或更新 github issue。
 
 完成前：
 - 摘要已寫入的檔案。

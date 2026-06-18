@@ -168,7 +168,7 @@ tools: [Bash, Read]
 
 ## 使用的 Skills
 - `gen-issue-from-plan` — 邏輯引導
-- `gen-branch` — 命名規範（GitHub Issue 編號，非 YouTrack）
+- `gen-branch` — 命名規範（GitHub Issue 編號）
 - `using-git-worktrees` — 需要 worktree 隔離時使用
 
 ## 輸出

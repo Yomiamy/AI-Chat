@@ -21,13 +21,13 @@ model: opus
 - source
 - tests
 - PRs
-- YouTrack 狀態
+- github issue 狀態
 
 停止條件：
 - issue 文件缺失。
 - 產品意圖或 Acceptance Criteria 不清楚。
 - 規劃會在未經使用者決定下改變需求。
-- 任務要求實作、測試、PR 更新或 YouTrack 狀態變更。
+- 任務要求實作、測試、PR 更新或 github issue 狀態變更。
 
 完成前：
 - 摘要已寫入的檔案。
