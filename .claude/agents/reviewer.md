@@ -1,7 +1,8 @@
 ---
 name: reviewer
 description: 用於深度程式碼審查與完成前驗證。負責分支 diff 分析並強制執行驗證紀律。最適合在 PR 前捕捉 bug、回歸並把關品質。
-model: fable
+model: opus
+effort: xhigh
 tools: [Bash, Read, Glob, Grep]
 ---
 
