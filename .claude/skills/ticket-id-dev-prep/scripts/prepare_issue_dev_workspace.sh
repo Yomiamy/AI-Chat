@@ -14,17 +14,16 @@ LOCAL_CONFIG_SOURCE_ROOTS=()
 usage() {
   cat <<'EOF'
 Usage:
-  prepare_issue_dev_workspace.sh --issue-id "2351" --prefix "fix/" --slug "password-fields-validator-error" [options]
-  prepare_issue_dev_workspace.sh --prefix "chore/" --slug "cleanup-skill-docs" [options]
+  prepare_issue_dev_workspace.sh --ticket-id "BUG-2351" --prefix "fix/" --slug "password-fields-validator-error" [options]
 
 Required:
+  --issue-id        GitHub issue key such as BUG-2351
   --prefix          Branch prefix such as fix/, feature/, chore/
   --slug            Lowercase kebab-case English slug
 
 Optional:
-  --issue-id        GitHub issue ID such as 2351 or BUG-2351
   --base            Base ref to branch from. Default: origin/main
-  --worktree-parent Parent directory for the new worktree. Default: parent of current repo
+  --worktree-parent Parent directory for the new worktree. Default: .claude/worktrees inside current repo
   --skip-fetch      Skip fetching remote refs before creation
   --skip-local-config-sync
                     Do not copy local-only development config files into the new worktree
@@ -182,7 +181,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "${PREFIX}" || -z "${SLUG}" ]]; then
+if [[ -z "${TICKET_ID}" || -z "${PREFIX}" || -z "${SLUG}" ]]; then
   echo "Missing required arguments" >&2
   usage >&2
   exit 1
@@ -208,17 +207,12 @@ REPO_NAME="$(basename "${REPO_ROOT}")"
 REPO_PARENT="$(dirname "${REPO_ROOT}")"
 
 if [[ -z "${WORKTREE_PARENT}" ]]; then
-  WORKTREE_PARENT="${REPO_PARENT}"
+  WORKTREE_PARENT="${REPO_ROOT}/.claude/worktrees"
 fi
 
-if [[ -n "${TICKET_ID}" ]]; then
-  TICKET_ID_LOWER="$(printf '%s' "${TICKET_ID}" | tr '[:upper:]' '[:lower:]')"
-  BRANCH_NAME="${PREFIX}${TICKET_ID}-${SLUG}"
-  WORKTREE_NAME="${REPO_NAME}-${TICKET_ID_LOWER}-${SLUG}"
-else
-  BRANCH_NAME="${PREFIX}${SLUG}"
-  WORKTREE_NAME="${REPO_NAME}-${SLUG}"
-fi
+TICKET_ID_LOWER="$(printf '%s' "${TICKET_ID}" | tr '[:upper:]' '[:lower:]')"
+BRANCH_NAME="${PREFIX}${TICKET_ID}-${SLUG}"
+WORKTREE_NAME="${REPO_NAME}-${TICKET_ID_LOWER}-${SLUG}"
 WORKTREE_PATH="${WORKTREE_PARENT}/${WORKTREE_NAME}"
 
 if git show-ref --verify --quiet "refs/heads/${BRANCH_NAME}"; then
