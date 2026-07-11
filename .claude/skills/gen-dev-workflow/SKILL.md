@@ -79,7 +79,7 @@ description: |
     │     • 否則 → 🔴 序列逐任務                        │
     │  → 逐任務選 model：機械性→快/便宜｜整合→標準     │
     │     ｜設計判斷/跨層→最強（見 Model 策略章節）    │
-    │  → agy 實作任務，Claude 兩階段驗收            │
+    │  → agy 實作任務，verifier 兩階段驗收          │
     │  🪶 Ponytail：派發模板必附〈規則塊〉，驗收把  │
     │     計畫外抽象/依賴/防禦分支當品質不佳退回    │
     │  ⏸ 每個任務（或每批並行）完成後暫停：            │
@@ -121,17 +121,18 @@ description: |
 
     ──────────────────────────────────────────────────
     [Model: ...] = 該 stage 委派時選用的基準 model。
-    主對話（總指揮）全程不換 model；切換發生在委派出去的
-    agy 子進程。STAGE 2 為逐任務動態分級。
+    主對話（總指揮）本身不換 model；切換發生在委派出去的
+    子進程——agy（STAGE 2 逐任務動態分級）與 STAGE 2 驗收
+    委派的 verifier（優先 Opus xHigh，否則 Sonnet Max）。
     詳見下方「Model 與委派策略」章節。
 
     ──────────────────────────────────────────────────
     STAGE 5：回覆 PR Review（獨立入口，由你手動觸發）
     ──────────────────────────────────────────────────
     觸發方式：你說「PR #42 有新的 review 意見」
-    → 呼叫 responder agent 處理每條意見      [Model: Sonnet (Max effort)]
+    → 呼叫 responder agent 處理每條意見      [Model: Sonnet (High effort)]
     → 處理完畢 → 呼叫 reviewer agent 重新審查 [Model: Opus (xHigh effort)]
-    → 審查通過 → 呼叫 publisher agent 更新 PR [Model: Sonnet (Max effort)]
+    → 審查通過 → 呼叫 publisher agent 更新 PR [Model: Sonnet (High effort)]
     → 完成後流程再次結束，Claude 停止等待。
 
     ──────────────────────────────────────────────────
@@ -187,7 +188,7 @@ STAGE 1 建立分支與工作區時，**不論從哪個入口進來**，最後�
    - prefix 依 issue 意圖選擇：`fix/YYYYMM`（bug/regression）、`feature/YYYYMM`（新功能）、`chore/YYYYMM`（refactor/維護）。
    - slug：2–6 個英文字的 kebab-case，具體且與實作相關，避免 `handle`/`update`/`fix-issue` 這類填充詞。
    - branch 名稱：`<prefix>/<ISSUE-ID>-<slug>`，其中 `<prefix>` 已含 `YYYYMM`（例：`fix/202607/54-console-clear-not-wiping`）。
-   - worktree 目錄：`<repo-name>-<ISSUE-ID>-<slug>`，建在當前 repo 旁（同層目錄），除非使用者要求其他位置。
+   - worktree 目錄：`.claude/worktrees/<repo-name>-<ISSUE-ID>-<slug>`，建在當前 repo 內的 `.claude/worktrees` 目錄下，除非使用者要求其他位置。
 3. **建立 worktree + branch**：優先使用 `ticket-id-dev-prep` 內附的 `scripts/prepare_issue_dev_workspace.sh`（若存在於當前專案）；否則走手動回退流程：
    ```bash
    git fetch origin main --prune
@@ -474,7 +475,11 @@ Model 不綁死在 agent 身上，而是**依工作性質動態選擇**。這是
   → 帶 model: "opus", effort: "xHigh"
 ```
 
-下表與流程圖中標註 `Opus (xHigh effort)` 與 `Sonnet (Max effort)` 的位置皆使用該設定；「快/便宜」的位置**不受影響**，維持原樣。對於所有 Sonnet 的派發，皆帶 `model: "sonnet", effort: "max"`。
+下表與流程圖中標註 `Opus (xHigh effort)` 與 `Sonnet (Max effort)` 的位置皆使用該設定；「快/便宜」的位置**不受影響**，維持原樣。對於標註 `Sonnet (Max effort)` 的派發，皆帶 `model: "sonnet", effort: "max"`。
+
+**例外——用 `Sonnet (High effort)`（`model: "sonnet", effort: "high"`）的環節：**
+- **STAGE 5 的 responder / publisher**：逐條意見判斷（responder 回意見並改局部代碼）與 PR 描述產出 + push（publisher），比其他 Sonnet 環節略降一級 effort，Max 換不到等值品質。**注意 STAGE 5 中間的 reviewer 仍是 `Opus (xHigh effort)`**——審查吃重推論、是交叉驗證的把關點，不降。
+- **STAGE 6 清理 worktree**：`git worktree remove` + 呼叫 cleanup skill，純 IO、只移除 worktree 不刪 branch、決策成本低，High 綽綽有餘。
 
 ### Stage 層級的基準分配
 
@@ -482,11 +487,11 @@ Model 不綁死在 agent 身上，而是**依工作性質動態選擇**。這是
 |-------|-------|-----------|------------|------------|
 | 0a/0b 規劃 | planner | Opus (xHigh effort) | — | 設計與計畫拆解是最高槓桿推論，錯了後面全錯 |
 | 1 建立 Issue + Worktree | gen-gh-issue skill + brancher | Sonnet (Max effort) | ✦ gh issue create/view, git worktree add, flutter pub get | Issue body 由 gen-gh-issue 產（五區段 zh-tw，或 issue-id 路徑由 brancher 解析既有 issue），brancher 依 ticket-id-dev-prep 規則建立 worktree + branch，皆純 IO |
-| 2 實作 | implementer | **見下方分級** | ✦ 代碼+測試+commit（Claude 驗收）| — |
+| 2 實作 | implementer | **見下方分級** | ✦ 代碼+測試+commit（驗收委派 verifier：優先 Opus xHigh，否則 Sonnet Max）| — |
 | 3 審查 | reviewer | Opus (xHigh effort) | — | 根因判斷需最強推論，且不該讓產出代碼的同源 model 自審 |
 | 4 發布 | publisher（內部用 gen-pr skill） | Sonnet (Max effort) | ✦ Diff 分析 → PR 草稿（Claude 校對）| PR 描述由 gen-pr 產（Summary + 修正問題/修正方式），publisher 負責 push + gh pr create |
-| 5 回覆 PR Review | responder | Sonnet (Max effort) | — | 逐條意見處理，短文判斷 |
-| 6 清理 Worktree | worktree-close-cleanup skill | Sonnet (Max effort) | ✦ git worktree remove | 純 IO，且只移除 worktree、不刪 branch，決策成本低 |
+| 5 回覆 PR Review | responder（→ reviewer → publisher） | responder/publisher: Sonnet (High effort)；reviewer: Opus (xHigh effort) | — | responder 逐條意見判斷、publisher 產 PR 描述，用 High（比其他 Sonnet 環節略降一級）；中間 reviewer 審查吃重推論仍用 Opus xHigh |
+| 6 清理 Worktree | worktree-close-cleanup skill | Sonnet (High effort) | ✦ git worktree remove | 純 IO，且只移除 worktree、不刪 branch，決策成本低，用 High 即可 |
 
 ### STAGE 2 implementer 內部的 model 分級
 
@@ -499,6 +504,20 @@ implementer 不該對所有任務一律用同一 model。讀取實作計畫後�
 | 需設計判斷或廣泛 codebase 理解 | 最強 model（Opus, xHigh effort） | 重構狀態機、新增跨層架構 |
 
 planner 在實作計畫中**應為每個任務標註複雜度等級**，implementer 直接據此分派；未標註時 implementer 自行依上表判定。
+
+### STAGE 2 驗收的 model（與實作 model 分離）
+
+驗收（spec compliance → code quality 兩階段）**不沿用主對話當前 model**，而是**委派一個帶指定 model 的 verifier subagent** 執行，選模規則固定為：
+
+```
+STAGE 2 驗收
+  → 優先 model: "opus", effort: "xHigh"
+  → 取不到 Opus 時 fallback → model: "sonnet", effort: "max"
+```
+
+這麼設計的原因與 STAGE 3 相同——**產出代碼的 agy 可能用便宜/快 model（Haiku/Sonnet），驗收刻意用最高推論等級的 Opus 交叉檢查**，不讓同源 model 自審。Opus 不可用時退到 Sonnet Max，維持「驗收 model ≥ 實作 model」的把關強度。
+
+> 落地方式：用 `Task("verifier", ...)` 或 Workflow 的 `agent('驗收任務...', {model: 'opus', effort: 'xHigh', ...})` 執行（見「用 Claude Workflow 執行並行」章節的 verify 階段）。這是 STAGE 2 唯一會脫離「主對話 model」的環節。
 
 ### 不委派 agy 的硬規則
 
@@ -587,11 +606,13 @@ const [projCtx, similarCode] = await parallel([
 planner 已在計畫中標好各任務的**寫入檔案 scope** 與**複雜度等級**。同一批內「寫入路徑不重疊」的任務 → `pipeline()` 並行，**每個任務沿用原本的逐任務 model 分級**（`opts.model` 帶入計畫標註的等級）。
 
 ```js
-// batch = 當前批次中路徑不重疊的任務；model 來自計畫的複雜度標註
+// batch = 當前批次中路徑不重疊的任務；實作 model 來自計畫的複雜度標註
+// 驗收 model 固定：優先 Opus xHigh、取不到再退 Sonnet Max（不隨實作任務浮動）
+const VERIFY_MODEL = opusAvailable ? {model: 'opus', effort: 'xHigh'} : {model: 'sonnet', effort: 'max'}
 const results = await pipeline(
   batch,
   task => agent(task.prompt, {label: task.id, model: task.model, isolation: 'worktree', schema: TASK_SCHEMA}),
-  (impl, task) => agent(`驗收任務 ${task.id}：跑測試、檢查 diff`, {label: `verify:${task.id}`, schema: VERIFY_SCHEMA}),
+  (impl, task) => agent(`驗收任務 ${task.id}：跑測試、檢查 diff`, {label: `verify:${task.id}`, ...VERIFY_MODEL, schema: VERIFY_SCHEMA}),
 )
 // 回到主對話：聚合 results → 寫 state（completed_tasks）→ 在「每批完成」暫停點展示 → 問使用者確認下一批
 ```
