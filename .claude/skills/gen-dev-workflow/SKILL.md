@@ -152,7 +152,7 @@ description: |
 
 ---
 
-## 暫停點規則（只有三種）
+## 暫停點規則
 
 | 暫停時機 | 你要做什麼 | 繼續條件 |
 |---------|-----------|---------|
@@ -167,6 +167,8 @@ description: |
 **不應該暫停的情況：** 分支建立、任務間自動切換、STAGE 2 內部失敗 retry、STAGE 3 審查失敗退回 STAGE 2、測試執行、並行單元間的協調。這些全部自動處理（失敗 retry 與退回路徑見「並行執行契約」章節）。
 
 **主動中斷（非暫停）：** context > 150k 時依 Token Budget Gate 主動保存並切 session，這不是暫停點，是保護性中斷。
+
+**暫停點的程式強制（棘輪）：** 每個暫停點對應一次 `wf-state.sh stage-done`（或 STAGE 2 的 `task-done`），把 state 標為等待確認；使用者確認後才跑 `advance <next> --confirmed`（或任務間的 `confirm`）推進。未確認就 `advance` 會被腳本直接拒絕——暫停點不再只靠本文件的自律（見「狀態機腳本」章節）。
 
 ---
 
@@ -278,9 +280,9 @@ quick <描述或 #issue>
 ```
 
 **規則：**
-- state 檔照寫：`<branch-slug>.json`（存原 repo `.claude/workflow-state/`），`mode: "quick"`——中斷後「繼續」照常續接，PR MERGED 照常自動刪檔。
+- state 檔照寫：`wf-state.sh init --mode quick --branch <branch>` 建 `<branch-slug>.json`（存原 repo `.claude/workflow-state/`）——中斷後「繼續」照常續接，PR MERGED 照常自動刪檔。quick 不套用 stage 轉移表，但 schema 校驗與暫停點棘輪照常生效（唯一暫停點：PR 草稿確認前 `stage-done <檔> <目前-stage>`，確認後 `confirm` 再發布）。
 - 不建 worktree ⇒ 同一 repo **同時只能跑一個 quick**（需要多並行就走完整流程的 worktree 隔離）。
-- 中途發現超出小修正範圍（多檔設計判斷、新依賴、要動架構）→ 停下告知，帶著已建的 branch 升級轉入完整流程 STAGE 2，不硬撐。
+- 中途發現超出小修正範圍（多檔設計判斷、新依賴、要動架構）→ 停下告知，`wf-state.sh upgrade <檔>`（單向 quick→sequence，stage 落在 2）帶著已建的 branch 升級轉入完整流程 STAGE 2，不硬撐。
 - Token Budget Gate 照常適用。
 
 ---
@@ -297,6 +299,29 @@ quick <描述或 #issue>
 [feature-202605-42-cart] [4/5] 發布準備中...
 [feature-202605-42-cart] [5/5] 完成 ✦ PR: <URL>
 ```
+
+### 狀態機腳本（唯一存取入口，強制）
+
+state 檔的**所有**建立、讀取、更新一律透過本 skill 的 `scripts/wf-state.sh`，**絕不手寫或手改 JSON**。guard 在腳本裡，不在本文件裡：
+
+- **schema 校驗 + 原子寫入**：先寫 tmp、`jq` 驗過才 `mv`——壞資料進不了磁碟，寫到一半中斷也不會留下半套 state。
+- **stage 轉移合法性**：sequence 模式只接受 `0a→0b→1→2→3→4`、`3→2`（審查退回）、`4→done`，非法跳段直接 exit 1。quick/jump 模式不套用轉移表（quick 的階段本來就非正式、jump 是使用者明示跳段），但校驗與棘輪照常生效。
+- **暫停點棘輪**：`stage-done` / `task-done` 之後 `awaiting_confirmation=true`，未帶 `--confirmed` 的 `advance` 一律拒絕。`--confirmed` 只能在**使用者真的在對話中確認後**帶上——跳過暫停點從「無聲遺忘」變成必須蓄意加旗標、在 Bash 歷史留下痕跡的動作。
+
+| 時機 | 指令 |
+|------|------|
+| 流程啟動（STAGE 0a） | `wf-state.sh init` → 回傳 pending 檔路徑（內含 wf-id） |
+| jump / quick 啟動（已知 branch） | `wf-state.sh init --mode jump\|quick --stage <S> --branch <branch>` |
+| STAGE 1 建好 worktree | `wf-state.sh promote <pending-檔> --branch <branch> --dest <worktree>/.claude/workflow-state` |
+| 欄位更新（spec/plan/issue/pr…） | `wf-state.sh set <檔> k=v`（`stage` 與確認旗標**改不了**，防繞過棘輪） |
+| stage 完成、進入暫停點 | `wf-state.sh stage-done <檔> <stage>` |
+| STAGE 2 單一任務完成 | `wf-state.sh task-done <檔> <n>` |
+| 使用者確認（stage 不變，如 STAGE 2 任務間） | `wf-state.sh confirm <檔>` |
+| 使用者確認並推進 stage | `wf-state.sh advance <檔> <next> --confirmed` |
+| quick 升級完整流程 | `wf-state.sh upgrade <檔> [--confirmed]`（單向 quick→sequence，stage 落在 2；有暫停點等待確認時須帶 `--confirmed`） |
+| 續接時讀取 | `wf-state.sh get <檔>`（讀取即校驗，腐壞檔立即失敗而非靜默續接） |
+
+> 腳本路徑：`.claude/skills/gen-dev-workflow/scripts/wf-state.sh`（相對當前工作目錄的 repo root；`cd` 進 worktree 後用 worktree 內的同路徑 checkout）。
 
 ### 狀態檔：每個 workflow 一個檔，用 branch 命名
 
@@ -322,14 +347,16 @@ quick <描述或 #issue>
 舊設計把「本 session 對應哪個 pending 檔」只存在對話 context 裡——session 一中斷，pending 檔就成了無主孤兒，新 session 因為還沒 branch 而推導不到它。改用 workflow-id 後，這個識別碼**同時寫進 state 檔內容、並由 session 在每次進度回報行帶上**，所以續接時能精準認領自己的 pending 檔，不會誤撿別人的。
 
 ```json
-// .pending-<wf-id>.json 內容（STAGE 0a/0b 階段）
+// .pending-<wf-id>.json 內容（STAGE 0a/0b 階段，由 wf-state.sh init 產生，勿手寫）
 {
+  "schema_version": 1,
   "workflow_id": "wf-1717400000-3f9a",
   "stage": "0a",
   "mode": "sequence",
   "branch": null,
   "spec": null,
-  "plan": null
+  "plan": null,
+  "awaiting_confirmation": false
 }
 ```
 
@@ -346,20 +373,21 @@ worktree 建立後改帶 branch slug，不再需要 workflow-id：
 
 | 時機 | 動作 |
 |------|------|
-| STAGE 0a 啟動（流程剛開始，還沒 worktree，在原 repo 目錄） | 產生 `<wf-id>` → 於原 repo 建 `.pending-<wf-id>.json`（內含 `workflow_id`）→ 之後進度行都帶 `[<wf-id>]` |
-| STAGE 1 建好 worktree 後 | 把 `.pending-<wf-id>.json` 的內容寫入新 worktree 內的 `<worktree-path>/.claude/workflow-state/<branch-slug>.json`，補上 `branch` 欄位（`workflow_id` 保留，便於追溯），刪除原 repo 的 pending 檔，主對話 `cd` 進新 worktree |
-| STAGE 1 之後每次寫入 | 寫新 worktree 內的 `<branch-slug>.json`，因 worktree 本身已隔離，零衝突 |
-| 直接 jump 進 STAGE 1+（已知 branch，已在該 worktree 內） | 略過 pending，直接寫當前 worktree 的 `<branch-slug>.json` |
+| STAGE 0a 啟動（流程剛開始，還沒 worktree，在原 repo 目錄） | `wf-state.sh init` → 腳本產生 `<wf-id>` 並於原 repo 建 `.pending-<wf-id>.json` → 之後進度行都帶 `[<wf-id>]` |
+| STAGE 1 建好 worktree 後 | `wf-state.sh promote <pending-檔> --branch <branch> --dest <worktree>/.claude/workflow-state` → 腳本補上 `branch` 欄位（`workflow_id` 保留，便於追溯）、寫入新 worktree、刪除原 repo 的 pending 檔；主對話 `cd` 進新 worktree |
+| STAGE 1 之後每次寫入 | 對新 worktree 內的 `<branch-slug>.json` 跑 `set` / `stage-done` / `task-done` / `advance`，因 worktree 本身已隔離，零衝突 |
+| 直接 jump 進 STAGE 1+（已知 branch，已在該 worktree 內） | 略過 pending，`wf-state.sh init --mode jump --stage <S> --branch <branch>` 直接建當前 worktree 的 `<branch-slug>.json` |
 
 > 關鍵：pending 階段（原 repo 目錄）靠 `<wf-id>` 認領，避免多個並行 workflow 在同一目錄搶檔；STAGE 1 之後每個 workflow 各自在專屬 worktree 內，天然零衝突，不需要再靠命名規則互相禮讓。
 
-**每個 stage 完成後寫入對應 state 檔**，讓新 session 可以從中斷點繼續：
+**每個 stage 完成後寫入對應 state 檔**（一律經 `wf-state.sh`，以下 JSON 僅為 schema 參考），讓新 session 可以從中斷點繼續：
 
 **sequence 模式**（正常流程跑到這裡）：
 ```json
 {
+  "schema_version": 1,
   "workflow_id": "wf-1717400000-3f9a",
-  "stage": 2,
+  "stage": "2",
   "mode": "sequence",
   "spec": "docs/features/2026-05-03-cart.md",
   "plan": "docs/plans/2026-05-03-cart.md",
@@ -368,7 +396,8 @@ worktree 建立後改帶 branch slug，不再需要 workflow-id：
   "pr": null,
   "completed_tasks": [1, 2],
   "total_tasks": 5,
-  "interrupted_by": "context_budget"
+  "interrupted_by": "context_budget",
+  "awaiting_confirmation": false
 }
 ```
 
@@ -379,8 +408,9 @@ worktree 建立後改帶 branch slug，不再需要 workflow-id：
 **jump 模式**（直接指定特定 stage 執行）：
 ```json
 {
+  "schema_version": 1,
   "workflow_id": "wf-1717400500-b21c",
-  "stage": 5,
+  "stage": "5",
   "mode": "jump",
   "pr": 42,
   "spec": null,
@@ -388,7 +418,8 @@ worktree 建立後改帶 branch slug，不再需要 workflow-id：
   "branch": null,
   "issue": null,
   "completed_tasks": [],
-  "total_tasks": null
+  "total_tasks": null,
+  "awaiting_confirmation": false
 }
 ```
 
@@ -430,9 +461,11 @@ worktree 建立後改帶 branch slug，不再需要 workflow-id：
 
 > **絕不**用 `git branch --show-current` 推導去認領 pending 檔——pending 階段可能多個流程共用同一 base branch，branch 推不出唯一的 pending 檔。pending 階段的唯一識別永遠是 `<wf-id>`。
 
+> **🔴 定位期間，其他 state 檔唯讀。** 上面「列出其他流程讓使用者選」的分支裡，你對那些檔案的權限**只有列名**——不查它們的 PR 狀態、不讀內容做判斷、更不刪除。它們要等使用者**明確說「接續它」**才成為本 session 認領的檔。使用者若選擇「開新流程」，那些檔案維持原狀，**不因為你路過而被清理**（見下方「本 session 的 state 檔以外，一律不碰」）。
+
 **狀態檔存在時（即上面定位到的 `<slug>.json`）：**
 ```
-→ 讀取該檔
+→ wf-state.sh get <檔>（讀取即校驗；校驗失敗 → 告知使用者 state 已腐壞，不靜默續接）
 → 若 pr 欄位有值 → gh pr view <pr> --json state --jq '.state'
    ├─ MERGED → 自動刪除該檔，告知「PR 已合併，開發週期完成 ✦」
    ├─ CLOSED → 問使用者「PR 已關閉，要重新開 PR 還是放棄？」
@@ -447,14 +480,37 @@ worktree 建立後改帶 branch slug，不再需要 workflow-id：
 → 觸發 C → 告知「當前 branch 找不到未完成的流程，要開始新的嗎？」
 ```
 
-**狀態檔刪除時機：**
-- PR 狀態為 `MERGED` → 自動刪除該 branch 的 state 檔
-- 使用者說「放棄這個功能」→ 自動刪除該 branch 的 state 檔
-- 其他情況一律保留，直到明確完成
+### 🔴 本 session 的 state 檔以外，一律不碰
+
+**唯一可寫、可刪的 state 檔，是「先定位」步驟認領到的那一個。** 其他 `.claude/workflow-state/` 底下的檔案，無論看起來多像殘留物、PR 查起來多像已合併，都**不屬於本 session**，一律：
+
+- ❌ 不刪除
+- ❌ 不修改
+- ❌ 不「順手清理」
+- ✅ 只在「先定位」流程需要列出候選時**唯讀列名**
+
+> **它們是別的流程的資產，不是你的垃圾。** 判斷「它已經沒用了」不是你的職權——那個流程的 owner（另一個 session、或使用者本人）才有權決定。你眼中的殘留物，可能是別人明天要續接的進度。
+
+**曾經發生的真實錯誤（此規則的由來）：** 一個在 `main` 上啟動新流程的 session，定位不到自己的候選檔，卻看到目錄裡有另一個流程的 state 檔，於是自行 `gh pr view` 查到該 PR 已 MERGED，就套用下方「MERGED → 刪除」規則把它 `rm` 掉了。那個檔案跟它要開發的功能毫無關係。**下方的刪除時機表，主詞永遠是「本 session 認領到的那一個檔」，不是「任何一個 MERGED 的檔」。**
+
+---
+
+**狀態檔刪除時機**（主詞一律是**本 session 認領到的那一個 state 檔**）：
+
+| 條件 | 動作 |
+|------|------|
+| **本 session 的** state 檔，其 PR 狀態為 `MERGED` | 自動刪除**該檔** |
+| 使用者說「放棄這個功能」（指本 session 正在跑的流程） | 自動刪除**該檔** |
+| 其他情況 | 一律保留，直到明確完成 |
+| **不是本 session 認領到的檔** | **一律不動**——即使它的 PR 已 MERGED、即使它看起來是殘留物 |
+
+刪除前先自問一句：**「這個檔是我在『先定位』步驟認領到的那一個嗎？」** 答案不是斬釘截鐵的「是」，就不要刪。
 
 > 上述刪除只針對 **state 檔（JSON）**，**git branch 本身一律保留**——流程任何階段（含 PR MERGED 後）都不自動執行 `git branch -d/-D`，branch 由使用者自行決定何時刪除。
 
 > 刪除只動「本 session 對應的那一個」state 檔，絕不清整個 `.claude/workflow-state/` 目錄——別的 session 的進度不可被波及。
+
+> **想清理別人的殘留 state 檔？** 那是使用者的決定，不是你的。可以**告知**（「順帶一提，目錄裡有 X 的 state 檔，其 PR 已合併，你可能想清掉」），但**不要代勞**。
 
 ---
 
@@ -477,10 +533,12 @@ worktree 建立後改帶 branch slug，不再需要 workflow-id：
 
 ```
 1. 完成當前正在進行的最小單元（如 STAGE 2 的當前任務），不要切在半途
-2. 寫入本 workflow 的 state 檔，並設 "interrupted_by": "context_budget"
+2. 寫入本 workflow 的 state 檔：`wf-state.sh set <檔> interrupted_by=context_budget`
    ├─ 已建 branch → <branch-slug>.json（記錄 stage / mode / spec / plan / branch / completed_tasks）
    └─ 尚無 branch（STAGE 0a/0b）→ .pending-<wf-id>.json（務必含 workflow_id，否則新 session 認不回）
-3. 若有未 commit 的變更 → 先 commit（避免 session 切換後遺失）
+3. 若有未 commit 的變更 → 先 commit（避免 session 切換後遺失）。
+   若當前任務真的收不了尾（緩衝內做不完，被迫半途切）→ 打 WIP commit，message **必須帶交接筆記**：
+   做到哪、下一步打算做什麼、為什麼選這個作法——代碼會自己活在磁碟上，思路不寫下來就真的丟了
 4. 明確告知使用者，並把識別碼一起給出去（讓使用者知道續接的是哪個流程）：
    「[<wf-id 或 branch-slug>] context 已達 <用量>，為避免品質下降已保存進度至 STAGE <N>。
      請開新 session 後輸入『繼續』或 /gen-dev-workflow，會自動從 STAGE <N> 接續。」
@@ -690,7 +748,7 @@ const findings = (await parallel([
 
 ## 跳入特定階段
 
-所有跳入指令都以 `mode: "jump"` 寫入狀態檔。
+所有跳入指令都以 `mode: "jump"` 寫入狀態檔（用 `wf-state.sh init --mode jump --stage <S> [--branch <branch>] [--set k=v]` 建立，不手寫 JSON）。
 
 ```
 # 重新規劃功能規格（STAGE 0a）
