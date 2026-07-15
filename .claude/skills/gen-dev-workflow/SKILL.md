@@ -121,12 +121,15 @@ description: |
                        PR 合併後可手動觸發 STAGE 6 清理 worktree）
 
     ──────────────────────────────────────────────────
-    各 stage 的 model/effort 一律由對應 agent 檔的
-    frontmatter 綁定（.claude/agents/*.md，用別名不綁版本 ID），
-    本文件只寫角色名與推論等級名。
+    各 stage 的 model 由對應 agent 檔的 frontmatter 綁定
+    （.claude/agents/*.md，用別名不綁版本 ID），本文件只寫
+    角色名與推論等級名。**effort 不在 frontmatter 裡**——
+    `a6fcd29` 已移除逐 agent 的 effort 綁定，改為預設繼承
+    session 目前的 effort；要維持 stage 間差異化，派發時
+    須明確帶 effort 參數。詳見下方「Model 與委派策略」章節。
     主對話（總指揮）本身不換 model；切換發生在委派出去的
     子進程——agy（STAGE 2 逐任務動態分級）與 STAGE 2 驗收
-    委派的 verifier agent。詳見下方「Model 與委派策略」章節。
+    委派的 verifier agent。
 
     ──────────────────────────────────────────────────
     STAGE 5：回覆 PR Review（獨立入口，由你手動觸發）
@@ -152,7 +155,7 @@ description: |
 
 ---
 
-## 暫停點規則
+## 暫停點規則（只有三種）
 
 | 暫停時機 | 你要做什麼 | 繼續條件 |
 |---------|-----------|---------|
@@ -167,8 +170,6 @@ description: |
 **不應該暫停的情況：** 分支建立、任務間自動切換、STAGE 2 內部失敗 retry、STAGE 3 審查失敗退回 STAGE 2、測試執行、並行單元間的協調。這些全部自動處理（失敗 retry 與退回路徑見「並行執行契約」章節）。
 
 **主動中斷（非暫停）：** context > 150k 時依 Token Budget Gate 主動保存並切 session，這不是暫停點，是保護性中斷。
-
-**暫停點的程式強制（棘輪）：** 每個暫停點對應一次 `wf-state.sh stage-done`（或 STAGE 2 的 `task-done`），把 state 標為等待確認；使用者確認後才跑 `advance <next> --confirmed`（或任務間的 `confirm`）推進。未確認就 `advance` 會被腳本直接拒絕——暫停點不再只靠本文件的自律（見「狀態機腳本」章節）。
 
 ---
 
@@ -214,15 +215,15 @@ STAGE 1 建立分支與工作區時，**不論從哪個入口進來**，最後�
 ```
 使用者：幫我做 <需求描述>
 
-你：好，開始執行開發流程。
-    Task("planner", "規劃 <需求描述>，產出 plan 文件")
+你：好，開始執行開發流程。（effort 依「推論等級表」明確帶入，見上方風險註記）
+    Task("planner", "規劃 <需求描述>，產出 plan 文件", effort: "xhigh")
     → [等 planner 完成] → 展示計畫摘要 → 暫停確認
     → Skill("gen-gh-issue") 依計畫產出 Issue body（五區段 zh-tw）
-    → Task("brancher", "用上述 Issue body 執行 <plan 路徑>")
-    → Task("implementer", "執行 <plan 路徑>")
-    → Task("reviewer", "審查 <branch-name>")
-    → [若不通過] Task("implementer", "修正以下問題：<reviewer 回報>")
-    → Task("publisher", "用 gen-pr skill 產 PR 描述，發布 <branch-name>")
+    → Task("brancher", "用上述 Issue body 執行 <plan 路徑>", effort: "high")
+    → Task("implementer", "執行 <plan 路徑>", effort: "max")
+    → Task("reviewer", "審查 <branch-name>", effort: "xhigh")
+    → [若不通過] Task("implementer", "修正以下問題：<reviewer 回報>", effort: "max")
+    → Task("publisher", "用 gen-pr skill 產 PR 描述，發布 <branch-name>", effort: "high")
     → 暫停確認 → 完成
 ```
 
@@ -237,15 +238,15 @@ STAGE 1 建立分支與工作區時，**不論從哪個入口進來**，最後�
 ```
 使用者：開發 issue #54
 
-你：好，直接進 STAGE 1。
+你：好，直接進 STAGE 1。（effort 依「推論等級表」明確帶入，見上方風險註記）
     Task("brancher", "解析 issue #54 內容為實作 brief，依 ticket-id-dev-prep 規則
-                       決定 prefix/slug，建立 worktree + branch")
+                       決定 prefix/slug，建立 worktree + branch", effort: "high")
     → [等 brancher 完成] → 展示解析後的 brief + branch/worktree 名稱 → 暫停確認
     → cd 進新 worktree
-    → Task("implementer", "依 issue brief 執行實作")
-    → Task("reviewer", "審查 <branch-name>")
-    → [若不通過] Task("implementer", "修正以下問題：<reviewer 回報>")
-    → Task("publisher", "用 gen-pr skill 產 PR 描述，發布 <branch-name>")
+    → Task("implementer", "依 issue brief 執行實作", effort: "max")
+    → Task("reviewer", "審查 <branch-name>", effort: "xhigh")
+    → [若不通過] Task("implementer", "修正以下問題：<reviewer 回報>", effort: "max")
+    → Task("publisher", "用 gen-pr skill 產 PR 描述，發布 <branch-name>", effort: "high")
     → 暫停確認 → 完成
 ```
 此路徑跳過 STAGE 0a/0b（規格與計畫）——issue 內容本身就是實作依據，不重新規劃。若 issue 內容過於模糊而無法產生可靠的實作 brief，依 `ticket-id-dev-prep` 的安全規則停下向使用者確認，不臆測需求。
@@ -280,9 +281,9 @@ quick <描述或 #issue>
 ```
 
 **規則：**
-- state 檔照寫：`wf-state.sh init --mode quick --branch <branch>` 建 `<branch-slug>.json`（存原 repo `.claude/workflow-state/`）——中斷後「繼續」照常續接，PR MERGED 照常自動刪檔。quick 不套用 stage 轉移表，但 schema 校驗與暫停點棘輪照常生效（唯一暫停點：PR 草稿確認前 `stage-done <檔> <目前-stage>`，確認後 `confirm` 再發布）。
+- state 檔照寫：`<branch-slug>.json`（存原 repo `.claude/workflow-state/`），`mode: "quick"`——中斷後「繼續」照常續接，PR MERGED 照常自動刪檔。
 - 不建 worktree ⇒ 同一 repo **同時只能跑一個 quick**（需要多並行就走完整流程的 worktree 隔離）。
-- 中途發現超出小修正範圍（多檔設計判斷、新依賴、要動架構）→ 停下告知，`wf-state.sh upgrade <檔>`（單向 quick→sequence，stage 落在 2）帶著已建的 branch 升級轉入完整流程 STAGE 2，不硬撐。
+- 中途發現超出小修正範圍（多檔設計判斷、新依賴、要動架構）→ 停下告知，帶著已建的 branch 升級轉入完整流程 STAGE 2，不硬撐。
 - Token Budget Gate 照常適用。
 
 ---
@@ -299,29 +300,6 @@ quick <描述或 #issue>
 [feature-202605-42-cart] [4/5] 發布準備中...
 [feature-202605-42-cart] [5/5] 完成 ✦ PR: <URL>
 ```
-
-### 狀態機腳本（唯一存取入口，強制）
-
-state 檔的**所有**建立、讀取、更新一律透過本 skill 的 `scripts/wf-state.sh`，**絕不手寫或手改 JSON**。guard 在腳本裡，不在本文件裡：
-
-- **schema 校驗 + 原子寫入**：先寫 tmp、`jq` 驗過才 `mv`——壞資料進不了磁碟，寫到一半中斷也不會留下半套 state。
-- **stage 轉移合法性**：sequence 模式只接受 `0a→0b→1→2→3→4`、`3→2`（審查退回）、`4→done`，非法跳段直接 exit 1。quick/jump 模式不套用轉移表（quick 的階段本來就非正式、jump 是使用者明示跳段），但校驗與棘輪照常生效。
-- **暫停點棘輪**：`stage-done` / `task-done` 之後 `awaiting_confirmation=true`，未帶 `--confirmed` 的 `advance` 一律拒絕。`--confirmed` 只能在**使用者真的在對話中確認後**帶上——跳過暫停點從「無聲遺忘」變成必須蓄意加旗標、在 Bash 歷史留下痕跡的動作。
-
-| 時機 | 指令 |
-|------|------|
-| 流程啟動（STAGE 0a） | `wf-state.sh init` → 回傳 pending 檔路徑（內含 wf-id） |
-| jump / quick 啟動（已知 branch） | `wf-state.sh init --mode jump\|quick --stage <S> --branch <branch>` |
-| STAGE 1 建好 worktree | `wf-state.sh promote <pending-檔> --branch <branch> --dest <worktree>/.claude/workflow-state` |
-| 欄位更新（spec/plan/issue/pr…） | `wf-state.sh set <檔> k=v`（`stage` 與確認旗標**改不了**，防繞過棘輪） |
-| stage 完成、進入暫停點 | `wf-state.sh stage-done <檔> <stage>` |
-| STAGE 2 單一任務完成 | `wf-state.sh task-done <檔> <n>` |
-| 使用者確認（stage 不變，如 STAGE 2 任務間） | `wf-state.sh confirm <檔>` |
-| 使用者確認並推進 stage | `wf-state.sh advance <檔> <next> --confirmed` |
-| quick 升級完整流程 | `wf-state.sh upgrade <檔> [--confirmed]`（單向 quick→sequence，stage 落在 2；有暫停點等待確認時須帶 `--confirmed`） |
-| 續接時讀取 | `wf-state.sh get <檔>`（讀取即校驗，腐壞檔立即失敗而非靜默續接） |
-
-> 腳本路徑：`.claude/skills/gen-dev-workflow/scripts/wf-state.sh`（相對當前工作目錄的 repo root；`cd` 進 worktree 後用 worktree 內的同路徑 checkout）。
 
 ### 狀態檔：每個 workflow 一個檔，用 branch 命名
 
@@ -347,16 +325,14 @@ state 檔的**所有**建立、讀取、更新一律透過本 skill 的 `scripts
 舊設計把「本 session 對應哪個 pending 檔」只存在對話 context 裡——session 一中斷，pending 檔就成了無主孤兒，新 session 因為還沒 branch 而推導不到它。改用 workflow-id 後，這個識別碼**同時寫進 state 檔內容、並由 session 在每次進度回報行帶上**，所以續接時能精準認領自己的 pending 檔，不會誤撿別人的。
 
 ```json
-// .pending-<wf-id>.json 內容（STAGE 0a/0b 階段，由 wf-state.sh init 產生，勿手寫）
+// .pending-<wf-id>.json 內容（STAGE 0a/0b 階段）
 {
-  "schema_version": 1,
   "workflow_id": "wf-1717400000-3f9a",
   "stage": "0a",
   "mode": "sequence",
   "branch": null,
   "spec": null,
-  "plan": null,
-  "awaiting_confirmation": false
+  "plan": null
 }
 ```
 
@@ -373,21 +349,20 @@ worktree 建立後改帶 branch slug，不再需要 workflow-id：
 
 | 時機 | 動作 |
 |------|------|
-| STAGE 0a 啟動（流程剛開始，還沒 worktree，在原 repo 目錄） | `wf-state.sh init` → 腳本產生 `<wf-id>` 並於原 repo 建 `.pending-<wf-id>.json` → 之後進度行都帶 `[<wf-id>]` |
-| STAGE 1 建好 worktree 後 | `wf-state.sh promote <pending-檔> --branch <branch> --dest <worktree>/.claude/workflow-state` → 腳本補上 `branch` 欄位（`workflow_id` 保留，便於追溯）、寫入新 worktree、刪除原 repo 的 pending 檔；主對話 `cd` 進新 worktree |
-| STAGE 1 之後每次寫入 | 對新 worktree 內的 `<branch-slug>.json` 跑 `set` / `stage-done` / `task-done` / `advance`，因 worktree 本身已隔離，零衝突 |
-| 直接 jump 進 STAGE 1+（已知 branch，已在該 worktree 內） | 略過 pending，`wf-state.sh init --mode jump --stage <S> --branch <branch>` 直接建當前 worktree 的 `<branch-slug>.json` |
+| STAGE 0a 啟動（流程剛開始，還沒 worktree，在原 repo 目錄） | 產生 `<wf-id>` → 於原 repo 建 `.pending-<wf-id>.json`（內含 `workflow_id`）→ 之後進度行都帶 `[<wf-id>]` |
+| STAGE 1 建好 worktree 後 | 把 `.pending-<wf-id>.json` 的內容寫入新 worktree 內的 `<worktree-path>/.claude/workflow-state/<branch-slug>.json`，補上 `branch` 欄位（`workflow_id` 保留，便於追溯），刪除原 repo 的 pending 檔，主對話 `cd` 進新 worktree |
+| STAGE 1 之後每次寫入 | 寫新 worktree 內的 `<branch-slug>.json`，因 worktree 本身已隔離，零衝突 |
+| 直接 jump 進 STAGE 1+（已知 branch，已在該 worktree 內） | 略過 pending，直接寫當前 worktree 的 `<branch-slug>.json` |
 
 > 關鍵：pending 階段（原 repo 目錄）靠 `<wf-id>` 認領，避免多個並行 workflow 在同一目錄搶檔；STAGE 1 之後每個 workflow 各自在專屬 worktree 內，天然零衝突，不需要再靠命名規則互相禮讓。
 
-**每個 stage 完成後寫入對應 state 檔**（一律經 `wf-state.sh`，以下 JSON 僅為 schema 參考），讓新 session 可以從中斷點繼續：
+**每個 stage 完成後寫入對應 state 檔**，讓新 session 可以從中斷點繼續：
 
 **sequence 模式**（正常流程跑到這裡）：
 ```json
 {
-  "schema_version": 1,
   "workflow_id": "wf-1717400000-3f9a",
-  "stage": "2",
+  "stage": 2,
   "mode": "sequence",
   "spec": "docs/features/2026-05-03-cart.md",
   "plan": "docs/plans/2026-05-03-cart.md",
@@ -396,8 +371,7 @@ worktree 建立後改帶 branch slug，不再需要 workflow-id：
   "pr": null,
   "completed_tasks": [1, 2],
   "total_tasks": 5,
-  "interrupted_by": "context_budget",
-  "awaiting_confirmation": false
+  "interrupted_by": "context_budget"
 }
 ```
 
@@ -408,9 +382,8 @@ worktree 建立後改帶 branch slug，不再需要 workflow-id：
 **jump 模式**（直接指定特定 stage 執行）：
 ```json
 {
-  "schema_version": 1,
   "workflow_id": "wf-1717400500-b21c",
-  "stage": "5",
+  "stage": 5,
   "mode": "jump",
   "pr": 42,
   "spec": null,
@@ -418,8 +391,7 @@ worktree 建立後改帶 branch slug，不再需要 workflow-id：
   "branch": null,
   "issue": null,
   "completed_tasks": [],
-  "total_tasks": null,
-  "awaiting_confirmation": false
+  "total_tasks": null
 }
 ```
 
@@ -465,7 +437,7 @@ worktree 建立後改帶 branch slug，不再需要 workflow-id：
 
 **狀態檔存在時（即上面定位到的 `<slug>.json`）：**
 ```
-→ wf-state.sh get <檔>（讀取即校驗；校驗失敗 → 告知使用者 state 已腐壞，不靜默續接）
+→ 讀取該檔
 → 若 pr 欄位有值 → gh pr view <pr> --json state --jq '.state'
    ├─ MERGED → 自動刪除該檔，告知「PR 已合併，開發週期完成 ✦」
    ├─ CLOSED → 問使用者「PR 已關閉，要重新開 PR 還是放棄？」
@@ -533,12 +505,10 @@ worktree 建立後改帶 branch slug，不再需要 workflow-id：
 
 ```
 1. 完成當前正在進行的最小單元（如 STAGE 2 的當前任務），不要切在半途
-2. 寫入本 workflow 的 state 檔：`wf-state.sh set <檔> interrupted_by=context_budget`
+2. 寫入本 workflow 的 state 檔，並設 "interrupted_by": "context_budget"
    ├─ 已建 branch → <branch-slug>.json（記錄 stage / mode / spec / plan / branch / completed_tasks）
    └─ 尚無 branch（STAGE 0a/0b）→ .pending-<wf-id>.json（務必含 workflow_id，否則新 session 認不回）
-3. 若有未 commit 的變更 → 先 commit（避免 session 切換後遺失）。
-   若當前任務真的收不了尾（緩衝內做不完，被迫半途切）→ 打 WIP commit，message **必須帶交接筆記**：
-   做到哪、下一步打算做什麼、為什麼選這個作法——代碼會自己活在磁碟上，思路不寫下來就真的丟了
+3. 若有未 commit 的變更 → 先 commit（避免 session 切換後遺失）
 4. 明確告知使用者，並把識別碼一起給出去（讓使用者知道續接的是哪個流程）：
    「[<wf-id 或 branch-slug>] context 已達 <用量>，為避免品質下降已保存進度至 STAGE <N>。
      請開新 session 後輸入『繼續』或 /gen-dev-workflow，會自動從 STAGE <N> 接續。」
@@ -560,21 +530,28 @@ worktree 建立後改帶 branch slug，不再需要 workflow-id：
 
 ## Model 與委派策略
 
-Model **不寫在本文件裡**，而是綁在各 agent 檔的 frontmatter（`.claude/agents/*.md`）；本文件只寫**角色名**與**推論等級名**。這是降低成本與換代維護成本的核心——model 換代時改 agent 檔（甚至因為用別名而完全免改），本文件一個字不動。
+Model 別名綁在各 agent 檔的 frontmatter（`.claude/agents/*.md`），本文件只寫**角色名**與**推論等級名**——這是降低 model 換代維護成本的核心，換代時只動 agent 檔一行（甚至因為用別名而完全免改）。
+
+> **effort 不在 frontmatter 裡。** `a6fcd29`（chore(agents): remove effort overrides from subagent frontmatter）已移除逐 agent 的 `effort:` 綁定，改為子 agent **預設繼承主對話 session 目前的 effort**。這代表若派發時不主動帶 `effort` 參數，下表描述的「STAGE 2 機械任務便宜、STAGE 3 審查最強」這套 stage 間差異化**不會自動發生**——所有 stage 會用同一個 session effort。要維持本表的設計意圖，派發時必須**顯式帶入 effort**（見下方綁定原則）。
 
 ### 推論等級表（等級 → 綁定，全文唯一定義處）
 
-| 等級 | frontmatter 綁定 | 綁定的 agent |
-|------|-----------------|-------------|
-| 最強推論 | `model: opus` + `effort: xhigh` | planner、reviewer、verifier |
-| 標準 | `model: sonnet` + `effort: max` | implementer |
-| 輕量 | `model: sonnet` + `effort: high` | brancher、responder、publisher |
-| 快/便宜 | agy 內部 fast model（不在 Claude 側綁定） | STAGE 2 機械性任務 |
+| 等級 | model（frontmatter 綁定，未變） | effort（呼叫時明確帶入，取代已移除的 frontmatter 綁定） | 綁定的 agent |
+|------|-----------------|-------------|-------------|
+| 最強推論 | `model: opus` | `effort: xhigh` | planner、reviewer、verifier |
+| 標準 | `model: sonnet` | `effort: max` | implementer |
+| 輕量 | `model: sonnet` | `effort: high` | brancher、responder、publisher |
+| 快/便宜 | agy 內部 fast model（不在 Claude 側綁定） | — | STAGE 2 機械性任務 |
 
 **綁定原則：**
-- model 一律用**別名**（`opus`/`sonnet`），不綁版本 ID——CLI 自動解析到當代 model。
-- 派發時**不帶 model/effort 參數**：`Task("<agent>", ...)` 自動套用該 agent 的 frontmatter。要調整某角色的等級 → 改該 agent 檔一行，本文件不動。
-- Workflow `agent()` 呼叫需要指定等級時，用 `agentType: '<agent 名>'` 沿用 frontmatter 綁定，不手寫 model 字串。
+- model 一律用**別名**（`opus`/`sonnet`），不綁版本 ID——CLI 自動解析到當代 model。這部分仍綁 frontmatter，不受 effort 變動影響。
+- effort **派發時必須明確帶入**：`Task("<agent>", ..., effort: "<本表對應值>")`。不帶等同放棄差異化、落回 session 預設值——這不是可省略的細節，是本表能否生效的唯一開關。
+- Workflow `agent()` 呼叫：`agentType: '<agent 名>'` 仍沿用 frontmatter 的 model 綁定；effort 另用 `opts.effort` 依本表帶入（frontmatter 已無 effort 可沿用，省略等於落回 session 預設）。
+- 要調整某角色的等級 → model 改該 agent 檔一行；effort 改本表一行，兩處呼叫端（Task 派發與 Workflow `agent()` 範例）跟著本表走，不散落各處硬編碼。
+
+> 🔴 **已知風險（實測案例，未完全排除）：`effort: 'xhigh'` 在 thinking 未開啟時，於 Opus 4.8 上曾實際遇到 `400 output_config.effort 'xhigh' is not supported when thinking is disabled on this model`。**
+> Claude Code 的 `Task`/`Agent`/Workflow `agent()` 呼叫是否會在帶 `effort: 'xhigh'`（或 `max`）時自動連帶開啟 thinking，**目前未經驗證**——若沒有，本表對 planner/reviewer/verifier（`xhigh`）與 implementer（`max`）的派發範例都可能在實際執行時 400。錯誤訊息本身指出安全退路：`effort: 'high'` 以下不受此限。
+> 在此風險被驗證排除之前：若某次派發真的撞到這個 400，先把該次呼叫的 effort 降到 `high` 復原可用性，並回來這裡更新本表——**不要**默默把全表降級成 `high`（那會抹掉 STAGE 2/3 原本要的差異化），也不要無視這條風險繼續往更多派發點複製 `xhigh`/`max`。
 
 ### Stage 層級的基準分配
 
@@ -602,11 +579,11 @@ planner 在實作計畫中**應為每個任務標註複雜度等級**，implemen
 
 ### STAGE 2 驗收的 model（與實作 model 分離）
 
-驗收（spec compliance → code quality 兩階段）**不沿用主對話當前 model**，而是**委派 verifier agent** 執行——其 frontmatter 綁定最強推論，opus 取不到時由 CLI fallback 鏈自動落到可用的最強 model。
+驗收（spec compliance → code quality 兩階段）**不沿用主對話當前 model**，而是**委派 verifier agent** 執行——其 frontmatter 綁定 `model: opus`（effort 需依推論等級表明確帶 `xhigh`，見上方「effort 不在 frontmatter 裡」），opus 取不到時由 CLI fallback 鏈自動落到可用的最強 model。
 
 這麼設計的原因與 STAGE 3 相同——**產出代碼的 agy 可能用便宜/快 model，驗收刻意用最強推論交叉檢查**，不讓同源 model 自審，維持「驗收等級 ≥ 實作等級」的把關強度。
 
-> 落地方式：用 `Task("verifier", ...)` 或 Workflow 的 `agent('驗收任務...', {agentType: 'verifier', ...})` 執行（見「用 Claude Workflow 執行並行」章節的 verify 階段）。這是 STAGE 2 唯一會脫離「主對話 model」的環節。
+> 落地方式：`Task("verifier", ..., effort: "xhigh")` 或 Workflow 的 `agent('驗收任務...', {agentType: 'verifier', effort: 'xhigh', ...})` 執行（見「用 Claude Workflow 執行並行」章節的 verify 階段）。這是 STAGE 2 唯一會脫離「主對話 model」的環節；`effort: 'xhigh'` 不可省略，省略會落回 session 當前 effort。
 
 ### 不委派 agy 的硬規則
 
@@ -692,15 +669,15 @@ const [projCtx, similarCode] = await parallel([
 
 ### 適用點 2：STAGE 2 同批獨立任務
 
-planner 已在計畫中標好各任務的**寫入檔案 scope** 與**複雜度等級**。同一批內「寫入路徑不重疊」的任務 → `pipeline()` 並行，**每個任務沿用原本的逐任務 model 分級**（`opts.model` 帶入計畫標註的等級）。
+planner 已在計畫中標好各任務的**寫入檔案 scope** 與**複雜度等級**。同一批內「寫入路徑不重疊」的任務 → `pipeline()` 並行，**每個任務沿用原本的逐任務 model 分級**（`opts.model` 帶入計畫標註的等級）；**effort 需另外依推論等級表帶入**（`opts.model` 只管 model，不會連帶設定 effort）。
 
 ```js
-// batch = 當前批次中路徑不重疊的任務；實作等級來自計畫的複雜度標註（等級 → 綁定見「推論等級表」）
-// 驗收固定走 verifier agent（frontmatter 綁最強推論，不隨實作任務浮動）
+// batch = 當前批次中路徑不重疊的任務；model/effort 來自計畫的複雜度標註（等級 → 綁定見「推論等級表」）
+// 驗收固定走 verifier agent + effort: 'xhigh'（frontmatter 只綁 model，effort 不隨實作任務浮動，需顯式帶）
 const results = await pipeline(
   batch,
-  task => agent(task.prompt, {label: task.id, model: task.model, isolation: 'worktree', schema: TASK_SCHEMA}),
-  (impl, task) => agent(`驗收任務 ${task.id}：跑測試、檢查 diff`, {label: `verify:${task.id}`, agentType: 'verifier', schema: VERIFY_SCHEMA}),
+  task => agent(task.prompt, {label: task.id, model: task.model, effort: task.effort, isolation: 'worktree', schema: TASK_SCHEMA}),
+  (impl, task) => agent(`驗收任務 ${task.id}：跑測試、檢查 diff`, {label: `verify:${task.id}`, agentType: 'verifier', effort: 'xhigh', schema: VERIFY_SCHEMA}),
 )
 // 回到主對話：聚合 results → 寫 state（completed_tasks）→ 在「每批完成」暫停點展示 → 問使用者確認下一批
 ```
@@ -713,12 +690,13 @@ const results = await pipeline(
 
 ```js
 const LENSES = ['correctness', 'security', '回歸風險', '測試覆蓋']
+// 每個 lens 都是審查的一部分，effort 對齊 STAGE 3 的最強推論——不是任意選填。
 const findings = (await parallel([
   ...LENSES.map(lens => () =>
-    agent(`以 ${lens} 視角審查 <branch> 的 diff，盡力挑出真實問題`, {label: `review:${lens}`, schema: FINDING_SCHEMA})),
+    agent(`以 ${lens} 視角審查 <branch> 的 diff，盡力挑出真實問題`, {label: `review:${lens}`, effort: 'xhigh', schema: FINDING_SCHEMA})),
   // 第五 lens：找「不該存在的東西」。verifier 子進程看不到 ponytail hook，判準必須明文內嵌。
   () => agent(`以「過度工程/可簡化」視角審查 <branch> 的 diff 對照已確認的 plan：挑出計畫沒要求卻新增的抽象（單一實作的 interface、單一產品的 factory、永不變的 config、留給未來的 scaffolding、可用既有 helper/stdlib 取代的自製輪子）。每條 finding 必附刪除方案（刪哪些行、刪後 diff 是否更小、既有測試是否仍過）。絕不把信任邊界輸入驗證、防資料遺失、security、a11y 列為可簡化項。`,
-    {label: 'review:過度工程', schema: FINDING_SCHEMA}),
+    {label: 'review:過度工程', effort: 'xhigh', schema: FINDING_SCHEMA}),
 ])).filter(Boolean).flatMap(r => r.findings)
 // 回到主對話：reviewer 親自收斂 findings、去重、判定真偽 → 寫審查報告 → 暫停展示（不委派 agy）
 ```
@@ -748,18 +726,18 @@ const findings = (await parallel([
 
 ## 跳入特定階段
 
-所有跳入指令都以 `mode: "jump"` 寫入狀態檔（用 `wf-state.sh init --mode jump --stage <S> [--branch <branch>] [--set k=v]` 建立，不手寫 JSON）。
+所有跳入指令都以 `mode: "jump"` 寫入狀態檔。以下每條「呼叫 X agent」都須依「推論等級表」明確帶 `effort` 參數（見該表旁的已知風險註記），本節在每條後方標註對應等級。
 
 ```
 # 重新規劃功能規格（STAGE 0a）
 /gen-dev-workflow spec <需求描述>
 → 寫入狀態檔 { stage: "0a", mode: "jump" }
-→ 呼叫 planner agent 產出功能規格
+→ 呼叫 planner agent 產出功能規格（effort: xhigh，最強推論）
 
 # 重新產出實作計畫（STAGE 0b）
 /gen-dev-workflow plan <spec 路徑>
 → 寫入狀態檔 { stage: "0b", mode: "jump", spec: "<spec 路徑>" }
-→ 呼叫 planner agent 依規格產出實作計畫
+→ 呼叫 planner agent 依規格產出實作計畫（effort: xhigh，最強推論）
 
 # 只需要建 Issue + Worktree（STAGE 1）
 /gen-dev-workflow branch <ISSUE-NUMBER>
@@ -767,33 +745,33 @@ const findings = (await parallel([
 → 若需新建 Issue：先呼叫 gen-gh-issue skill 產出 Issue body（五區段 zh-tw）
 → 若 issue 已存在：brancher 依 ticket-id-dev-prep 規則解析既有 issue 內容為 brief
 → 呼叫 brancher agent（依 ticket-id-dev-prep 規則建立 worktree + branch，
-  主對話 cd 進新 worktree）
+  主對話 cd 進新 worktree；effort: high，輕量）
 
 # 繼續實作（STAGE 2）
 /gen-dev-workflow implement <plan 路徑>
 → 寫入狀態檔 { stage: 2, mode: "jump", plan: "<plan 路徑>" }
-→ 呼叫 implementer agent
+→ 呼叫 implementer agent（effort: max，標準；STAGE 2 逐任務再依複雜度分級）
 
 # 只需要審查（STAGE 3）
 /gen-dev-workflow code-review <branch-name>
 → 寫入狀態檔 { stage: 3, mode: "jump", branch: "<branch-name>" }
-→ 呼叫 reviewer agent
+→ 呼叫 reviewer agent（effort: xhigh，最強推論）
 
 # 只需要發 PR（STAGE 4）
 /gen-dev-workflow publish <branch-name>
 → 寫入狀態檔 { stage: 4, mode: "jump", branch: "<branch-name>" }
-→ 呼叫 publisher agent（內部用 gen-pr skill 產 PR 描述，再 push + gh pr create）
+→ 呼叫 publisher agent（內部用 gen-pr skill 產 PR 描述，再 push + gh pr create；effort: high，輕量）
 
 # 處理 PR review 意見（STAGE 5）
 /gen-dev-workflow review #<PR>
 → 寫入狀態檔 { stage: 5, mode: "jump", pr: <PR> }
-→ 呼叫 responder agent 處理所有 review 意見
-→ 處理完畢後呼叫 reviewer agent 重新審查
-→ 審查通過後呼叫 publisher agent 更新 PR
+→ 呼叫 responder agent 處理所有 review 意見（effort: high，輕量）
+→ 處理完畢後呼叫 reviewer agent 重新審查（effort: xhigh，最強推論）
+→ 審查通過後呼叫 publisher agent 更新 PR（effort: high，輕量）
 
 # PR 合併後清理 worktree（STAGE 6）
 /gen-dev-workflow cleanup <branch-name>
 → 寫入狀態檔 { stage: 6, mode: "jump", branch: "<branch-name>" }
 → 呼叫 worktree-close-cleanup skill 移除該 branch 對應的 worktree
-→ 只移除 worktree，branch 本身保留不刪除
+→ 只移除 worktree，branch 本身保留不刪除（純 IO，無 model/effort 可調）
 ```
