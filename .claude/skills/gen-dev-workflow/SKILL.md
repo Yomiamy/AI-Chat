@@ -799,8 +799,8 @@ const findings = (await parallel([
 # PR 合併後清理 worktree（STAGE 6）
 /gen-dev-workflow cleanup <branch-name>
 → 寫入狀態檔 { stage: 6, mode: "jump", branch: "<branch-name>" }
+→ 呼叫 gen-sync-docs-by-branchs skill，以 <branch-name> 為目標同步文件
+→ 同步完成後呼叫 gen-commit skill 將文件變更 commit（避免清理 worktree 時遺失）
 → 呼叫 worktree-close-cleanup skill 移除該 branch 對應的 worktree
 → 只移除 worktree，branch 本身保留不刪除（純 IO，無 model/effort 可調）
 ```
-→ 呼叫 gen-sync-docs-by-branchs skill，以 <branch-name> 為目標同步文件
-→ 同步完成後呼叫 gen-commit skill 將文件變更 commit（避免清理 worktree 時遺失）
