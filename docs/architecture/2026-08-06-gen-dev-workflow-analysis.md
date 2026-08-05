@@ -1,5 +1,9 @@
 # gen-dev-workflow 全階段分析報告
 
+> **📝 更新紀錄 (Changelog)**：
+> * **2026-08-06**：同步 SKILL.md 變更——STAGE 6 新增「文件同步」前置步驟（gen-sync-docs-by-branchs → gen-commit），確保 worktree 清理前 docs 已反映分支最終狀態。更新 STAGE 6 表格、委派規則、優缺點分析。
+> * **2026-07-30**：同步審查 SKILL.md（含 `acf4f70` 新增的 STAGE 1 規劃文件搬移步驟）。STAGE 1 新增「帶入規劃文件」步驟、補記 Bug 1.6、更新總覽與優缺點分析。
+> * **2026-07-21**：建立初版（從 `docs/features/` 移至 `docs/architecture/`）。
 ## 總覽
 
 `gen-dev-workflow` 是一個**全自動開發流程編排器**，從使用者說「幫我做 X 功能」到 PR 建立，共 6 個 stage（0a → 0b → 1 → 2 → 3 → 4），外加兩個獨立入口的 STAGE 5（回覆 PR review）與 STAGE 6（PR 合併後清理 worktree），以及小修正用的 **quick 模式**（單暫停點快速通道，不建 worktree）。核心機制是 **Claude 做總指揮 + `agy` CLI 做委派執行**。自 STAGE 1 起，整條流程搬進一個獨立 worktree 執行——worktree 才是真正的隔離邊界。
@@ -67,6 +71,8 @@ Model 別名**綁在各 agent 檔 frontmatter**（`.claude/agents/*.md`，用 `o
 4. 確認後由 brancher 建立 **worktree + branch**（`git worktree add -b <branch> <worktree-path> origin/main`），主對話 `cd` 進新 worktree 繼續後續所有 stage
 
 **Worktree 命名與落地：** worktree 目錄為 `.claude/worktrees/<repo-name>-<ISSUE-ID>-<slug>`，建在當前 repo 內的 `.claude/worktrees/` 下，base 預設 `origin/main`。branch 名稱 `<prefix>/<ISSUE-ID>-<slug>`（prefix 含 `YYYYMM`）。若目標 branch 或 worktree 路徑已存在則停止回報，不默默重用或覆蓋。這個 worktree 是**整個 workflow 的長駐工作區**；主流程（STAGE 1–4）全程只用不刪，連 PR 合併都不會自動清除——要等使用者手動觸發 STAGE 6 才移除（刻意不自動清，避免 PR 合併後仍需修改時誤刪工作區）。
+
+**🔴 帶入 STAGE 0a/0b 產出的規劃文件（正常路徑必做）：** 功能規格與實作計畫是在原 repo 目錄產出的未 commit 檔案，新 worktree 從 `origin/main` 拉出來時不會有它們。建好 worktree 後、`cd` 進去之前，用 `cp` 將 spec 與 plan 檔複製到新 worktree 的同名路徑，並驗證兩檔都存在。用複製不用 commit + cherry-pick（規劃文件由 STAGE 2 的 commit 一併帶進 branch）；原 repo 的那兩份留著不刪；issue-id 路徑略過本步驟。
 
 **與 STAGE 2 臨時 worktree 的區別：** STAGE 1 的 worktree 是整個 workflow 的長駐工作區；STAGE 2 並行任務用的 `isolation: 'worktree'` 只是子 agent 層級的臨時隔離（跑完自動清除、不留存），僅避免並行任務互踩工作區，兩者不是同一回事。
 
@@ -171,19 +177,23 @@ Model 別名**綁在各 agent 檔 frontmatter**（`.claude/agents/*.md`，用 `o
 
 | 項目 | 內容 |
 |------|------|
-| **Agent** | worktree-close-cleanup skill |
+| **Agent** | gen-sync-docs-by-branchs → gen-commit → worktree-close-cleanup skill |
 | **Model** | —（skill 於主對話執行，無獨立綁定） |
 | **委派** | ✦ agy 執行 `git worktree remove` |
 | **並行** | 無 |
-| **產出** | 移除 STAGE 1 建立的 worktree（**對應 branch 一律保留、不刪除**） |
+| **產出** | docs 同步更新 + commit → 移除 STAGE 1 建立的 worktree（**對應 branch 一律保留、不刪除**） |
 | **觸發** | PR **實際合併後**，使用者說「PR #42 合併了，清理 worktree」 |
 
 **執行工作：**
-1. 呼叫 worktree-close-cleanup skill 移除 STAGE 1 建立的 worktree
-2. 只移除 worktree 本身，對應 branch 保留不刪除（沿用 worktree-close-cleanup 既有規則）
-3. 完成後流程結束
+1. 呼叫 gen-sync-docs-by-branchs skill，以當前處理的分支為目標，將該分支的實際變更回寫到 docs 下的發想／結構說明文件（brainstorm、architecture 等）
+2. 同步完成後呼叫 gen-commit skill 將文件變更 commit 進 git（避免同步結果在清理 worktree 時遺失）
+3. 呼叫 worktree-close-cleanup skill 移除 STAGE 1 建立的 worktree
+4. 只移除 worktree 本身，對應 branch 保留不刪除（沿用 worktree-close-cleanup 既有規則）
+5. 完成後流程結束
 
-**設計考量：** 不自動觸發——workflow 不偵測 PR 合併狀態並自動清理，需使用者明確告知已合併才執行，避免 PR 還可能需要修改時誤刪工作區。
+**設計考量：**
+- **先 sync 再 commit 再清理**的順序是必要的——worktree 一旦 `remove`，裡面未 commit 的文件變更就永久遺失。gen-sync-docs-by-branchs 本身不 commit（見其鐵律），所以中間必須顯式呼叫 gen-commit 銜接。
+- 不自動觸發——workflow 不偵測 PR 合併狀態並自動清理，需使用者明確告知已合併才執行，避免 PR 還可能需要修改時誤刪工作區。
 
 ---
 
@@ -254,7 +264,7 @@ graph LR
 ```
 
 ### STAGE 6 委派規則
-- STAGE 6 清理 worktree 走 ✦ agy 委派 `git worktree remove`（純 IO，只移除 worktree、不刪 branch，決策成本低）
+- STAGE 6 開始時先跑 gen-sync-docs-by-branchs（以當前分支為目標同步文件）→ gen-commit（將同步結果 commit），之後走 ✦ agy 委派 `git worktree remove`（純 IO，只移除 worktree、不刪 branch）。文件同步確保 docs 在 worktree 被清理前已反映分支的最終狀態
 
 ### 不委派 agy 的硬規則
 - commit message（直接依 diff 生成，省一次 context 來回）
@@ -338,9 +348,10 @@ STAGE 1 之後的 state 檔存在**各自 worktree 內部**，不再是主 repo 
 | **並行複雜度** | 契約規則難以程式化驗證 | 🟡 中 | 「寫入路徑不重疊」「共享資源指定唯一 owner」靠 planner 在計畫中標好——但 planner 本身是 LLM，標錯怎麼辦？沒有靜態檢查機制 |
 | **Context 估算** | Token 用量無法精確測量 | 🟡 中 | Token Budget Gate 依賴「評估主對話 context 用量」，但 LLM 無法精確知道自己的 context 用了多少 token。60k / 100k / 150k 的閾值在實務上只能靠啟發式猜測 |
 | **缺乏回滾** | 沒有 undo/rollback 機制 | 🟡 中 | STAGE 2 如果 implementer 寫了爛 code 且已 commit，STAGE 3 退回 STAGE 2 只是「重做」，不會自動 `git revert`。壞 commit 會留在歷史中 |
-| **STAGE 5/6 脫節** | 獨立入口與主流程不連貫 | 🟡 低 | STAGE 5、6 都是「獨立入口」。STAGE 5 串聯 responder → reviewer → publisher，邏輯與主流程部分重疊卻又獨立，若修改引入新 bug 沒有機制退回 STAGE 2；STAGE 6 清理 worktree 也脫離主流程，靠使用者手動觸發、不自動偵測 PR 合併狀態，誤觸發（PR 未真正合併就清理）無自動防護，只靠使用者自律 |
+| **STAGE 5/6 脫節** | 獨立入口與主流程不連貫 | 🟡 低 | STAGE 5、6 都是「獨立入口」。STAGE 5 串聯 responder → reviewer → publisher，邏輯與主流程部分重疊卻又獨立，若修改引入新 bug 沒有機制退回 STAGE 2；STAGE 6 雖已新增文件同步（gen-sync-docs-by-branchs → gen-commit）避免 docs 過期，但仍脫離主流程，靠使用者手動觸發、不自動偵測 PR 合併狀態，誤觸發（PR 未真正合併就清理）無自動防護，只靠使用者自律 |
 | **文件 vs 執行** | Skill 是文件，不是程式 | 🟡 中（原 🔴 高） | 可程式化的 guard 已從文件搬進 `scripts/wf-state.sh`：(1) state machine 實作——sequence 模式非法 stage 轉移直接 exit 1（合法路徑 0a→0b→1→2→3→4、3→2、4→done 寫死在轉移表；quick/jump 不套用轉移表，quick 升級走單向 `upgrade` 指令）；(2) 暫停點棘輪——`stage-done`/`task-done` 後未帶 `--confirmed` 的 `advance` 一律拒絕，跳過暫停點從「無聲遺忘」變成必須蓄意加旗標的可稽核動作；(3) `set` 白名單禁改 `stage`/確認旗標，防繞過。**殘餘風險**：LLM 仍可能根本不呼叫腳本（只能靠 SKILL.md 明文禁止手寫 JSON），context 用量估算依然無法程式化 |
 | **錯誤傳播** | 早期 stage 錯誤會放大 | 🟡 中 | 如果 STAGE 0a 的功能規格就有偏差，使用者確認了（可能沒仔細看），後面所有 stage 都在錯誤基礎上工作。flow 沒有後期發現早期問題的回溯機制 |
+| **STAGE 1 斷裂** | ~~`promote` 後 `stage-done 1` 恆遭拒（Bug 1.6）~~ | ✅ 已解決 | 2026-07-30 已透過修改 SKILL.md 工作流指示 (Workaround) 解決。正常 sequence 流程如今會依序執行 `advance 0b` 與 `advance 1`，強行推進 stage 來滿足 guard 的要求，而不去改動 `promote` 共用底層腳本。詳見 [`docs/brainstorm/2026-08-06-workflow-brainstorm.md`](../brainstorm/2026-08-06-workflow-brainstorm.md) §6。 |
 | **狀態機漏洞** | ~~缺少任務完成與 STAGE 5 閉環校驗~~ | ✅ 已解決 | 2026-07-21 已在 `wf-state.sh` 補齊 `completed_tasks` 數量是否與 `total_tasks` 吻合的檢查，並於 STAGE 5 轉移表加上 `reviewer -> responder` 退回規則，防堵漏洞。（註：該校驗初版誤在頂層 `case` 分支用 `local`，一觸發即 `set -e` crash，已由「腳本脆弱性」列的 Bug 1.5 修正。） |
 | **腳本脆弱性** | ~~`wf-state.sh` 隱含多個 Bash Bug~~ | ✅ 已解決 | 2026-07-21 修復了 5 個 Bash 執行階段漏洞：參數不足導致 `shift 2` crash、無 `=` 的 `set` 參數致 JSON 損毀、負數被錯誤轉為字串、原子寫入失敗時殘留暫存檔，以及 `advance` 任務校驗誤用函式外 `local` 致 `set -e` crash（Bug 1.5，曾堵死 STAGE 2→3 主流程，屬「狀態機漏洞」修復引入的回歸）。 |
 | **垃圾回收缺失**| ~~廢棄 Pending 檔無人清理~~ | ✅ 已解決 | 2026-07-21 於 `wf-state.sh` 實作 `prune` 指令，可安全清理遺留超過 7 天的孤兒 `.pending-<wf-id>.json`。 |
@@ -351,8 +362,8 @@ STAGE 1 之後的 state 檔存在**各自 worktree 內部**，不再是主 repo 
 
 **最值得保留的設計：** Token Budget Gate 閉環 + per-worktree state 檔的中斷續接。這是解決 LLM context 爆炸這個**真實問題**的務實方案。多 workflow 並行更是把「並行衝突」這個特殊情況用數據結構直接消滅——STAGE 1 起各流程各佔一個獨立 worktree，工作目錄本身分開，連 state 檔撞名都不可能，而不是加鎖去處理它——好品味。
 
-**已修掉的問題：** (1) 缺少輕量模式——quick 模式已補上（單暫停點、不建 worktree、branch → 直改 → reviewer 快掃 → PR），10 行 fix 不再跑 6 個 stage。(2) 參數配置收斂——model 別名收斂於 frontmatter 綁定，effort 配置則收斂於推論等級表；雖呼叫時需明確指明 effort，但透過統一定義降低了 model 換代的維護稅。(3) **跨工作區盲區與 Quick 升級逃逸**——已在 SKILL.md 規範中強制利用 `git worktree list` 跨區掃描以及升級時強制建置工作區來修補。(4) **腳本底層漏洞**——2026-07-21 已修復 `wf-state.sh` 的 5 個 Bash 執行階段 bug（含暫存檔洩漏、參數檢查缺失，以及完成度校驗誤用函式外 `local` 致 `set -e` crash 的回歸）與 3 個設計縫隙（缺少完成度校驗、STAGE 5 退回路徑、以及 prune GC），徹底鞏固防線。
+**已修掉的問題：** (1) 缺少輕量模式——quick 模式已補上（單暫停點、不建 worktree、branch → 直改 → reviewer 快掃 → PR），10 行 fix 不再跑 6 個 stage。(2) 參數配置收斂——model 別名收斂於 frontmatter 綁定，effort 配置則收斂於推論等級表；雖呼叫時需明確指明 effort，但透過統一定義降低了 model 換代的維護稅。(3) **跨工作區盲區與 Quick 升級逃逸**——已在 SKILL.md 規範中強制利用 `git worktree list` 跨區掃描以及升級時強制建置工作區來修補。(4) **腳本底層漏洞**——2026-07-21 已修復 `wf-state.sh` 的 5 個 Bash 執行階段 bug（含暫存檔洩漏、參數檢查缺失，以及完成度校驗誤用函式外 `local` 致 `set -e` crash 的回歸）與 3 個設計縫隙（缺少完成度校驗、STAGE 5 退回路徑、以及 prune GC），徹底鞏固防線。(5) **STAGE 1 規劃文件搬移**——2026-07-29 新增步驟將 STAGE 0a/0b 產出的未 commit spec/plan 檔複製進新 worktree，避免 state 檔的路徑懸空。
 
-**最該修的問題（更新後）：** 暫停點密度。正常路徑 6 個固定暫停點、STAGE 2 逐任務再線性膨脹——「自動驅動」的承諾被密集確認打斷，應考慮讓使用者選擇確認粒度。
+**已採用之修復與背景（Bug 1.6 STAGE 1 斷裂）：** 此問題（`promote` 不推進 `stage` 導致 sequence 模式下 `stage-done 1` 遭拒）曾被視為高優先級待修項目。基於「Never break userspace」的實用主義哲學，最終選擇**修改 SKILL.md（Workaround）**，要求 AI 在 promote 後主動跑 `advance 0b --confirmed` → `advance 1 --confirmed` 來推動轉移表，而非去改動服務於多條路徑的 `promote` 底層腳本。這保證了 100% 安全且零回歸風險。目前殘餘的流程設計缺陷主要為暫停點密度：正常路徑 6 個固定暫停點、STAGE 2 逐任務再線性膨脹——「自動驅動」的承諾被密集確認打斷，未來應考慮讓使用者選擇確認粒度。
 
 **最危險的假設（更新後）：** 原本是「markdown 指令 = 程式碼保證」；guard 進了 `wf-state.sh` 且腳本 bug 也修復之後，假設縮小為「LLM 會記得呼叫腳本」。我們成功將絕大多數的 LLM 自律漏洞轉移為 Code-level 的守門員，但若不主動呼叫 `wf-state.sh`，再強的防線也是形同虛設。
