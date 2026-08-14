@@ -24,7 +24,7 @@
 
 ## 0. 完成度總覽（Bug 1.x / Gap 2.1–2.5 核對於 2026-07-21 · Gap 2.6 增補於 2026-08-07）
 
-> 狀態依 [`docs/features/2026-07-18-gen-dev-workflow-analysis.md`](../features/2026-07-18-gen-dev-workflow-analysis.md) 核對標注。✅ 已修 ｜ 🟡 部分 ｜ ⬜ 待修。
+> 狀態依 [`docs/architecture/2026-08-12-gen-dev-workflow-analysis.md`](../architecture/2026-08-12-gen-dev-workflow-analysis.md) 核對標注。✅ 已修 ｜ 🟡 部分 ｜ ⬜ 待修。（原引用 `docs/features/2026-07-18-...`，該檔已隨文件搬遷／改名不存在。）
 >
 > **🔍 實查校正 (2026-08-06)**：本註記原寫「`wf-state.sh` 不在本 repo，無法直接讀原始碼，
 > 故以該份 analysis 為權威來源」——**此前提已不成立**。該腳本就在本 repo 的
@@ -81,13 +81,6 @@
 * **現象**：流程的核心委派動作（如 brancher、implementer、publisher）完全依賴外部 `agy` 命令。
 * **限制**：若 `agy` 未正確配置在 PATH，退回 Fallback 模式後的行為描述含糊。且由於 Fallback 模式無法有效委派，整條流程的優勢將不復存在。
 
----
-
-## 3. `wf-state.sh` 中的 Bash Bug 細節與具體修復方案
-
-以下是目前 `wf-state.sh` 腳本中存在的四個 Bash Bug 及其具體修復方案：
-
-### Bug 1.1: `shift 2` Crash under `set -e` — ✅ 已修
 > **🔍 2026-08-10 校正**：本節的問題比原本描述的**更嚴重**——實際上 `agy` 就算在 PATH 裡
 > （實查 `/Users/yomiry/.local/bin/agy`，v1.1.11），**`agy -p` headless 路徑仍不可用**：
 > 不吃 stdin、權限會卡死。也就是說委派**一直**落在 fallback，「流程優勢不復存在」不是假設情境，
@@ -105,6 +98,13 @@
 > 4. **退出碼遮蔽問題換了形式但沒消失**——MCP 回傳的是文字，沒有 exit code 概念；
 >    子進程宣稱「測試通過」同樣不可採信，仍須主對話親自跑測試驗證。
 
+---
+
+## 3. `wf-state.sh` 中的 Bash Bug 細節與具體修復方案
+
+以下是目前 `wf-state.sh` 腳本中存在的四個 Bash Bug 及其具體修復方案：
+
+### Bug 1.1: `shift 2` Crash under `set -e` — ✅ 已修
 * **問題根源**：由於腳本設定了 `set -euo pipefail`，當執行 `advance`、`init`、`promote` 等指令時，如果使用者漏傳了選填或必填參數（例如少傳了 `<next>`，僅執行 `wf-state.sh advance config.json`），`$#` 數量小於 2，此時執行 `shift 2` 會返回退出狀態碼 `1`。這會觸發 `set -e` 導致腳本直接異常退出（Crash），而無法輸出優雅的 Usage 說明。
 * **受影響程式碼片段 (`wf-state.sh` Line 221)**：
   ```bash
@@ -406,13 +406,6 @@ Bug 1.6 的 promote 斷裂**不影響此搬移步驟**——搬移是在 promote
 - **現象與瓶頸**：流程的核心子 Agent 委派動作高度依賴外部 `agy` CLI 命令。然而當 `agy` 執行內層指令失敗（例如 `flutter test` 返回非零退出碼 `1`）時，封裝腳本因未正確傳播內層退出碼，誤將狀態捕捉為 `0` (Success)，導致測試失敗卻被系統認定為成功的致命誤判。
 - **根因分析**：舊版執行腳本在 `agy` 命令返回後未紀錄 `$?` 便進入警告與 fallback 區塊，吞掉了原始 Exception。
 
-### 2.4 痛點四：不安全的 Git 回滾與 Metadata 破壞風險
-- **現象與瓶頸**：當審查退回或任務失敗觸發自動回滾（Rollback）時：
-  1. 無法處理 `review` 階段退回標籤（未支援 `target_type="review"`）。
-  2. 當分支名稱包含斜線（如 `feature/login`）時，因未轉換為橫槓 slug (`feature-login`)，導致 Checkpoint Tag 比對 100% 失敗。
-  3. 任務失敗時，索引計算錯誤地取用 `completed_tasks[-1]`（即已完成的上個任務），導致回滾時誤刪已完成的合法工作成果。
-  4. 執行 fallback `git clean -fd` 時，無差別清掉了 `.agents/` 目錄下的計畫與元資料。
-
 > **🔍 2026-08-10 校正**（與前半部 §2.3 為同一議題，此處為第二部分的重述）：
 > 委派已改走 MCP（`mcp__gemini-cli__ask-gemini`），**不再經過 bash 子進程，沒有 `$?` 可傳播**——
 > 「退出碼遮蔽」這個具體形狀消失了。
@@ -421,6 +414,13 @@ Bug 1.6 的 promote 斷裂**不影響此搬移步驟**——搬移是在 promote
 > 子進程宣稱「測試通過」與舊版 exit 0 誤判**危害等價**。
 > 對策不是轉接層（見 §3 提案 4 的不採用理由），而是**驗收紀律**：
 > 主對話親自跑測試與 `git log` / `git status` 驗證，不採信回報文字。
+
+### 2.4 痛點四：不安全的 Git 回滾與 Metadata 破壞風險
+- **現象與瓶頸**：當審查退回或任務失敗觸發自動回滾（Rollback）時：
+  1. 無法處理 `review` 階段退回標籤（未支援 `target_type="review"`）。
+  2. 當分支名稱包含斜線（如 `feature/login`）時，因未轉換為橫槓 slug (`feature-login`)，導致 Checkpoint Tag 比對 100% 失敗。
+  3. 任務失敗時，索引計算錯誤地取用 `completed_tasks[-1]`（即已完成的上個任務），導致回滾時誤刪已完成的合法工作成果。
+  4. 執行 fallback `git clean -fd` 時，無差別清掉了 `.agents/` 目錄下的計畫與元資料。
 
 ### 2.5 痛點五：Observation 截斷算術溢位與暫存資源洩漏
 - **現象與瓶頸**：原 truncation 腳本硬編碼假設 `MAX_LINES >= 80`（固定 `head -n 40` 與 `tail -n 40`）。當設定 `MAX_LINES=50` 傳入 60 行輸出時，算術評估算出 `-20 lines omitted`，不僅產生重複行，還輸出 83 行，完全失去截斷作用。此外，中斷執行時未清除 `/tmp` 暫存檔，造成檔案洩漏；`2>&1` 混流輸出則毀損了結構化 JSON 資訊。
@@ -1148,6 +1148,7 @@ Orchestrator 維護一份持續更新的 `progress.md`，記錄：已完成的 M
 | §5.5 Handoff | ✅ 需求已覆蓋 | SKILL.md:545-575 state 檔 + WIP commit 交接（不採 `HANDOFF.md`） |
 | §3 提案 1 `pause_level` | ✅ **已完成**（2026-08-06 · `9bce068`） | `wf-state.sh:141` `should_pause()` 單一判定來源；`:172` `apply_sets()` 白名單含 `pause_level` + enum 校驗；`:269`/`:286` 為 `stage-done`/`task-done` 兩個呼叫端；SKILL.md:179 暫停粒度章節、:872 選項語法 |
 | **批次佇列**（非原提案，2026-08-06 新增） | ✅ **已完成**（`9bce068`） | `wf-state.sh:349-430` `batch-init`/`batch-get`/`batch-next`/`batch-done`/`batch-fail`/`batch-abort`；獨立 schema + `batch_write` 原子寫入；SKILL.md:328 批次模式章節 |
+| **Gap 2.6 獨立入口狀態防護**（2026-08-14 補正） | ✅ **已完成**（2026-08-14 · 方案 A+C） | `SKILL.md:146` 首步硬性化；`.claude/hooks/wf-guard-stage-check.sh` PreToolUse 攔截 responder 派發；`.agents/hooks.json` 與 `.claude/settings.local.json` 掛載；`wf-state.sh:98` 補齊 `4->5` 轉移表 |
 | §3 提案 2 `cmd_rollback.sh` | ⬜ **未實作** | 全專案查無此檔；SKILL.md 內 `rollback` / `回滾` 零命中 |
 | §3 提案 3 `wf-truncate.sh` | ⬜ **未實作** | `scripts/` 下僅有 `wf-state.sh` |
 | §3 提案 4 `wf-exec.sh` | ❌ **不採用**（2026-08-10 定案） | 前提已變：委派改走 MCP 工具呼叫，不經 bash 子進程，沒有 `$?` 可保留，此形狀無對應物。其要解決的「回報不可信」問題改由**驗收紀律**覆蓋（`implementer.md`「回報不等於事實」+ SKILL.md 委派紀律第 3 條）。**前一版的判斷（「agy headless 不可用 ⇒ 委派已死 ⇒ 不必寫轉接層」）方向對、結論錯**——不可用的是傳輸層，不是委派本身；正解是換傳輸層，不是放棄委派 |
@@ -1183,4 +1184,3 @@ Orchestrator 維護一份持續更新的 `progress.md`，記錄：已完成的 M
 > `pause_level` 完成後立刻回寫，不等下次盤點。
 > 建議每次 release 或每月固定跑一次 `/gen-list-work-item-by-priority` 的實查核對，
 > 別讓狀態欄持續漂移——漂移的待辦清單會讓人去做已經做完的事。
-| **Gap 2.6 獨立入口狀態防護**（2026-08-14 補正） | ✅ **已完成**（2026-08-14 · 方案 A+C） | `SKILL.md:146` 首步硬性化；`.claude/hooks/wf-guard-stage-check.sh` PreToolUse 攔截 responder 派發；`.agents/hooks.json` 與 `.claude/settings.local.json` 掛載；`wf-state.sh:98` 補齊 `4->5` 轉移表 |
