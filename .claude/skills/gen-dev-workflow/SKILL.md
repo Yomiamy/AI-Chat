@@ -146,6 +146,10 @@ description: |
     STAGE 5：回覆 PR Review（獨立入口，由你手動觸發）
     ──────────────────────────────────────────────────
     觸發方式：你說「PR #42 有新的 review 意見」
+    🔴 第一步（不可跳過）：推進狀態至 STAGE 5
+       - 既有工作區已存在 state 檔：wf-state.sh advance <state_file> 5 --confirmed
+       - 新對話／獨立進入：wf-state.sh init --mode jump --stage 5 --branch <branch> --set pr=<PR>
+       ↑ 未執行此步就派發 responder = 流程違規（將遭 Hook 攔截）
     → 呼叫 responder agent 處理每條意見
     → 處理完畢 → 呼叫 reviewer agent 重新審查
     → 審查通過 → 呼叫 publisher agent 更新 PR 描述與留言
@@ -156,6 +160,9 @@ description: |
     STAGE 6：清理 Worktree（獨立入口，由你手動觸發）
     ──────────────────────────────────────────────────
     觸發方式：PR **實際合併後**，你說「PR #42 合併了，清理 worktree」
+    🔴 第一步（不可跳過）：推進狀態至 STAGE 6
+       - 既有工作區已存在 state 檔：wf-state.sh advance <state_file> 6 --confirmed
+       - 新對話／獨立進入：wf-state.sh init --mode jump --stage 6 --branch <branch>
     → 【文件同步】先呼叫 gen-sync-docs-by-branchs skill，
       以當前處理的分支為目標，將該分支的實際變更回寫到
       docs 下的發想／結構說明文件（brainstorm、architecture 等）
@@ -164,14 +171,12 @@ description: |
     → 呼叫 worktree-close-cleanup skill 移除 STAGE 1 建立的 worktree
     → 只移除 worktree 本身，**對應 branch 一律保留、不刪除**
       （worktree-close-cleanup 的既有規則，不因併入此流程而改變）
+    → 呼叫 wf-state.sh stage-done 6（或標記 done）
     → 不自動觸發：workflow 不會偵測 PR 合併狀態並自動清理，
       需你明確告知已合併才執行，避免在 PR 還可能需要修改時
       誤刪工作區。
     → 完成後流程再次結束，Claude 停止等待。
 ```
-    🔴 第一步（不可跳過）：推進狀態至 STAGE 6
-       - 既有工作區已存在 state 檔：wf-state.sh advance <state_file> 6 --confirmed
-       - 新對話／獨立進入：wf-state.sh init --mode jump --stage 6 --branch <branch>
 
 ---
 
@@ -180,7 +185,6 @@ description: |
 | 暫停時機 | 你要做什麼 | 繼續條件 |
 |---------|-----------|---------|
 | 功能規格完成後 | 展示功能規格（使用者故事、驗收條件、範圍），問「確認嗎？」 | 使用者確認 |
-    → 呼叫 wf-state.sh stage-done 6（或標記 done）
 | 實作計畫完成後 | 展示實作計畫（任務清單、檔案異動），問「確認開始實作嗎？」 | 使用者確認 |
 | Issue + 分支建立前 | 展示 Issue 標題、描述內容、分支名稱，問「確認建立嗎？」 | 使用者確認或修改後確認 |
 | 每個實作任務完成後 | 展示變更檔案清單 + 測試結果，問「確認繼續下一個任務嗎？」 | 使用者確認 |
@@ -1008,5 +1012,5 @@ const findings = (await parallel([
 → 同步完成後呼叫 gen-commit skill 將文件變更 commit（避免清理 worktree 時遺失）
 → 呼叫 worktree-close-cleanup skill 移除該 branch 對應的 worktree
 → 只移除 worktree，branch 本身保留不刪除（純 IO，無 model/effort 可調）
-```
 → 呼叫 wf-state.sh stage-done 6（或標記 done）
+```
