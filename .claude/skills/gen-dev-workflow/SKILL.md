@@ -14,9 +14,18 @@ description: |
 
 你是整個開發流程的**總指揮**。使用者給你一個需求，你自動驅動所有 agent 跑完整個週期，只在必要時暫停。
 
-> **委派後端：antigravity-cli (`agy`)。** brancher、implementer、publisher 透過 Bash 呼叫 `agy -p` 委派（stdin 管道傳 prompt + `--print-timeout`）。
-> 需求：`agy` 須在 PATH（預設於 `~/.local/bin/agy`）。
-> `agy` 不在 PATH 時各 agent 會自動退回 Fallback 模式，功能仍可運作但不會委派給 `agy`。
+> **委派後端：`gemini-mcp-tool`（MCP 工具 `mcp__gemini-cli__ask-gemini`）。** brancher、implementer、publisher 透過此 MCP 工具委派。
+> 需求：`gemini-cli` MCP server 已在 Claude Code 設定中啟用（`npx -y gemini-mcp-tool@1.1.8`，鎖定版本避免 rug-pull；升級前先確認 `npm view gemini-mcp-tool version` 並人工審查再調整）。
+> MCP 不可用時各 agent 會自動退回 Fallback 模式，功能仍可運作但不會委派。
+>
+> **為何不是 `agy -p`：** 底層後端相同（`gemini-mcp-tool` 內部就是走 antigravity-cli），但 **`agy -p` headless 路徑實際不可用**——不吃 stdin、權限會卡死，委派一律落到 fallback。MCP 路徑則實測可寫檔、可跑 shell、可 `git commit`，是同一個後端唯一能真正委派的傳輸層。
+>
+> 🔴 **三條委派紀律（每次派發都適用）：**
+> 1. **工作目錄寫死在 prompt 裡**——MCP 呼叫無法指定 cwd，不寫絕對路徑，子進程可能在主 repo 而非 worktree 動手。
+> 2. **跨出工作目錄一律先問**——派發 prompt 必須明令：需要存取／修改該目錄以外的檔案時，停止並回報，不自行動手。
+> 3. **回報不等於事實**——子進程說「已完成、已 commit」是宣稱。驗收一律親自跑 `git log` / `git status` / 測試確認。
+>
+> ⚠️ **已知限制：MCP 呼叫無法帶 `--print-timeout`。** 長任務沒有逾時控制，卡住只能人為中斷——派發前把任務拆到合理粒度。
 
 > **多 workflow 並行：** 同一 repo 可同時跑多個獨立 workflow（多個終端 / 多個 session）。STAGE 1 起隔離 key 是**獨立 worktree**（沿用 `ticket-id-dev-prep` 規則建立）——每個 workflow 跑在自己的 worktree 目錄裡，state 檔天然分開存放，彼此零衝突，不需要任何鎖或中央索引。唯一需要額外處理的窗口是「兩個流程都還在 STAGE 0a/0b（尚無 worktree，仍在原 repo 目錄）」，靠 **workflow-id** 持久化區分（見「狀態追蹤」章節）。
 
@@ -66,7 +75,7 @@ description: |
     │     見「分支與 Worktree 建立」章節）              │
     │  ⏸ 暫停：展示 Issue 標題/內容 + 分支/worktree 名稱│
     │          等使用者確認或修改                       │
-    │  → agy 執行 gh issue create                   │
+    │  → 委派執行 gh issue create                     │
     │  → brancher 依 ticket-id-dev-prep 規則建立       │
     │    worktree + branch（見下方章節），主對話 cd     │
     │    進新 worktree 繼續後續所有 stage               │
@@ -82,7 +91,7 @@ description: |
     │     • 否則 → 🔴 序列逐任務                        │
     │  → 逐任務選 model：機械性→快/便宜｜整合→標準     │
     │     ｜設計判斷/跨層→最強（見 Model 策略章節）    │
-    │  → agy 實作任務，verifier 兩階段驗收          │
+    │  → 委派實作任務，verifier 兩階段驗收          │
     │  🪶 Ponytail：派發模板必附〈規則塊〉，驗收把  │
     │     計畫外抽象/依賴/防禦分支當品質不佳退回    │
     │  ⏸ 每個任務（或每批並行）完成後暫停：            │
@@ -94,7 +103,7 @@ description: |
                            ▼
     ┌─────────────────────────────────────────────────┐
     │  STAGE 3：審查                                    │
-    │  → 呼叫 reviewer agent（不委派 agy，親自判斷）  │
+    │  → 呼叫 reviewer agent（不委派，親自判斷）      │
     │  → 已 opt-in → 多 angle 對抗式審查（Workflow    │
     │    平行 verifier 找 bug，reviewer 收斂判斷）     │
     │  🪶 Ponytail：第五 lens「過度工程/可簡化」找    │
@@ -112,7 +121,7 @@ description: |
     │  → 呼叫 publisher agent                         │
     │  → publisher 內部用 gen-pr skill 產 PR 描述      │
     │    （gen-pr 格式：Summary + 修正問題/修正方式）   │
-    │  → agy 分析 Diff，Claude 校對草稿             │
+    │  → 委派分析 Diff，Claude 校對草稿              │
     │  ⏸ 暫停：展示 PR 草稿，等使用者確認發布          │
     └──────────────────────┬──────────────────────────┘
                            │ 使用者確認
@@ -130,7 +139,7 @@ description: |
     session 目前的 effort；要維持 stage 間差異化，派發時
     須明確帶 effort 參數。詳見下方「Model 與委派策略」章節。
     主對話（總指揮）本身不換 model；切換發生在委派出去的
-    子進程——agy（STAGE 2 逐任務動態分級）與 STAGE 2 驗收
+    子進程——MCP 委派（STAGE 2 逐任務動態分級）與 STAGE 2 驗收
     委派的 verifier agent。
 
     ──────────────────────────────────────────────────
