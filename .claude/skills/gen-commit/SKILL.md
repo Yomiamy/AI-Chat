@@ -101,7 +101,6 @@ EOF
 - Scope：標示受影響的*區域*而非檔案 —— 用 `build(deps)` 而非 `build(pubspec)`。當一個檔案拆成多筆 commit 時，scope 就是區分它們的依據。
 - Subject 行 ≤ 72 字元，使用祈使語氣（"add"、"fix"、"remove" —— 不要 "added"、"fixes"）
 - Body：解釋*為何*或*改了什麼*，而非逐行摘要
-- 不要附加任何署名 trailer（不要 `Co-Authored-By`、不要 `Generated with ...`）
 
 ### 5. 確認
 
