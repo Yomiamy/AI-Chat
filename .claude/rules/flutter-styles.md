@@ -194,9 +194,10 @@ class MySingleton {
 
 遵循 Dart 官方規範 (Effective Dart) 與 Flutter 框架最佳實踐，拒絕教條式地「一律使用 Named Parameter」或「一律使用 Positional Parameter」，請依據**實用主義**來決定參數形式：
 
-1. **Widget Constructors (元件建構式)**：最核心、不可或缺的單一資料（如 `Text` 的文字、`Icon` 的圖示）使用 Positional Parameter，其餘所有的修飾、樣式與配置**必須**使用 Named Parameter。
-2. **Functions / Methods (一般函式與方法)**：
-   - 參數數量 **≥ 3 個** 時，強制使用 Named Parameter。
+1. **參數排序約定 (Arguments Ordering)**：保持建構式與方法參數的邏輯順序一致。一般建議順序：Key -> 必填位置參數 -> 選填位置參數 -> 具名參數 -> 回呼函式。
+2. **Widget Constructors (元件建構式)**：最核心、不可或缺的單一資料（如 `Text` 的文字、`Icon` 的圖示）使用 Positional Parameter，其餘所有的修飾、樣式與配置**必須**使用 Named Parameter。
+3. **Functions / Methods (一般函式與方法)**：
+   - 參數數量 **≥ 3 個** 時，強制使用 Named Parameter。（當參數數量大於 4 個時，應考慮重構為資料類別 Data Class 以降低複雜度）。
    - 當參數中包含 **多個相同型別**（尤其是 `bool` 旗標），強制使用 Named Parameter，避免語意混淆。
    - 若只有 1~2 個語意極度明確的參數，優先使用 Positional Parameter 保持簡潔。
 
@@ -340,9 +341,13 @@ final String name = 'Alice';
 const int maxCount = 100;
 ```
 
-### 5.3. 避免深層巢狀 (Avoid Deep Nesting)
+### 5.3. 複雜度限制與避免深層巢狀 (Complexity & Deep Nesting)
 
-盡量減少程式碼的巢狀深度，這有助於提高可讀性。可以透過提取方法、使用衛語句 (guard clauses) 等方式來實現。
+為避免過度工程 (over-engineering)，採用務實的程式碼指標：
+- **限制複雜度 (Cyclomatic Complexity)**：保持邏輯單純，避免單一函式處理過多條件分支。
+- **限制函式長度 (Lines of Code)**：單一函式（不含註解）儘量保持在 50 行以內。
+
+在結構上，盡量減少程式碼的巢狀深度（建議**最深不超過 4 層**），這有助於提高可讀性。強烈建議採用 **early-return (提早返回)** 與衛語句 (guard clauses) 處理邊界條件或錯誤情況，避免將主要邏輯包進 `if/else` 區塊中，並適時透過提取方法來實現結構扁平化。
 
 ```dart
 // Bad: Deeply nested code
@@ -446,6 +451,7 @@ void method() {
 #### 7.3.1. BLoC 組織 (BLoC Organization)
 
 - 每個 BLoC 應該專注於單一職責 (Single Responsibility Principle)。
+- **避免公開屬性 (avoid-bloc-public-fields)**：狀態只能透過 `State` 往外發布，禁止在 BLoC 中宣告 `public` 變數讓外部直接存取，保持單向資料流的純淨。
 - 使用事件 (Events) 來觸發狀態變更，並使用狀態 (State) 來表示不同的 UI 狀態。
 - 將 BLoC 與 UI 分離，確保 UI 只關心如何呈現狀態。
 
@@ -465,6 +471,7 @@ void method() {
 - 使用 `equatable` 套件來簡化事件的比較。
 - 事件保持與 Bloc 相同前綴，例如 `CartBloc` 的事件命名為 `CartInitial`、 `CartLoad`。
 - 事件類別中覆寫 `props` 屬性以包含所有相關的屬性，確保事件的比較是基於其內容而非引用。
+- 避免 Query 事件處理過多邏輯：建議在 Bloc 中以私有方法 `_onCompleted`、`_onFailed` 處理（符合 BLoC 規範，避免事件迴圈）。
 
 ```dart
 abstract class CartEvent extends Equatable {
@@ -525,6 +532,48 @@ Future<void> _save2() async {
 - **字串串接用 `StringBuffer`**：迴圈內累積字串用 `StringBuffer`，勿用 `+`（避免產生大量中間 String 物件）。
 - **列表分隔線用 `ListView.separated`**：需要項目間分隔線時用 `ListView.separated`，勿在每個 item 手動塞 `Divider`（同樣是 lazy build，且分隔邏輯集中）。
 
+### 7.7. 生命週期與狀態陷阱 (Lifecycle & State Anti-Patterns)
+
+**嚴禁在 `build()` 內將路由參數或外部資料指派給本地狀態 (State)**。這是一個極度危險且難以察覺的反模式 (Anti-pattern)，會導致狀態無預警重置。
+
+**The Bug (反模式):**
+當你在 `build` 方法中讀取 `ModalRoute.of(context)` 並直接賦值給 `State` 變數時，只要發生任何不可控的重建（例如：鍵盤彈出導致 `MediaQuery` 改變、上層 Widget 更新、或內部觸發 `setState`），`build` 就會再次執行，**把你辛苦更新的狀態用傳入的原始參數給覆蓋掉**。`build` 方法必須是純粹的 (Pure)——只將狀態映射到 UI，絕不可包含變更狀態的副作用。
+
+**Bad:**
+```dart
+@override
+Widget build(BuildContext context) {
+  final args = ModalRoute.of(context)!.settings.arguments as MyArgs;
+  // 🔴 嚴重錯誤：每次頁面重建，使用者編輯過的值都會被洗掉
+  this._localValue = args.initialValue; 
+  return Scaffold(...);
+}
+```
+
+**Good (正解):**
+因為 `ModalRoute.of` 需要完整的 context，不能在 `initState` 中呼叫。正確作法是放在 `didChangeDependencies` 並且搭配 `_isInit` 旗標，確保只初始化一次：
+
+```dart
+bool _isInit = false;
+
+@override
+void didChangeDependencies() {
+  super.didChangeDependencies();
+  if (!_isInit) {
+    // ✅ 安全：只在第一次依賴建立時讀取並寫入初始狀態
+    final args = ModalRoute.of(context)!.settings.arguments as MyArgs;
+    _localValue = args.initialValue;
+    _isInit = true;
+  }
+}
+
+@override
+Widget build(BuildContext context) {
+  // 保持 build 純淨，不再修改 _localValue
+  return Scaffold(...);
+}
+```
+
 ## 8. 測試 (Testing)
 
 ### 8.1. 測試 (Testing)
@@ -560,6 +609,28 @@ void main() {
   });
 }
 ```
+
+## X. AI Review Decisions
+
+### X.1. Retrofit
+
+依 Domain 拆分不同 API，透過 Dio 管理 Base URL、Headers、Interceptors，使用 Retrofit 生成 API 客戶端。
+
+- 不在 `@RestApi()` 使用 `baseUrl` 參數（由 Dio 統一管理）。
+- Path 宣告需含 `/` 前綴，不在 `@GET`、`@POST` 重複 Base URL。
+
+```dart
+@RestApi()
+abstract class UserApi {
+  @GET('/users')
+  Future<List<User>> getUsers();
+}
+```
+
+### X.2. DTO / Entity / Model 轉換
+
+- 大多數情境建議透過 `fromJson` / `toJson` 完成轉換以減少程式碼（接受 type safety 的取捨）。
+- 僅在需要複雜轉換或更高效能時，才直接在建構函式中映射欄位。
 
 ## Y. 其他 (Miscellaneous)
 
